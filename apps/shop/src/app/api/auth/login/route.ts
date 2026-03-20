@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) throw new Error('Supabase 환경변수가 설정되지 않았습니다.');
+  return createClient(url, key);
+}
 
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
+    const supabase = getSupabase();
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
