@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Plus, Package, AlertTriangle, Clock, FlaskConical, X, MapPin } from 'lucide-react';
+import { Search, Plus, Package, AlertTriangle, Clock, FlaskConical, X, MapPin, ExternalLink } from 'lucide-react';
 import { formatCurrency } from '@jinuchem/shared';
+import Link from 'next/link';
+import { sampleReagents } from '@/lib/mock-data';
 
 interface InventoryItem {
   id: string;
@@ -147,8 +149,30 @@ export default function InventoryPage() {
           <tbody>
             {filtered.map((item) => (
               <tr key={item.id} className="border-b border-[var(--border)] last:border-0 hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-[var(--text)]">{item.name}</td>
-                <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">{item.casNumber}</td>
+                <td className="px-4 py-3 font-medium">
+                  {(() => {
+                    const matched = sampleReagents.find((r) => r.casNumber === item.casNumber);
+                    return matched ? (
+                      <Link href={`/order/${matched.id}`} className="text-blue-600 hover:underline flex items-center gap-1">
+                        {item.name} <ExternalLink size={10} />
+                      </Link>
+                    ) : (
+                      <span className="text-[var(--text)]">{item.name}</span>
+                    );
+                  })()}
+                </td>
+                <td className="px-4 py-3 font-mono text-xs">
+                  {(() => {
+                    const matched = sampleReagents.find((r) => r.casNumber === item.casNumber);
+                    return matched ? (
+                      <Link href={`/order/${matched.id}`} className="text-blue-600 hover:underline">
+                        {item.casNumber}
+                      </Link>
+                    ) : (
+                      <span className="text-[var(--text-secondary)]">{item.casNumber}</span>
+                    );
+                  })()}
+                </td>
                 <td className="px-4 py-3 text-right text-[var(--text)]">
                   {item.quantity} {item.unit}
                 </td>
