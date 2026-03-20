@@ -2,10 +2,12 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, SlidersHorizontal, Grid3X3, List, ChevronDown, Truck, FlaskConical } from 'lucide-react';
+import { Search, SlidersHorizontal, Grid3X3, List, ChevronDown, Truck, FlaskConical, ShoppingCart } from 'lucide-react';
 import { CardStructureImage } from '@/components/products/CardStructureImage';
 import { sampleReagents, supplierList, gradeList } from '@/lib/mock-data';
 import { formatCurrency } from '@jinuchem/shared';
+import { useCartStore } from '@/stores/cartStore';
+import type { ReagentCardData } from '@jinuchem/shared';
 
 type ViewMode = 'grid' | 'list';
 
@@ -18,6 +20,12 @@ export default function ReagentOrderPage() {
   const [sameDayOnly, setSameDayOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [supplierSearch, setSupplierSearch] = useState('');
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
 
   const filteredReagents = useMemo(() => {
     let result = [...sampleReagents];
@@ -194,13 +202,13 @@ export default function ReagentOrderPage() {
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-4 gap-4">
               {filteredReagents.map((reagent) => (
-                <ReagentGridCard key={reagent.id} reagent={reagent} />
+                <ReagentGridCard key={reagent.id} reagent={reagent} showToast={showToast} />
               ))}
             </div>
           ) : (
             <div className="space-y-3">
               {filteredReagents.map((reagent) => (
-                <ReagentListCard key={reagent.id} reagent={reagent} />
+                <ReagentListCard key={reagent.id} reagent={reagent} showToast={showToast} />
               ))}
             </div>
           )}
@@ -240,14 +248,42 @@ export default function ReagentOrderPage() {
           )}
         </div>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl text-sm z-50 animate-fade-in">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
 
 /* ========== Grid Card ========== */
-function ReagentGridCard({ reagent }: { reagent: ReagentCardData }) {
-  const firstVariant = reagent.variants[0];
-  const price = firstVariant?.salePrice ?? firstVariant?.listPrice ?? 0;
+function ReagentGridCard({ reagent, showToast }: { reagent: ReagentCardData; showToast: (msg: string) => void }) {
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const addToCart = useCartStore((s) => s.addItem);
+  const variant = reagent.variants[selectedIdx] || reagent.variants[0];
+  const price = variant?.salePrice ?? variant?.listPrice ?? 0;
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!variant) return;
+    addToCart({
+      productId: reagent.id,
+      productName: reagent.name,
+      catalogNo: reagent.catalogNo || '',
+      supplierName: reagent.supplierName,
+      variantId: variant.id,
+      size: variant.size,
+      unit: variant.unit,
+      unitPrice: variant.salePrice ?? variant.listPrice,
+      quantity: 1,
+      formula: reagent.formula,
+    });
+    showToast(`${reagent.name} ${variant.size}${variant.unit} 장바구니에 추가`);
+  };
 
   return (
     <Link href={`/order/${reagent.id}`} className="block bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden hover:shadow-md transition-shadow cursor-pointer group">
@@ -272,36 +308,71 @@ function ReagentGridCard({ reagent }: { reagent: ReagentCardData }) {
         <p className="text-xs text-[var(--text-secondary)] mb-2">{reagent.formula} / MW: {reagent.molWeight}</p>
 
         <div className="flex items-baseline gap-2">
-          {firstVariant?.salePrice && (
+          {variant?.salePrice && (
             <span className="text-xs text-[var(--text-secondary)] line-through">
-              {formatCurrency(firstVariant.listPrice)}
+              {formatCurrency(variant.listPrice)}
             </span>
           )}
           <span className="text-sm font-bold text-[var(--text)]">{formatCurrency(price)}</span>
         </div>
 
-        {firstVariant?.sameDayShip && (
+        {variant?.sameDayShip && (
           <div className="flex items-center gap-1 mt-2">
             <Truck size={12} className="text-emerald-600" />
             <span className="text-xs text-emerald-600 font-medium">당일출고</span>
           </div>
         )}
 
-        <button
-          className="w-full mt-3 h-[34px] bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
-          onClick={(e) => { e.stopPropagation(); alert('장바구니에 추가되었습니다'); }}
-        >
-          장바구니 담기
-        </button>
+        {/* Variant Selector + Cart Button */}
+        <div className="flex gap-2 mt-3" onClick={(e) => e.preventDefault()}>
+          {reagent.variants.length > 1 && (
+            <select
+              value={selectedIdx}
+              onChange={(e) => { e.stopPropagation(); setSelectedIdx(Number(e.target.value)); }}
+              onClick={(e) => e.stopPropagation()}
+              className="flex-1 h-[34px] px-2 border border-[var(--border)] rounded-lg text-xs bg-[var(--bg-card)] text-[var(--text)] min-w-0"
+            >
+              {reagent.variants.map((v, i) => (
+                <option key={v.id} value={i}>{v.size}{v.unit}</option>
+              ))}
+            </select>
+          )}
+          <button
+            className={`${reagent.variants.length > 1 ? '' : 'w-full'} flex-1 h-[34px] bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-1`}
+            onClick={handleAddToCart}
+          >
+            <ShoppingCart size={12} />
+            담기
+          </button>
+        </div>
       </div>
     </Link>
   );
 }
 
 /* ========== List Card ========== */
-function ReagentListCard({ reagent }: { reagent: ReagentCardData }) {
-  const firstVariant = reagent.variants[0];
-  const price = firstVariant?.salePrice ?? firstVariant?.listPrice ?? 0;
+function ReagentListCard({ reagent, showToast }: { reagent: ReagentCardData; showToast: (msg: string) => void }) {
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const addToCart = useCartStore((s) => s.addItem);
+  const variant = reagent.variants[selectedIdx] || reagent.variants[0];
+  const price = variant?.salePrice ?? variant?.listPrice ?? 0;
+
+  const handleAddToCart = () => {
+    if (!variant) return;
+    addToCart({
+      productId: reagent.id,
+      productName: reagent.name,
+      catalogNo: reagent.catalogNo || '',
+      supplierName: reagent.supplierName,
+      variantId: variant.id,
+      size: variant.size,
+      unit: variant.unit,
+      unitPrice: variant.salePrice ?? variant.listPrice,
+      quantity: 1,
+      formula: reagent.formula,
+    });
+    showToast(`${reagent.name} ${variant.size}${variant.unit} 장바구니에 추가`);
+  };
 
   return (
     <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 flex gap-4 items-center hover:shadow-md transition-shadow cursor-pointer group">
@@ -330,25 +401,39 @@ function ReagentListCard({ reagent }: { reagent: ReagentCardData }) {
       {/* Price + Actions */}
       <div className="text-right shrink-0 space-y-2">
         <div>
-          {firstVariant?.salePrice && (
+          {variant?.salePrice && (
             <span className="text-xs text-[var(--text-secondary)] line-through mr-2">
-              {formatCurrency(firstVariant.listPrice)}
+              {formatCurrency(variant.listPrice)}
             </span>
           )}
           <span className="text-base font-bold text-[var(--text)]">{formatCurrency(price)}</span>
         </div>
-        {firstVariant?.sameDayShip && (
+        {variant?.sameDayShip && (
           <div className="flex items-center justify-end gap-1">
             <Truck size={12} className="text-emerald-600" />
             <span className="text-xs text-emerald-600 font-medium">당일출고</span>
           </div>
         )}
-        <button className="h-[34px] px-4 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors">
-          장바구니 담기
-        </button>
+        <div className="flex gap-2 justify-end">
+          {reagent.variants.length > 1 && (
+            <select
+              value={selectedIdx}
+              onChange={(e) => setSelectedIdx(Number(e.target.value))}
+              className="h-[34px] px-2 border border-[var(--border)] rounded-lg text-xs bg-[var(--bg-card)] text-[var(--text)]"
+            >
+              {reagent.variants.map((v, i) => (
+                <option key={v.id} value={i}>{v.size}{v.unit}</option>
+              ))}
+            </select>
+          )}
+          <button
+            onClick={handleAddToCart}
+            className="h-[34px] px-4 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+          >
+            <ShoppingCart size={12} /> 담기
+          </button>
+        </div>
       </div>
     </div>
   );
 }
-
-import type { ReagentCardData } from '@jinuchem/shared';

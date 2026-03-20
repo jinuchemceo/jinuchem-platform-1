@@ -118,6 +118,17 @@ export function NotificationPanel() {
             })
           )}
         </div>
+
+        {/* 전체보기 링크 */}
+        <div className="border-t border-[var(--border)] px-4 py-2.5">
+          <Link
+            href="/notifications"
+            onClick={closePanel}
+            className="block w-full text-center text-sm text-blue-600 hover:underline font-medium"
+          >
+            전체보기
+          </Link>
+        </div>
       </div>
     </>
   );

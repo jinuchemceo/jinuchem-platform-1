@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { ShoppingCart, Bell, Sun, Moon, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useNotificationStore } from '@/stores/notificationStore';
+import { useCartStore } from '@/stores/cartStore';
 import { NotificationPanel } from '@/components/notifications/NotificationPanel';
 
 export function Topbar() {
   const [isDark, setIsDark] = useState(false);
-  const cartCount = 3; // TODO: Zustand cart store 연동
+  const cartCount = useCartStore((s) => s.getItemCount());
   const { unreadCount, togglePanel } = useNotificationStore();
 
   const toggleTheme = () => {

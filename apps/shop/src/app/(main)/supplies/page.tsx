@@ -1,14 +1,23 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, Grid3X3, List, Truck, ChevronDown, ChevronRight, RefreshCw, Package } from 'lucide-react';
+import { Search, Grid3X3, List, Truck, ChevronDown, ChevronRight, RefreshCw, Package, ShoppingCart, Minus, Plus } from 'lucide-react';
 import { sampleSupplies } from '@/lib/mock-data';
 import { formatCurrency, SUPPLY_CATEGORIES } from '@jinuchem/shared';
+import { useCartStore } from '@/stores/cartStore';
 import type { SupplyCardData } from '@jinuchem/shared';
 
 type ViewMode = 'grid' | 'list';
 
 const categories = SUPPLY_CATEGORIES;
+
+const SUBSCRIPTION_PERIODS = [
+  { value: '1w', label: '1주' },
+  { value: '2w', label: '2주' },
+  { value: '1m', label: '1개월' },
+  { value: '2m', label: '2개월' },
+  { value: '3m', label: '3개월' },
+];
 
 export default function SupplyOrderPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,6 +28,12 @@ export default function SupplyOrderPage() {
   const [sameDayOnly, setSameDayOnly] = useState(false);
   const [subscriptionOnly, setSubscriptionOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
 
   const filteredSupplies = useMemo(() => {
     let result = [...sampleSupplies];
@@ -171,13 +186,13 @@ export default function SupplyOrderPage() {
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-4 gap-4">
               {filteredSupplies.map((supply) => (
-                <SupplyGridCard key={supply.id} supply={supply} />
+                <SupplyGridCard key={supply.id} supply={supply} showToast={showToast} />
               ))}
             </div>
           ) : (
             <div className="space-y-3">
               {filteredSupplies.map((supply) => (
-                <SupplyListCard key={supply.id} supply={supply} />
+                <SupplyListCard key={supply.id} supply={supply} showToast={showToast} />
               ))}
             </div>
           )}
@@ -207,14 +222,41 @@ export default function SupplyOrderPage() {
           )}
         </div>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl text-sm z-50 animate-fade-in">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
 
 /* ========== Grid Card ========== */
-function SupplyGridCard({ supply }: { supply: SupplyCardData }) {
+function SupplyGridCard({ supply, showToast }: { supply: SupplyCardData; showToast: (msg: string) => void }) {
+  const [quantity, setQuantity] = useState(1);
+  const [subPeriod, setSubPeriod] = useState('1m');
+  const addToCart = useCartStore((s) => s.addItem);
   const firstVariant = supply.variants[0];
   const price = firstVariant?.listPrice ?? 0;
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!firstVariant) return;
+    addToCart({
+      productId: supply.id,
+      productName: supply.name,
+      catalogNo: supply.catalogNo || '',
+      supplierName: supply.supplierName,
+      variantId: firstVariant.id,
+      size: firstVariant.size,
+      unit: firstVariant.unit,
+      unitPrice: firstVariant.listPrice,
+      quantity,
+    });
+    showToast(`${supply.name} ${quantity}개 장바구니에 추가`);
+  };
 
   return (
     <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 hover:shadow-md transition-shadow cursor-pointer group">
@@ -248,20 +290,81 @@ function SupplyGridCard({ supply }: { supply: SupplyCardData }) {
         )}
       </div>
 
+      {/* Subscription Period */}
+      {supply.subscriptionAvailable && (
+        <div className="mb-3">
+          <select
+            value={subPeriod}
+            onChange={(e) => { e.stopPropagation(); setSubPeriod(e.target.value); }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full h-[30px] px-2 border border-[var(--border)] rounded text-xs bg-[var(--bg-card)] text-[var(--text)]"
+          >
+            {SUBSCRIPTION_PERIODS.map((p) => (
+              <option key={p.value} value={p.value}>정기배송: {p.label}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Quantity */}
+      <div className="flex items-center gap-2 mb-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center border border-[var(--border)] rounded-lg overflow-hidden">
+          <button
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            className="w-[28px] h-[28px] flex items-center justify-center hover:bg-gray-100 text-[var(--text)]"
+          >
+            <Minus size={12} />
+          </button>
+          <input
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+            className="w-[36px] h-[28px] text-center text-xs font-medium border-x border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)]"
+            min={1}
+          />
+          <button
+            onClick={() => setQuantity(quantity + 1)}
+            className="w-[28px] h-[28px] flex items-center justify-center hover:bg-gray-100 text-[var(--text)]"
+          >
+            <Plus size={12} />
+          </button>
+        </div>
+        <span className="text-xs text-[var(--text-secondary)]">개</span>
+      </div>
+
       <button
-        className="w-full h-[34px] bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
-        onClick={(e) => { e.stopPropagation(); alert('장바구니에 추가되었습니다'); }}
+        className="w-full h-[34px] bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
+        onClick={handleAddToCart}
       >
-        장바구니 담기
+        <ShoppingCart size={12} /> 장바구니 담기
       </button>
     </div>
   );
 }
 
 /* ========== List Card ========== */
-function SupplyListCard({ supply }: { supply: SupplyCardData }) {
+function SupplyListCard({ supply, showToast }: { supply: SupplyCardData; showToast: (msg: string) => void }) {
+  const [quantity, setQuantity] = useState(1);
+  const [subPeriod, setSubPeriod] = useState('1m');
+  const addToCart = useCartStore((s) => s.addItem);
   const firstVariant = supply.variants[0];
   const price = firstVariant?.listPrice ?? 0;
+
+  const handleAddToCart = () => {
+    if (!firstVariant) return;
+    addToCart({
+      productId: supply.id,
+      productName: supply.name,
+      catalogNo: supply.catalogNo || '',
+      supplierName: supply.supplierName,
+      variantId: firstVariant.id,
+      size: firstVariant.size,
+      unit: firstVariant.unit,
+      unitPrice: firstVariant.listPrice,
+      quantity,
+    });
+    showToast(`${supply.name} ${quantity}개 장바구니에 추가`);
+  };
 
   return (
     <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 flex gap-4 items-center hover:shadow-md transition-shadow cursor-pointer group">
@@ -290,11 +393,51 @@ function SupplyListCard({ supply }: { supply: SupplyCardData }) {
           </div>
         )}
       </div>
+
+      {/* Subscription Period */}
+      {supply.subscriptionAvailable && (
+        <select
+          value={subPeriod}
+          onChange={(e) => setSubPeriod(e.target.value)}
+          className="h-[34px] px-2 border border-[var(--border)] rounded-lg text-xs bg-[var(--bg-card)] text-[var(--text)] shrink-0"
+        >
+          {SUBSCRIPTION_PERIODS.map((p) => (
+            <option key={p.value} value={p.value}>{p.label}</option>
+          ))}
+        </select>
+      )}
+
+      {/* Quantity */}
+      <div className="flex items-center border border-[var(--border)] rounded-lg overflow-hidden shrink-0">
+        <button
+          onClick={() => setQuantity(Math.max(1, quantity - 1))}
+          className="w-[30px] h-[34px] flex items-center justify-center hover:bg-gray-100 text-[var(--text)]"
+        >
+          <Minus size={12} />
+        </button>
+        <input
+          type="number"
+          value={quantity}
+          onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+          className="w-[40px] h-[34px] text-center text-xs font-medium border-x border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)]"
+          min={1}
+        />
+        <button
+          onClick={() => setQuantity(quantity + 1)}
+          className="w-[30px] h-[34px] flex items-center justify-center hover:bg-gray-100 text-[var(--text)]"
+        >
+          <Plus size={12} />
+        </button>
+      </div>
+
       <div className="text-right shrink-0">
         <span className="text-base font-bold text-[var(--text)]">{formatCurrency(price)}</span>
         <br />
-        <button className="mt-1 h-[34px] px-4 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors">
-          장바구니 담기
+        <button
+          onClick={handleAddToCart}
+          className="mt-1 h-[34px] px-4 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+        >
+          <ShoppingCart size={12} /> 담기
         </button>
       </div>
     </div>

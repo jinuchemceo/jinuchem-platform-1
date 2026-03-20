@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, Upload, Plus, Trash2, ShoppingCart, FlaskConical, FileText, Zap } from 'lucide-react';
 import { formatCurrency } from '@jinuchem/shared';
 import { sampleReagents } from '@/lib/mock-data';
+import { useCartStore } from '@/stores/cartStore';
 import type { VariantSummary } from '@jinuchem/shared';
 
 interface QuickOrderItem {
@@ -12,6 +13,8 @@ interface QuickOrderItem {
   catalogNo: string;
   productName: string;
   supplierName: string;
+  casNumber: string;
+  formula: string;
   specialNote: string;
   sdsAvailable: boolean;
   coaAvailable: boolean;
@@ -26,12 +29,71 @@ interface QuickOrderItem {
 export default function QuickOrderPage() {
   const [searchType, setSearchType] = useState('catalog');
   const [searchInput, setSearchInput] = useState('');
-  const [items, setItems] = useState<QuickOrderItem[]>([]); // 항상 빈 상태로 시작
+  const [items, setItems] = useState<QuickOrderItem[]>([]);
   const [toast, setToast] = useState<string | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const addToCart = useCartStore((s) => s.addItem);
 
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
+  };
+
+  // Autocomplete suggestions
+  const suggestions = useMemo(() => {
+    if (!searchInput.trim() || searchInput.trim().length < 1) return [];
+    const q = searchInput.trim().toLowerCase();
+    return sampleReagents.filter(
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        r.casNumber?.includes(q) ||
+        r.catalogNo?.toLowerCase().includes(q) ||
+        r.formula?.toLowerCase().includes(q)
+    ).slice(0, 6);
+  }, [searchInput]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const addProduct = (match: typeof sampleReagents[0]) => {
+    if (items.some((i) => i.productId === match.id)) {
+      showToast('이미 추가된 제품입니다.');
+      return;
+    }
+
+    const firstVariant = match.variants[0];
+    const newItem: QuickOrderItem = {
+      id: String(Date.now()),
+      productId: match.id,
+      catalogNo: match.catalogNo || '',
+      productName: match.name,
+      supplierName: match.supplierName,
+      casNumber: match.casNumber || '',
+      formula: match.formula || '',
+      specialNote: '',
+      sdsAvailable: true,
+      coaAvailable: match.supplierName === 'Sigma-Aldrich',
+      variants: match.variants,
+      selectedVariantId: firstVariant?.id || '',
+      selectedSize: `${firstVariant?.size}${firstVariant?.unit}`,
+      unitPrice: firstVariant?.salePrice ?? firstVariant?.listPrice ?? 0,
+      quantity: 1,
+      selected: true,
+    };
+    setItems([...items, newItem]);
+    setSearchInput('');
+    setShowDropdown(false);
+    showToast(`${match.name} 추가되었습니다.`);
   };
 
   const handleSearch = () => {
@@ -49,32 +111,7 @@ export default function QuickOrderPage() {
       return;
     }
 
-    // 이미 추가된 제품인지 확인
-    if (items.some((i) => i.productId === match.id)) {
-      showToast('이미 추가된 제품입니다.');
-      return;
-    }
-
-    const firstVariant = match.variants[0];
-    const newItem: QuickOrderItem = {
-      id: String(Date.now()),
-      productId: match.id,
-      catalogNo: match.catalogNo || '',
-      productName: match.name,
-      supplierName: match.supplierName,
-      specialNote: '',
-      sdsAvailable: true,
-      coaAvailable: match.supplierName === 'Sigma-Aldrich',
-      variants: match.variants,
-      selectedVariantId: firstVariant?.id || '',
-      selectedSize: `${firstVariant?.size}${firstVariant?.unit}`,
-      unitPrice: firstVariant?.salePrice ?? firstVariant?.listPrice ?? 0,
-      quantity: 1,
-      selected: true,
-    };
-    setItems([...items, newItem]);
-    setSearchInput('');
-    showToast(`${match.name} 추가되었습니다.`);
+    addProduct(match);
   };
 
   const removeItem = (id: string) => setItems(items.filter((i) => i.id !== id));
@@ -114,6 +151,21 @@ export default function QuickOrderPage() {
       showToast('선택된 제품이 없습니다.');
       return;
     }
+    selectedItems.forEach((item) => {
+      const variant = item.variants.find((v) => v.id === item.selectedVariantId);
+      addToCart({
+        productId: item.productId,
+        productName: item.productName,
+        catalogNo: item.catalogNo,
+        supplierName: item.supplierName,
+        variantId: item.selectedVariantId,
+        size: variant?.size || '',
+        unit: variant?.unit || '',
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
+        formula: item.formula,
+      });
+    });
     showToast(`${selectedItems.length}개 제품이 장바구니에 추가되었습니다.`);
   };
 
@@ -123,7 +175,6 @@ export default function QuickOrderPage() {
       return;
     }
     showToast(`${selectedItems.length}개 제품 바로 주문을 진행합니다.`);
-    // TODO: 체크아웃 페이지로 이동
   };
 
   const handleQuoteRequest = () => {
@@ -156,14 +207,41 @@ export default function QuickOrderPage() {
             <option value="formula">분자식</option>
             <option value="keyword">키워드</option>
           </select>
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder="내용을 입력해 주세요."
-            className="flex-1 h-[38px] px-4 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
-          />
+          <div className="relative flex-1" ref={dropdownRef}>
+            <input
+              ref={inputRef}
+              type="text"
+              value={searchInput}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                setShowDropdown(true);
+              }}
+              onFocus={() => setShowDropdown(true)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="내용을 입력해 주세요."
+              className="w-full h-[38px] px-4 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
+            />
+            {/* Autocomplete Dropdown */}
+            {showDropdown && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-xl z-50 max-h-[280px] overflow-y-auto">
+                {suggestions.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => addProduct(r)}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-blue-50 transition-colors border-b border-[var(--border)] last:border-0"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[var(--text)] truncate">{r.name}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        {r.supplierName} | CAS: {r.casNumber} | {r.formula}
+                      </p>
+                    </div>
+                    <span className="text-xs text-blue-600 font-medium shrink-0">{r.catalogNo}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button onClick={handleSearch} className="h-[38px] px-5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
             견적 추가
           </button>
@@ -184,7 +262,8 @@ export default function QuickOrderPage() {
                   <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] w-[50px]">선택</th>
                   <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] w-[100px]">제품번호</th>
                   <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)]">제품명</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] w-[100px]">특이사항</th>
+                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] w-[100px]">CAS No.</th>
+                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] w-[110px]">분자식</th>
                   <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] w-[100px]">제품정보</th>
                   <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] w-[130px]">용량</th>
                   <th className="text-right py-2 px-3 font-medium text-[var(--text-secondary)] w-[100px]">단가</th>
@@ -204,13 +283,8 @@ export default function QuickOrderPage() {
                       <div className="font-medium text-[var(--text)]">{item.productName}</div>
                       <div className="text-xs text-[var(--text-secondary)]">{item.supplierName}</div>
                     </td>
-                    <td className="py-3 px-3">
-                      {item.specialNote ? (
-                        <span className="text-xs text-red-600 font-medium bg-red-50 px-2 py-0.5 rounded">{item.specialNote}</span>
-                      ) : (
-                        <span className="text-[var(--text-secondary)]">-</span>
-                      )}
-                    </td>
+                    <td className="py-3 px-3 text-xs font-mono text-[var(--text)]">{item.casNumber}</td>
+                    <td className="py-3 px-3 text-xs text-[var(--text)]">{item.formula}</td>
                     <td className="py-3 px-3">
                       <div className="flex gap-2">
                         {item.sdsAvailable && <span className="text-xs text-blue-600 font-medium cursor-pointer hover:underline">SDS</span>}

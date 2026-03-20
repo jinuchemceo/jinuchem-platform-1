@@ -9,6 +9,7 @@ import {
 import { sampleReagents } from '@/lib/mock-data';
 import { formatCurrency } from '@jinuchem/shared';
 import { StructureImage } from '@/components/products/StructureImage';
+import { useCartStore } from '@/stores/cartStore';
 import type { VariantSummary } from '@jinuchem/shared';
 
 // GHS 픽토그램 매핑 (SVG 아이콘 대체)
@@ -30,6 +31,30 @@ export default function ReagentDetailPage() {
   );
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const addToCart = useCartStore((s) => s.addItem);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const handleAddToCart = () => {
+    if (!reagent || !selectedVariant) return;
+    addToCart({
+      productId: reagent.id,
+      productName: reagent.name,
+      catalogNo: reagent.catalogNo || '',
+      supplierName: reagent.supplierName,
+      variantId: selectedVariant.id,
+      size: selectedVariant.size,
+      unit: selectedVariant.unit,
+      unitPrice: selectedVariant.salePrice ?? selectedVariant.listPrice,
+      quantity,
+      formula: reagent.formula,
+    });
+    showToast(`${reagent.name} ${selectedVariant.size}${selectedVariant.unit} ${quantity}개가 장바구니에 추가되었습니다.`);
+  };
 
   if (!reagent) {
     return (
@@ -271,7 +296,10 @@ export default function ReagentDetailPage() {
             )}
 
             <div className="flex gap-3">
-              <button className="flex-1 h-[42px] bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+              <button
+                onClick={handleAddToCart}
+                className="flex-1 h-[42px] bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
                 <ShoppingCart size={16} />
                 장바구니 담기
               </button>
@@ -286,6 +314,13 @@ export default function ReagentDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl text-sm z-50 animate-fade-in">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

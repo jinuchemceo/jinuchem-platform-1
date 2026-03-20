@@ -20,6 +20,7 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
+  Bell,
 } from 'lucide-react';
 
 interface NavItem {
@@ -61,6 +62,7 @@ const labItems: NavItem[] = [
     ],
   },
   { label: '대화', href: '/chat', icon: <MessageCircle size={18} /> },
+  { label: '알림', href: '/notifications', icon: <Bell size={18} /> },
   {
     label: '고객센터',
     icon: <Headphones size={18} />,
