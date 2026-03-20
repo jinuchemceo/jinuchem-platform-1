@@ -341,7 +341,7 @@ export default function MyPage() {
                 <label className="block text-xs text-[var(--text-secondary)] mb-1">배송 메모</label>
                 <input type="text" value={newMemo} onChange={(e) => setNewMemo(e.target.value)} placeholder="예: 수위실에 맡겨주세요, 부재 시 연락 바랍니다" className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-white text-sm text-[var(--text)]" />
               </div>
-              <div className="flex gap-2 pt-1">
+              <div className="flex gap-2 pt-1 justify-end">
                 <button onClick={() => { setShowAddAddress(false); setEditingAddressId(null); resetAddressForm(); }} className="h-[38px] px-4 border border-[var(--border)] text-sm text-[var(--text-secondary)] rounded-lg hover:border-blue-400">취소</button>
                 <button onClick={handleAddAddress} className="h-[38px] px-4 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">{editingAddressId ? '수정 완료' : '추가'}</button>
               </div>
