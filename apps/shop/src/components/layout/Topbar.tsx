@@ -2,20 +2,16 @@
 
 import Link from 'next/link';
 import { ShoppingCart, Bell, Sun, Moon, Search } from 'lucide-react';
-import { useState } from 'react';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useCartStore } from '@/stores/cartStore';
+import { useThemeStore } from '@/stores/themeStore';
 import { NotificationPanel } from '@/components/notifications/NotificationPanel';
 
 export function Topbar() {
-  const [isDark, setIsDark] = useState(false);
+  const { theme, toggleTheme } = useThemeStore();
+  const isDark = theme === 'dark';
   const cartCount = useCartStore((s) => s.getItemCount());
   const { unreadCount, togglePanel } = useNotificationStore();
-
-  const toggleTheme = () => {
-    setIsDark(!isDark);
-    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-  };
 
   return (
     <header className="sticky top-0 z-30 h-14 bg-[var(--bg-card)] border-b border-[var(--border)] flex items-center justify-between px-6">

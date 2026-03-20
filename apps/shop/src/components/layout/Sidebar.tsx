@@ -74,6 +74,11 @@ const labItems: NavItem[] = [
   },
 ];
 
+/* CSS variable based classes for theme-aware styling */
+const activeChildCls = 'bg-[var(--primary-light)] text-[var(--primary)] font-semibold';
+const inactiveCls = 'text-[var(--sidebar-text)] hover:bg-gray-100';
+const activeParentCls = 'text-[var(--primary)] font-semibold';
+
 export function Sidebar() {
   const pathname = usePathname();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
@@ -97,9 +102,7 @@ export function Sidebar() {
           <button
             onClick={() => toggleGroup(item.label)}
             className={`flex items-center w-full gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors ${
-              isActive
-                ? 'text-blue-600 font-semibold'
-                : 'text-[var(--sidebar-text)] hover:bg-gray-100'
+              isActive ? activeParentCls : inactiveCls
             }`}
           >
             {item.icon}
@@ -113,9 +116,7 @@ export function Sidebar() {
                   key={child.href}
                   href={child.href}
                   className={`block px-3 py-2 text-sm rounded-lg transition-colors ${
-                    pathname === child.href
-                      ? 'bg-blue-50 text-blue-600 font-semibold'
-                      : 'text-[var(--sidebar-text)] hover:bg-gray-100'
+                    pathname === child.href ? activeChildCls : inactiveCls
                   }`}
                 >
                   {child.label}
@@ -132,9 +133,7 @@ export function Sidebar() {
         key={item.href}
         href={item.href!}
         className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors ${
-          pathname === item.href
-            ? 'bg-blue-50 text-blue-600 font-semibold'
-            : 'text-[var(--sidebar-text)] hover:bg-gray-100'
+          pathname === item.href ? activeChildCls : inactiveCls
         }`}
       >
         {item.icon}
@@ -173,15 +172,13 @@ export function Sidebar() {
         <Link
           href="/mypage"
           className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors ${
-            pathname === '/mypage'
-              ? 'bg-blue-50 text-blue-600 font-semibold'
-              : 'text-[var(--sidebar-text)] hover:bg-gray-100'
+            pathname === '/mypage' ? activeChildCls : inactiveCls
           }`}
         >
           <User size={18} />
           <span>마이페이지</span>
         </Link>
-        <button className="flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg text-[var(--sidebar-text)] hover:bg-gray-100 w-full">
+        <button className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg w-full ${inactiveCls}`}>
           <LogOut size={18} />
           <span>로그아웃</span>
         </button>
