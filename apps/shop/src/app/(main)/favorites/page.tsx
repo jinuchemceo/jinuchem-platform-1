@@ -2,13 +2,13 @@
 
 import { useState, useMemo } from 'react';
 import { Heart, ShoppingCart, Trash2, FlaskConical, Search, Grid3X3, List } from 'lucide-react';
-import { sampleReagents } from '@/lib/mock-data';
 import { formatCurrency } from '@jinuchem/shared';
 import { useCartStore } from '@/stores/cartStore';
+import { useFavoriteStore } from '@/stores/favoriteStore';
 import Link from 'next/link';
 
 export default function FavoritesPage() {
-  const [favorites, setFavorites] = useState(sampleReagents.slice(0, 5));
+  const { favorites, removeFavorite } = useFavoriteStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -23,36 +23,32 @@ export default function FavoritesPage() {
     if (!searchQuery) return favorites;
     const q = searchQuery.toLowerCase();
     return favorites.filter(
-      (r) =>
-        r.name.toLowerCase().includes(q) ||
-        r.casNumber?.toLowerCase().includes(q) ||
-        r.formula?.toLowerCase().includes(q) ||
-        r.catalogNo?.toLowerCase().includes(q)
+      (f) =>
+        f.productName.toLowerCase().includes(q) ||
+        f.casNumber?.toLowerCase().includes(q) ||
+        f.catalogNo?.toLowerCase().includes(q)
     );
   }, [favorites, searchQuery]);
 
   const removeFromFavorites = (id: string) => {
-    const item = favorites.find((r) => r.id === id);
-    setFavorites((prev) => prev.filter((r) => r.id !== id));
-    showToast(`${item?.name || '제품'} 즐겨찾기에서 삭제되었습니다`);
+    const item = favorites.find((f) => f.productId === id);
+    removeFavorite(id);
+    showToast(`${item?.productName || '제품'} 즐겨찾기에서 삭제되었습니다`);
   };
 
-  const handleAddToCart = (reagent: typeof sampleReagents[0]) => {
-    const firstVariant = reagent.variants[0];
-    if (!firstVariant) return;
+  const handleAddToCart = (fav: typeof favorites[0]) => {
     addToCart({
-      productId: reagent.id,
-      productName: reagent.name,
-      catalogNo: reagent.catalogNo || '',
-      supplierName: reagent.supplierName,
-      variantId: firstVariant.id,
-      size: firstVariant.size,
-      unit: firstVariant.unit,
-      unitPrice: firstVariant.salePrice ?? firstVariant.listPrice,
+      productId: fav.productId,
+      productName: fav.productName,
+      catalogNo: fav.catalogNo || '',
+      supplierName: fav.supplierName,
+      variantId: fav.productId,
+      size: '',
+      unit: '',
+      unitPrice: fav.price,
       quantity: 1,
-      formula: reagent.formula,
     });
-    showToast(`${reagent.name} 장바구니에 추가`);
+    showToast(`${fav.productName} 장바구니에 추가`);
   };
 
   return (
@@ -123,68 +119,48 @@ export default function FavoritesPage() {
       ) : viewMode === 'grid' ? (
         /* Grid View */
         <div className="grid grid-cols-4 gap-4">
-          {filteredFavorites.map((reagent) => {
-            const firstVariant = reagent.variants[0];
-            const price = firstVariant?.salePrice ?? firstVariant?.listPrice ?? 0;
+          {filteredFavorites.map((fav) => (
+            <div key={fav.productId} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden hover:shadow-md transition-shadow group">
+              <div className="px-4 pt-3 pb-1 flex items-center justify-between">
+                <span className="text-xs text-blue-600 font-medium">{fav.supplierName}</span>
+                <button
+                  onClick={() => removeFromFavorites(fav.productId)}
+                  className="text-red-400 hover:text-red-600 transition-colors"
+                  title="즐겨찾기 해제"
+                >
+                  <Heart size={16} fill="currentColor" />
+                </button>
+              </div>
 
-            return (
-              <div key={reagent.id} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden hover:shadow-md transition-shadow group">
-                {/* Supplier Badge + Remove */}
-                <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-                  <span className="text-xs text-blue-600 font-medium">{reagent.supplierName}</span>
+              <div className="px-4 pb-4 pt-2">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-[var(--text-secondary)]">
+                  {fav.productType === 'reagent' ? '시약' : '소모품'}
+                </span>
+                <h3 className="text-sm font-semibold text-[var(--text)] mt-2 mb-1 line-clamp-2 min-h-[40px] group-hover:text-blue-600">
+                  {fav.productName}
+                </h3>
+                {fav.catalogNo && <p className="text-xs text-[var(--text-secondary)] mb-1">{fav.catalogNo}</p>}
+                {fav.casNumber && <p className="text-xs text-[var(--text-secondary)] mb-1">CAS: {fav.casNumber}</p>}
+
+                <div className="text-sm font-bold text-[var(--text)] mb-3 mt-2">{formatCurrency(fav.price)}</div>
+
+                <div className="flex gap-2">
                   <button
-                    onClick={() => removeFromFavorites(reagent.id)}
-                    className="text-red-400 hover:text-red-600 transition-colors"
-                    title="즐겨찾기 해제"
+                    onClick={() => handleAddToCart(fav)}
+                    className="flex-1 h-[34px] bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
                   >
-                    <Heart size={16} fill="currentColor" />
+                    <ShoppingCart size={12} /> 장바구니
+                  </button>
+                  <button
+                    onClick={() => removeFromFavorites(fav.productId)}
+                    className="w-[34px] h-[34px] border border-[var(--border)] rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-red-500 hover:border-red-300"
+                  >
+                    <Trash2 size={14} />
                   </button>
                 </div>
-
-                {/* Structure Image */}
-                <Link href={`/order/${reagent.id}`}>
-                  <div className="h-[140px] flex items-center justify-center bg-gray-50 mx-3 rounded-lg mb-2 cursor-pointer">
-                    <span className="text-3xl font-mono text-gray-300">{reagent.formula || '?'}</span>
-                  </div>
-                </Link>
-
-                {/* Info */}
-                <div className="px-4 pb-4">
-                  <Link href={`/order/${reagent.id}`}>
-                    <h3 className="text-sm font-semibold text-[var(--text)] mb-1 line-clamp-1 group-hover:text-blue-600 cursor-pointer">
-                      {reagent.name}
-                    </h3>
-                  </Link>
-                  <p className="text-xs text-[var(--text-secondary)] mb-1">CAS: {reagent.casNumber}</p>
-                  <p className="text-xs text-[var(--text-secondary)] mb-2">{reagent.formula} / MW: {reagent.molWeight}</p>
-
-                  <div className="flex items-baseline gap-2 mb-3">
-                    {firstVariant?.salePrice && (
-                      <span className="text-xs text-[var(--text-secondary)] line-through">
-                        {formatCurrency(firstVariant.listPrice)}
-                      </span>
-                    )}
-                    <span className="text-sm font-bold text-[var(--text)]">{formatCurrency(price)}</span>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleAddToCart(reagent)}
-                      className="flex-1 h-[34px] bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <ShoppingCart size={12} /> 장바구니
-                    </button>
-                    <button
-                      onClick={() => removeFromFavorites(reagent.id)}
-                      className="w-[34px] h-[34px] border border-[var(--border)] rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-red-500 hover:border-red-300"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       ) : (
         /* List View */
@@ -194,66 +170,47 @@ export default function FavoritesPage() {
               <tr className="bg-gray-50 border-b border-[var(--border)]">
                 <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">공급사</th>
                 <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">제품명</th>
-                <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">CAS No.</th>
-                <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">분자식</th>
+                <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">유형</th>
+                <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">CAS / 카탈로그</th>
                 <th className="text-right px-4 py-3 font-medium text-[var(--text-secondary)]">가격</th>
                 <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">작업</th>
               </tr>
             </thead>
             <tbody>
-              {filteredFavorites.map((reagent) => {
-                const firstVariant = reagent.variants[0];
-                const price = firstVariant?.salePrice ?? firstVariant?.listPrice ?? 0;
-
-                return (
-                  <tr key={reagent.id} className="border-b border-[var(--border)] last:border-0 hover:bg-gray-50 group">
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-blue-600 font-medium">{reagent.supplierName}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link href={`/order/${reagent.id}`} className="group-hover:text-blue-600 font-medium text-[var(--text)]">
-                        {reagent.name}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-[var(--text-secondary)] font-mono text-xs">{reagent.casNumber}</td>
-                    <td className="px-4 py-3 text-[var(--text-secondary)]">{reagent.formula}</td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-baseline justify-end gap-2">
-                        {firstVariant?.salePrice && (
-                          <span className="text-xs text-[var(--text-secondary)] line-through">
-                            {formatCurrency(firstVariant.listPrice)}
-                          </span>
-                        )}
-                        <span className="font-bold text-[var(--text)]">{formatCurrency(price)}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => handleAddToCart(reagent)}
-                          className="h-[34px] px-3 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
-                        >
-                          <ShoppingCart size={12} /> 장바구니
-                        </button>
-                        <button
-                          onClick={() => removeFromFavorites(reagent.id)}
-                          className="w-[34px] h-[34px] border border-[var(--border)] rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-red-500 hover:border-red-300"
-                          title="즐겨찾기 해제"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                        <button
-                          onClick={() => removeFromFavorites(reagent.id)}
-                          className="text-red-400 hover:text-red-600 transition-colors"
-                          title="즐겨찾기 해제"
-                        >
-                          <Heart size={16} fill="currentColor" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {filteredFavorites.map((fav) => (
+                <tr key={fav.productId} className="border-b border-[var(--border)] last:border-0 hover:bg-gray-50 group">
+                  <td className="px-4 py-3">
+                    <span className="text-xs text-blue-600 font-medium">{fav.supplierName}</span>
+                  </td>
+                  <td className="px-4 py-3 font-medium text-[var(--text)] group-hover:text-blue-600">
+                    {fav.productName}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${fav.productType === 'reagent' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                      {fav.productType === 'reagent' ? '시약' : '소모품'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-[var(--text-secondary)] text-xs font-mono">{fav.casNumber || fav.catalogNo || '-'}</td>
+                  <td className="px-4 py-3 text-right font-bold text-[var(--text)]">{formatCurrency(fav.price)}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => handleAddToCart(fav)}
+                        className="h-[34px] px-3 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+                      >
+                        <ShoppingCart size={12} /> 담기
+                      </button>
+                      <button
+                        onClick={() => removeFromFavorites(fav.productId)}
+                        className="text-red-400 hover:text-red-600 transition-colors"
+                        title="즐겨찾기 해제"
+                      >
+                        <Heart size={16} fill="currentColor" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

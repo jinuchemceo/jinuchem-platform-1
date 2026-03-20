@@ -5,6 +5,7 @@ import { Search, Grid3X3, List, Truck, ChevronDown, ChevronRight, RefreshCw, Pac
 import { sampleSupplies } from '@/lib/mock-data';
 import { formatCurrency, SUPPLY_CATEGORIES } from '@jinuchem/shared';
 import { useCartStore } from '@/stores/cartStore';
+import { useFavoriteStore } from '@/stores/favoriteStore';
 import type { SupplyCardData } from '@jinuchem/shared';
 
 type ViewMode = 'grid' | 'list';
@@ -236,8 +237,9 @@ function SupplyGridCard({ supply, showToast }: { supply: SupplyCardData; showToa
   const [quantity, setQuantity] = useState(1);
   const [subPeriod, setSubPeriod] = useState('1m');
   const [useSubscription, setUseSubscription] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
   const addToCart = useCartStore((s) => s.addItem);
+  const { isFavorite: checkFav, toggleFavorite } = useFavoriteStore();
+  const isFavorite = checkFav(supply.id);
   const firstVariant = supply.variants[0];
   const price = firstVariant?.listPrice ?? 0;
 
@@ -272,7 +274,11 @@ function SupplyGridCard({ supply, showToast }: { supply: SupplyCardData; showToa
           {supply.name}
         </h3>
         <button
-          onClick={(e) => { e.stopPropagation(); setIsFavorite(!isFavorite); showToast(isFavorite ? '즐겨찾기에서 제거' : '즐겨찾기에 추가'); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            const added = toggleFavorite({ productId: supply.id, productName: supply.name, productType: 'supply', supplierName: supply.supplierName, catalogNo: supply.catalogNo, price: firstVariant?.listPrice ?? 0 });
+            showToast(added ? `${supply.name} 즐겨찾기에 추가` : `${supply.name} 즐겨찾기에서 제거`);
+          }}
           className={`shrink-0 ml-2 transition-colors ${isFavorite ? 'text-red-500' : 'text-[var(--text-secondary)] hover:text-red-400'}`}
         >
           <Heart size={14} fill={isFavorite ? 'currentColor' : 'none'} />
@@ -353,8 +359,9 @@ function SupplyGridCard({ supply, showToast }: { supply: SupplyCardData; showToa
 function SupplyListCard({ supply, showToast }: { supply: SupplyCardData; showToast: (msg: string) => void }) {
   const [quantity, setQuantity] = useState(1);
   const [subPeriod, setSubPeriod] = useState('1m');
-  const [isFavorite, setIsFavorite] = useState(false);
   const addToCart = useCartStore((s) => s.addItem);
+  const { isFavorite: checkFav, toggleFavorite } = useFavoriteStore();
+  const isFavorite = checkFav(supply.id);
   const firstVariant = supply.variants[0];
   const price = firstVariant?.listPrice ?? 0;
 
@@ -401,7 +408,11 @@ function SupplyListCard({ supply, showToast }: { supply: SupplyCardData; showToa
           </div>
         )}
         <button
-          onClick={(e) => { e.stopPropagation(); setIsFavorite(!isFavorite); showToast(isFavorite ? '즐겨찾기에서 제거' : '즐겨찾기에 추가'); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            const added = toggleFavorite({ productId: supply.id, productName: supply.name, productType: 'supply', supplierName: supply.supplierName, catalogNo: supply.catalogNo, price: firstVariant?.listPrice ?? 0 });
+            showToast(added ? `${supply.name} 즐겨찾기에 추가` : `${supply.name} 즐겨찾기에서 제거`);
+          }}
           className={`transition-colors ${isFavorite ? 'text-red-500' : 'text-[var(--text-secondary)] hover:text-red-400'}`}
         >
           <Heart size={14} fill={isFavorite ? 'currentColor' : 'none'} />
