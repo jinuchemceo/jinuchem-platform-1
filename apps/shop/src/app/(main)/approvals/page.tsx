@@ -154,20 +154,22 @@ export default function ApprovalsPage() {
         showToast('사업자등록번호를 정확히 입력해주세요.');
         return;
       }
-    } else if (paymentMethod === 'bank_transfer') {
-      if (!selectedBank || !accountNo) {
-        showToast('은행 및 계좌번호를 입력해주세요.');
-        return;
-      }
     }
+
+    const count = selectedIds.size;
+    const methodLabel = paymentMethod === 'card' ? '카드결제' : paymentMethod === 'tax_invoice' ? '세금계산서' : '계좌이체';
 
     setApprovals((prev) =>
       prev.map((a) =>
-        selectedIds.has(a.id) ? { ...a, status: 'approved' as const, note: '결제 완료' } : a
+        selectedIds.has(a.id) ? { ...a, status: 'approved' as const, note: `${methodLabel} ${paymentMethod === 'bank_transfer' ? '(입금 확인 대기)' : '완료'}` } : a
       )
     );
     setSelectedIds(new Set());
-    showToast(`${selectedIds.size}건 결제가 완료되었습니다.`);
+    showToast(
+      paymentMethod === 'bank_transfer'
+        ? `${count}건 계좌이체 신청 완료. 입금 확인 후 처리됩니다.`
+        : `${count}건 결제가 완료되었습니다.`
+    );
   };
 
   const updateCardNumber = (index: number, value: string) => {
@@ -456,7 +458,7 @@ export default function ApprovalsPage() {
                 className="h-[42px] px-8 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
               >
                 <CreditCard size={16} />
-                결제하기
+                {paymentMethod === 'bank_transfer' ? '계좌이체 신청' : paymentMethod === 'tax_invoice' ? '세금계산서 발행' : '결제하기'}
               </button>
             </div>
           </div>
