@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Download, Eye, Calendar, ChevronDown, ClipboardList } from 'lucide-react';
+import { Search, Download, Eye, Calendar, ChevronDown, ClipboardList, Trash2 } from 'lucide-react';
 import { formatCurrency, ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from '@jinuchem/shared';
 
 interface OrderData {
@@ -37,6 +37,7 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
 
   const filtered = sampleOrders.filter((o) => {
     if (statusFilter !== 'all' && o.status !== statusFilter) return false;
@@ -44,13 +45,48 @@ export default function OrdersPage() {
     return true;
   });
 
+  const allSelected = filtered.length > 0 && filtered.every((o) => selectedOrders.has(o.id));
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedOrders(new Set());
+    } else {
+      setSelectedOrders(new Set(filtered.map((o) => o.id)));
+    }
+  };
+
+  const toggleSelectOrder = (id: string) => {
+    setSelectedOrders((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-[var(--text)]">주문 내역</h1>
-        <button className="h-[38px] px-4 border border-[var(--border)] text-sm text-[var(--text-secondary)] rounded-lg hover:border-blue-400 flex items-center gap-1.5">
-          <Download size={14} /> XLS 내보내기
-        </button>
+        <div className="flex items-center gap-2">
+          {selectedOrders.size > 0 && (
+            <button
+              disabled
+              className="h-[38px] px-4 border border-red-300 text-sm text-red-400 rounded-lg flex items-center gap-1.5 cursor-not-allowed opacity-60"
+            >
+              <Trash2 size={14} /> 선택 삭제
+            </button>
+          )}
+          <button className="h-[38px] px-4 border border-[var(--border)] text-sm text-[var(--text-secondary)] rounded-lg hover:border-blue-400 flex items-center gap-1.5">
+            <Download size={14} />
+            {selectedOrders.size > 0
+              ? `선택 내보내기 (${selectedOrders.size}건)`
+              : '전체 내보내기'}
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -69,6 +105,9 @@ export default function OrdersPage() {
         <input type="date" defaultValue="2026-01-01" className="h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]" />
         <span className="text-[var(--text-secondary)]">~</span>
         <input type="date" defaultValue="2026-03-20" className="h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]" />
+        <button className="h-[38px] px-5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 flex items-center gap-1.5">
+          <Search size={14} /> 조회
+        </button>
 
         <select
           value={statusFilter}
@@ -98,6 +137,14 @@ export default function OrdersPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-[var(--border)]">
+              <th className="w-10 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+              </th>
               <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">주문번호</th>
               <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">제품</th>
               <th className="text-right px-4 py-3 font-medium text-[var(--text-secondary)]">금액</th>
@@ -110,6 +157,14 @@ export default function OrdersPage() {
           <tbody>
             {filtered.map((order) => (
               <tr key={order.id} className="border-b border-[var(--border)] last:border-0 hover:bg-gray-50">
+                <td className="w-10 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedOrders.has(order.id)}
+                    onChange={() => toggleSelectOrder(order.id)}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                </td>
                 <td className="px-4 py-3 font-mono text-xs text-[var(--text)]">{order.orderNumber}</td>
                 <td className="px-4 py-3">
                   <span className="text-[var(--text)]">{order.products}</span>

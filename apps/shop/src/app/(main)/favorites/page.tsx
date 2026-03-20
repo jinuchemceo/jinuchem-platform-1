@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Heart, ShoppingCart, Trash2, FlaskConical, Search } from 'lucide-react';
+import { Heart, ShoppingCart, Trash2, FlaskConical, Search, Grid3X3, List } from 'lucide-react';
 import { sampleReagents } from '@/lib/mock-data';
 import { formatCurrency } from '@jinuchem/shared';
 import { useCartStore } from '@/stores/cartStore';
@@ -11,6 +11,7 @@ export default function FavoritesPage() {
   const [favorites, setFavorites] = useState(sampleReagents.slice(0, 5));
   const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const addToCart = useCartStore((s) => s.addItem);
 
   const showToast = (msg: string) => {
@@ -63,17 +64,39 @@ export default function FavoritesPage() {
         </span>
       </div>
 
-      {/* Search Bar */}
+      {/* Search Bar + View Toggle */}
       {favorites.length > 0 && (
-        <div className="relative max-w-md mb-6">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="제품명, CAS번호로 검색..."
-            className="w-full pl-10 pr-4 h-[38px] border border-[var(--border)] rounded-lg bg-[var(--bg-card)] text-sm text-[var(--text)] focus:outline-none focus:border-[var(--primary)]"
-          />
+        <div className="flex items-center gap-3 mb-6">
+          <div className="relative max-w-md flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="제품명, CAS번호로 검색..."
+              className="w-full pl-10 pr-4 h-[38px] border border-[var(--border)] rounded-lg bg-[var(--bg-card)] text-sm text-[var(--text)] focus:outline-none focus:border-[var(--primary)]"
+            />
+          </div>
+          <div className="flex border border-[var(--border)] rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`h-[38px] w-[38px] flex items-center justify-center transition-colors ${
+                viewMode === 'grid' ? 'bg-slate-800 text-white' : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text)]'
+              }`}
+              title="그리드 보기"
+            >
+              <Grid3X3 size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`h-[38px] w-[38px] flex items-center justify-center transition-colors border-l border-[var(--border)] ${
+                viewMode === 'list' ? 'bg-slate-800 text-white' : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text)]'
+              }`}
+              title="리스트 보기"
+            >
+              <List size={16} />
+            </button>
+          </div>
         </div>
       )}
 
@@ -95,7 +118,8 @@ export default function FavoritesPage() {
           <p className="text-lg font-medium mb-1">검색 결과가 없습니다</p>
           <p className="text-sm">다른 검색어를 시도해주세요</p>
         </div>
-      ) : (
+      ) : viewMode === 'grid' ? (
+        /* Grid View */
         <div className="grid grid-cols-4 gap-4">
           {filteredFavorites.map((reagent) => {
             const firstVariant = reagent.variants[0];
@@ -159,6 +183,77 @@ export default function FavoritesPage() {
               </div>
             );
           })}
+        </div>
+      ) : (
+        /* List View */
+        <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 border-b border-[var(--border)]">
+                <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">공급사</th>
+                <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">제품명</th>
+                <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">CAS No.</th>
+                <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">분자식</th>
+                <th className="text-right px-4 py-3 font-medium text-[var(--text-secondary)]">가격</th>
+                <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">작업</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredFavorites.map((reagent) => {
+                const firstVariant = reagent.variants[0];
+                const price = firstVariant?.salePrice ?? firstVariant?.listPrice ?? 0;
+
+                return (
+                  <tr key={reagent.id} className="border-b border-[var(--border)] last:border-0 hover:bg-gray-50 group">
+                    <td className="px-4 py-3">
+                      <span className="text-xs text-blue-600 font-medium">{reagent.supplierName}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link href={`/order/${reagent.id}`} className="group-hover:text-blue-600 font-medium text-[var(--text)]">
+                        {reagent.name}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-[var(--text-secondary)] font-mono text-xs">{reagent.casNumber}</td>
+                    <td className="px-4 py-3 text-[var(--text-secondary)]">{reagent.formula}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-baseline justify-end gap-2">
+                        {firstVariant?.salePrice && (
+                          <span className="text-xs text-[var(--text-secondary)] line-through">
+                            {formatCurrency(firstVariant.listPrice)}
+                          </span>
+                        )}
+                        <span className="font-bold text-[var(--text)]">{formatCurrency(price)}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handleAddToCart(reagent)}
+                          className="h-[34px] px-3 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+                        >
+                          <ShoppingCart size={12} /> 장바구니
+                        </button>
+                        <button
+                          onClick={() => removeFromFavorites(reagent.id)}
+                          className="w-[34px] h-[34px] border border-[var(--border)] rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-red-500 hover:border-red-300"
+                          title="즐겨찾기 해제"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        <button
+                          onClick={() => removeFromFavorites(reagent.id)}
+                          className="text-red-400 hover:text-red-600 transition-colors"
+                          title="즐겨찾기 해제"
+                        >
+                          <Heart size={16} fill="currentColor" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
