@@ -4,10 +4,10 @@
 
 /**
  * 통화 포맷 (원화)
- * @example formatCurrency(158239) => "\\158,239"
+ * @example formatCurrency(158239) => "158,239원"
  */
 export function formatCurrency(amount: number): string {
-  return `\\${amount.toLocaleString('ko-KR')}`;
+  return `${amount.toLocaleString('ko-KR')}원`;
 }
 
 /**
