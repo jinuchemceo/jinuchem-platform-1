@@ -153,8 +153,8 @@ export default function InventoryPage() {
                   {(() => {
                     const matched = sampleReagents.find((r) => r.casNumber === item.casNumber);
                     return matched ? (
-                      <Link href={`/order/${matched.id}`} className="text-blue-600 hover:underline flex items-center gap-1">
-                        {item.name} <ExternalLink size={10} />
+                      <Link href={`/order/${matched.id}`} className="text-[var(--text)] hover:underline cursor-pointer">
+                        {item.name}
                       </Link>
                     ) : (
                       <span className="text-[var(--text)]">{item.name}</span>
@@ -165,7 +165,7 @@ export default function InventoryPage() {
                   {(() => {
                     const matched = sampleReagents.find((r) => r.casNumber === item.casNumber);
                     return matched ? (
-                      <Link href={`/order/${matched.id}`} className="text-blue-600 hover:underline">
+                      <Link href={`/order/${matched.id}`} className="text-[var(--text-secondary)] hover:underline cursor-pointer">
                         {item.casNumber}
                       </Link>
                     ) : (
