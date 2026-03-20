@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, X, Plus, PackageX } from 'lucide-react';
+import { Search, X, Plus, PackageX, Info, CheckCircle, XCircle } from 'lucide-react';
 import { formatCurrency } from '@jinuchem/shared';
 
 interface CancelItem {
@@ -81,6 +81,70 @@ export default function CancelPage() {
         >
           <Plus size={14} /> 취소 신청
         </button>
+      </div>
+
+      {/* 취소 기준 안내 */}
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-5 mb-6">
+        <h3 className="text-sm font-semibold text-[var(--text)] mb-3 flex items-center gap-2">
+          <Info size={16} className="text-blue-500" />
+          취소 기준 안내
+        </h3>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <h4 className="font-medium text-[var(--text)] mb-2">취소 가능 조건</h4>
+            <ul className="space-y-1.5 text-[var(--text-secondary)]">
+              <li className="flex items-start gap-2">
+                <CheckCircle size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                <span><strong>결제 대기</strong> 상태: 즉시 취소 가능</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                <span><strong>결제 완료</strong> 상태: 출고 전까지 취소 가능</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                <span><strong>배송 준비</strong> 상태: 오후 4시 이전 취소 요청 시 당일 처리</span>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-medium text-[var(--text)] mb-2">취소 불가 조건</h4>
+            <ul className="space-y-1.5 text-[var(--text-secondary)]">
+              <li className="flex items-start gap-2">
+                <XCircle size={14} className="text-red-500 mt-0.5 shrink-0" />
+                <span><strong>배송 중 / 배송 완료</strong> 상태의 주문</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <XCircle size={14} className="text-red-500 mt-0.5 shrink-0" />
+                <span><strong>해외 발주</strong> 제품 (주문 접수 후 취소 불가)</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <XCircle size={14} className="text-red-500 mt-0.5 shrink-0" />
+                <span><strong>특수 시약</strong> (맞춤 제조, 냉장/냉동 보관 필수 제품)</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-4 pt-3 border-t border-[var(--border)]">
+          <h4 className="font-medium text-[var(--text)] text-sm mb-2">환불 안내</h4>
+          <div className="grid grid-cols-3 gap-3 text-xs text-[var(--text-secondary)]">
+            <div className="bg-[var(--bg)] rounded-lg p-3">
+              <p className="font-medium text-[var(--text)] mb-1">카드 결제</p>
+              <p>취소 승인 후 3~5 영업일 이내 환불</p>
+            </div>
+            <div className="bg-[var(--bg)] rounded-lg p-3">
+              <p className="font-medium text-[var(--text)] mb-1">계좌이체</p>
+              <p>취소 승인 후 1~2 영업일 이내 환불</p>
+            </div>
+            <div className="bg-[var(--bg)] rounded-lg p-3">
+              <p className="font-medium text-[var(--text)] mb-1">세금계산서</p>
+              <p>수정 세금계산서 발행 후 환불 처리</p>
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-[var(--text-secondary)] mt-3">
+          문의사항은 고객센터(070-8027-2696) 또는 1:1 문의를 이용해주세요. 영업시간: 평일 09:00~18:00
+        </p>
       </div>
 
       {/* Filters */}
