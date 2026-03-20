@@ -1,8 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Download, Eye, Calendar, ChevronDown, ClipboardList, Trash2, Truck, Package, MapPin, CheckCircle, Clock } from 'lucide-react';
+import { Search, Download, Eye, Calendar, ChevronDown, ClipboardList, Trash2, Truck, Package, MapPin, CheckCircle, Clock, FileSpreadsheet } from 'lucide-react';
 import { formatCurrency, ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from '@jinuchem/shared';
+
+function exportToExcel(orders: OrderData[], filename: string) {
+  const header = '주문번호\t제품\t수량\t금액\t상태\t주문일\t배송예정일\t택배사\t운송장번호\n';
+  const rows = orders.map((o) =>
+    `${o.orderNumber}\t${o.products}\t${o.itemCount}\t${o.totalAmount}\t${ORDER_STATUS_LABEL[o.status] || o.status}\t${o.orderedAt}\t${o.deliveryDate || '-'}\t${o.carrierName || '-'}\t${o.trackingNumber || '-'}`
+  ).join('\n');
+
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + header + rows], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}.xls`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 interface OrderData {
   id: string;
@@ -111,11 +127,22 @@ export default function OrdersPage() {
               <Trash2 size={14} /> 선택 삭제
             </button>
           )}
-          <button className="h-[38px] px-4 border border-[var(--border)] text-sm text-[var(--text-secondary)] rounded-lg hover:border-blue-400 flex items-center gap-1.5">
-            <Download size={14} />
-            {selectedOrders.size > 0
-              ? `선택 내보내기 (${selectedOrders.size}건)`
-              : '전체 내보내기'}
+          {selectedOrders.size > 0 && (
+            <button
+              onClick={() => {
+                const selected = filtered.filter((o) => selectedOrders.has(o.id));
+                exportToExcel(selected, `주문내역_선택_${selectedOrders.size}건`);
+              }}
+              className="h-[38px] px-4 border border-blue-400 text-sm text-blue-600 rounded-lg hover:bg-blue-50 flex items-center gap-1.5"
+            >
+              <FileSpreadsheet size={14} /> 선택 내보내기 ({selectedOrders.size}건)
+            </button>
+          )}
+          <button
+            onClick={() => exportToExcel(filtered, `주문내역_전체_${filtered.length}건`)}
+            className="h-[38px] px-4 border border-[var(--border)] text-sm text-[var(--text-secondary)] rounded-lg hover:border-blue-400 flex items-center gap-1.5"
+          >
+            <Download size={14} /> 전체 내보내기
           </button>
         </div>
       </div>
