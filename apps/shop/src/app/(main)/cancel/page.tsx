@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, RotateCcw, X, Plus, PackageX } from 'lucide-react';
+import { Search, X, Plus, PackageX } from 'lucide-react';
 import { formatCurrency } from '@jinuchem/shared';
 
 interface CancelItem {
@@ -9,7 +9,6 @@ interface CancelItem {
   receiptNumber: string;
   orderNumber: string;
   products: string;
-  type: 'cancel' | 'return';
   reason: string;
   refundAmount: number;
   status: 'received' | 'processing' | 'completed';
@@ -22,7 +21,6 @@ const sampleCancelItems: CancelItem[] = [
     receiptNumber: 'CAN-20260318-001',
     orderNumber: 'ORD-20260315-003',
     products: 'Acetone, ACS Grade 2.5L',
-    type: 'cancel',
     reason: '단순 변심',
     refundAmount: 96580,
     status: 'completed',
@@ -30,11 +28,10 @@ const sampleCancelItems: CancelItem[] = [
   },
   {
     id: '2',
-    receiptNumber: 'RET-20260317-001',
+    receiptNumber: 'CAN-20260317-001',
     orderNumber: 'ORD-20260310-001',
     products: 'Methanol, HPLC Grade 4L',
-    type: 'return',
-    reason: '제품 파손',
+    reason: '주문 실수',
     refundAmount: 88650,
     status: 'processing',
     requestedAt: '2026-03-17',
@@ -44,30 +41,24 @@ const sampleCancelItems: CancelItem[] = [
     receiptNumber: 'CAN-20260316-002',
     orderNumber: 'ORD-20260312-002',
     products: 'PIPES, 고순도 5G',
-    type: 'cancel',
-    reason: '주문 실수',
+    reason: '수량 오류',
     refundAmount: 248820,
     status: 'received',
     requestedAt: '2026-03-16',
   },
 ];
 
-const typeLabels: Record<string, string> = { cancel: '취소', return: '반품' };
-const typeColors: Record<string, string> = { cancel: 'bg-red-100 text-red-700', return: 'bg-orange-100 text-orange-700' };
 const statusLabels: Record<string, string> = { received: '접수', processing: '처리중', completed: '완료' };
 const statusColors: Record<string, string> = { received: 'bg-blue-100 text-blue-700', processing: 'bg-amber-100 text-amber-700', completed: 'bg-emerald-100 text-emerald-700' };
 
 export default function CancelPage() {
-  const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [formType, setFormType] = useState<'cancel' | 'return'>('cancel');
   const [formOrderNo, setFormOrderNo] = useState('');
   const [formReason, setFormReason] = useState('');
 
   const filtered = sampleCancelItems.filter((item) => {
-    if (typeFilter !== 'all' && item.type !== typeFilter) return false;
     if (statusFilter !== 'all' && item.status !== statusFilter) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -83,33 +74,21 @@ export default function CancelPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-[var(--text)]">취소/반품 내역</h1>
+        <h1 className="text-2xl font-bold text-[var(--text)]">취소 내역</h1>
         <button
           onClick={() => setShowModal(true)}
           className="h-[38px] px-4 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 flex items-center gap-1.5"
         >
-          <Plus size={14} /> 취소/반품 신청
+          <Plus size={14} /> 취소 신청
         </button>
       </div>
 
       {/* Filters */}
       <div className="flex items-center gap-3 mb-6">
-        {[{ key: 'all', label: '전체' }, { key: 'cancel', label: '취소' }, { key: 'return', label: '반품' }].map((opt) => (
-          <button
-            key={opt.key}
-            onClick={() => setTypeFilter(opt.key)}
-            className={`h-[38px] px-4 text-sm rounded-lg border transition-colors ${
-              typeFilter === opt.key ? 'bg-blue-600 text-white border-blue-600' : 'border-[var(--border)] text-[var(--text)] hover:border-blue-400'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg-card)] text-sm text-[var(--text)] ml-auto"
+          className="h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg-card)] text-sm text-[var(--text)]"
         >
           <option value="all">전체 상태</option>
           <option value="received">접수</option>
@@ -117,7 +96,7 @@ export default function CancelPage() {
           <option value="completed">완료</option>
         </select>
 
-        <div className="relative">
+        <div className="relative ml-auto">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
           <input
             type="text"
@@ -137,7 +116,6 @@ export default function CancelPage() {
               <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">접수번호</th>
               <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">주문번호</th>
               <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">제품</th>
-              <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">유형</th>
               <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">사유</th>
               <th className="text-right px-4 py-3 font-medium text-[var(--text-secondary)]">환불금액</th>
               <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">상태</th>
@@ -150,11 +128,6 @@ export default function CancelPage() {
                 <td className="px-4 py-3 font-mono text-xs text-[var(--text)]">{item.receiptNumber}</td>
                 <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">{item.orderNumber}</td>
                 <td className="px-4 py-3 text-[var(--text)]">{item.products}</td>
-                <td className="px-4 py-3 text-center">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${typeColors[item.type]}`}>
-                    {typeLabels[item.type]}
-                  </span>
-                </td>
                 <td className="px-4 py-3 text-[var(--text-secondary)]">{item.reason}</td>
                 <td className="px-4 py-3 text-right font-medium text-[var(--text)]">{formatCurrency(item.refundAmount)}</td>
                 <td className="px-4 py-3 text-center">
@@ -171,43 +144,21 @@ export default function CancelPage() {
         {filtered.length === 0 && (
           <div className="text-center py-16 text-[var(--text-secondary)]">
             <PackageX size={40} className="mx-auto mb-3 opacity-30" />
-            <p>해당 조건의 취소/반품 내역이 없습니다</p>
+            <p>해당 조건의 취소 내역이 없습니다</p>
           </div>
         )}
       </div>
 
-      {/* Request Modal */}
+      {/* Cancel Request Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowModal(false)}>
           <div className="bg-[var(--bg-card)] rounded-2xl w-[520px] p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-[var(--text)]">취소/반품 신청</h2>
+              <h2 className="text-lg font-bold text-[var(--text)]">취소 신청</h2>
               <button onClick={() => setShowModal(false)} className="text-[var(--text-secondary)] hover:text-[var(--text)] text-xl">&times;</button>
             </div>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">유형</label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setFormType('cancel')}
-                    className={`h-[38px] px-4 text-sm rounded-lg border transition-colors ${
-                      formType === 'cancel' ? 'bg-blue-600 text-white border-blue-600' : 'border-[var(--border)] text-[var(--text)]'
-                    }`}
-                  >
-                    <X size={14} className="inline mr-1" /> 취소
-                  </button>
-                  <button
-                    onClick={() => setFormType('return')}
-                    className={`h-[38px] px-4 text-sm rounded-lg border transition-colors ${
-                      formType === 'return' ? 'bg-blue-600 text-white border-blue-600' : 'border-[var(--border)] text-[var(--text)]'
-                    }`}
-                  >
-                    <RotateCcw size={14} className="inline mr-1" /> 반품
-                  </button>
-                </div>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-[var(--text)] mb-1.5">관련 주문번호</label>
                 <select
@@ -223,7 +174,7 @@ export default function CancelPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">사유</label>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">취소 사유</label>
                 <select
                   value={formReason}
                   onChange={(e) => setFormReason(e.target.value)}
@@ -232,8 +183,8 @@ export default function CancelPage() {
                   <option value="">사유를 선택하세요</option>
                   <option value="단순 변심">단순 변심</option>
                   <option value="주문 실수">주문 실수</option>
-                  <option value="제품 파손">제품 파손</option>
                   <option value="수량 오류">수량 오류</option>
+                  <option value="배송 지연">배송 지연</option>
                   <option value="기타">기타</option>
                 </select>
               </div>
@@ -250,13 +201,13 @@ export default function CancelPage() {
 
             <div className="flex gap-2 mt-5">
               <button onClick={() => setShowModal(false)} className="flex-1 h-[38px] border border-[var(--border)] text-[var(--text-secondary)] text-sm rounded-lg hover:border-blue-400">
-                취소
+                닫기
               </button>
               <button
-                onClick={() => { alert('취소/반품이 신청되었습니다'); setShowModal(false); }}
+                onClick={() => { alert('취소가 신청되었습니다'); setShowModal(false); }}
                 className="flex-1 h-[38px] bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
               >
-                신청하기
+                취소 신청하기
               </button>
             </div>
           </div>

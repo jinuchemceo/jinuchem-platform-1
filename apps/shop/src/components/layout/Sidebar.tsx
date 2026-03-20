@@ -46,7 +46,7 @@ const navItems: NavItem[] = [
     children: [
       { label: '주문 내역', href: '/orders' },
       { label: '결제하기', href: '/approvals' },
-      { label: '취소/반품 내역', href: '/cancel' },
+      { label: '취소 내역', href: '/cancel' },
     ],
   },
   { label: '증빙서류', href: '/documents', icon: <FileText size={18} /> },
