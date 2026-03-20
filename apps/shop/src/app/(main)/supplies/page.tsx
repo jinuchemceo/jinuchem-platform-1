@@ -25,6 +25,7 @@ export default function SupplyOrderPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState('popular');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [sameDayOnly, setSameDayOnly] = useState(false);
   const [subscriptionOnly, setSubscriptionOnly] = useState(false);
@@ -53,6 +54,10 @@ export default function SupplyOrderPage() {
       }
     }
 
+    if (selectedSubCategory) {
+      result = result.filter((s) => s.name.toLowerCase().includes(selectedSubCategory.toLowerCase()));
+    }
+
     if (sameDayOnly) {
       result = result.filter((s) => s.variants.some((v) => v.sameDayShip));
     }
@@ -71,7 +76,7 @@ export default function SupplyOrderPage() {
     }
 
     return result;
-  }, [searchQuery, selectedCategory, sameDayOnly, subscriptionOnly, sortBy]);
+  }, [searchQuery, selectedCategory, selectedSubCategory, sameDayOnly, subscriptionOnly, sortBy]);
 
   const toggleCategory = (id: string) => {
     setExpandedCategories((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -145,7 +150,7 @@ export default function SupplyOrderPage() {
           <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4">
             <h3 className="text-sm font-semibold text-[var(--text)] mb-3">카테고리</h3>
             <button
-              onClick={() => setSelectedCategory(null)}
+              onClick={() => { setSelectedCategory(null); setSelectedSubCategory(null); }}
               className={`w-full text-left px-2 py-1.5 text-sm rounded-lg mb-1 ${
                 !selectedCategory ? 'bg-blue-50 text-blue-600 font-medium' : 'text-[var(--text)] hover:bg-gray-50'
               }`}
@@ -155,9 +160,9 @@ export default function SupplyOrderPage() {
             {categories.map((cat) => (
               <div key={cat.id}>
                 <button
-                  onClick={() => { setSelectedCategory(cat.id); toggleCategory(cat.id); }}
+                  onClick={() => { setSelectedCategory(cat.id); setSelectedSubCategory(null); toggleCategory(cat.id); }}
                   className={`w-full flex items-center justify-between px-2 py-1.5 text-sm rounded-lg ${
-                    selectedCategory === cat.id ? 'bg-blue-50 text-blue-600 font-medium' : 'text-[var(--text)] hover:bg-gray-50'
+                    selectedCategory === cat.id && !selectedSubCategory ? 'bg-blue-50 text-blue-600 font-medium' : 'text-[var(--text)] hover:bg-gray-50'
                   }`}
                 >
                   <span>{cat.name}</span>
@@ -168,7 +173,10 @@ export default function SupplyOrderPage() {
                     {cat.subcategories.map((sub) => (
                       <button
                         key={sub}
-                        className="w-full text-left px-2 py-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text)] rounded"
+                        onClick={() => { setSelectedCategory(cat.id); setSelectedSubCategory(sub); }}
+                        className={`w-full text-left px-2 py-1.5 text-xs rounded transition-colors ${
+                          selectedSubCategory === sub ? 'text-blue-600 font-medium bg-blue-50' : 'text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-gray-50'
+                        }`}
                       >
                         {sub}
                       </button>
