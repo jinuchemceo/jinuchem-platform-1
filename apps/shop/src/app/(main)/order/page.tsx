@@ -2,12 +2,13 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, SlidersHorizontal, Grid3X3, List, ChevronDown, Truck, FlaskConical, ShoppingCart } from 'lucide-react';
+import { Search, SlidersHorizontal, Grid3X3, List, ChevronDown, Truck, FlaskConical, ShoppingCart, Heart } from 'lucide-react';
 import { CardStructureImage } from '@/components/products/CardStructureImage';
 import { StructureSearchModal } from '@/components/products/StructureSearchModal';
 import { sampleReagents, supplierList, gradeList } from '@/lib/mock-data';
 import { formatCurrency } from '@jinuchem/shared';
 import { useCartStore } from '@/stores/cartStore';
+import { useFavoriteStore } from '@/stores/favoriteStore';
 import type { ReagentCardData } from '@jinuchem/shared';
 
 type ViewMode = 'grid' | 'list';
@@ -278,6 +279,8 @@ export default function ReagentOrderPage() {
 function ReagentGridCard({ reagent, showToast }: { reagent: ReagentCardData; showToast: (msg: string) => void }) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const addToCart = useCartStore((s) => s.addItem);
+  const { isFavorite: checkFav, toggleFavorite } = useFavoriteStore();
+  const isFav = checkFav(reagent.id);
   const variant = reagent.variants[selectedIdx] || reagent.variants[0];
   const price = variant?.salePrice ?? variant?.listPrice ?? 0;
 
@@ -302,9 +305,20 @@ function ReagentGridCard({ reagent, showToast }: { reagent: ReagentCardData; sho
 
   return (
     <Link href={`/order/${reagent.id}`} className="block bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden hover:shadow-md transition-shadow cursor-pointer group">
-      {/* Supplier Badge */}
-      <div className="px-4 pt-3 pb-1">
+      {/* Supplier Badge + Heart */}
+      <div className="px-4 pt-3 pb-1 flex items-center justify-between">
         <span className="text-xs text-blue-600 font-medium">{reagent.supplierName}</span>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const added = toggleFavorite({ productId: reagent.id, productName: reagent.name, productType: 'reagent', supplierName: reagent.supplierName, catalogNo: reagent.catalogNo, casNumber: reagent.casNumber, formula: reagent.formula, price: variant?.salePrice ?? variant?.listPrice ?? 0 });
+            showToast(added ? `${reagent.name} 즐겨찾기에 추가` : `${reagent.name} 즐겨찾기에서 제거`);
+          }}
+          className={`transition-colors ${isFav ? 'text-red-500' : 'text-[var(--text-secondary)] hover:text-red-400'}`}
+        >
+          <Heart size={14} fill={isFav ? 'currentColor' : 'none'} />
+        </button>
       </div>
 
       {/* Structure Image (PubChem) */}
