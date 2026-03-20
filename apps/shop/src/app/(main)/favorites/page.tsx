@@ -133,13 +133,15 @@ export default function FavoritesPage() {
               </div>
 
               <div className="px-4 pb-4 pt-2">
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-[var(--text-secondary)]">
-                  {fav.productType === 'reagent' ? '시약' : '소모품'}
-                </span>
-                <h3 className="text-sm font-semibold text-[var(--text)] mt-2 mb-1 line-clamp-2 min-h-[40px] group-hover:text-blue-600">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-[var(--text-secondary)]">
+                    {fav.productType === 'reagent' ? '시약' : '소모품'}
+                  </span>
+                  {fav.catalogNo && <span className="text-[10px] text-[var(--text-secondary)]">{fav.catalogNo}</span>}
+                </div>
+                <h3 className="text-sm font-semibold text-[var(--text)] mb-1 line-clamp-2 min-h-[40px] group-hover:text-blue-600">
                   {fav.productName}
                 </h3>
-                {fav.catalogNo && <p className="text-xs text-[var(--text-secondary)] mb-1">{fav.catalogNo}</p>}
                 {fav.casNumber && <p className="text-xs text-[var(--text-secondary)] mb-1">CAS: {fav.casNumber}</p>}
 
                 <div className="text-sm font-bold text-[var(--text)] mb-3 mt-2">{formatCurrency(fav.price)}</div>
