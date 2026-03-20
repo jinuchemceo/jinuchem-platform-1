@@ -481,8 +481,9 @@ export default function ApprovalsPage() {
                 <th className="text-right px-4 py-3 font-medium text-[var(--text-secondary)]">금액</th>
                 <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">요청자</th>
                 <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">상태</th>
-                <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">비고</th>
+                <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">결제방법</th>
                 <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">결제일자</th>
+                <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">비고</th>
               </tr>
             </thead>
             <tbody>
@@ -504,8 +505,11 @@ export default function ApprovalsPage() {
                       {statusLabels[item.status]}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-center text-xs text-[var(--text-secondary)]">{item.note || '-'}</td>
+                  <td className="px-4 py-3 text-center text-xs text-[var(--text-secondary)]">
+                    {item.note?.includes('카드') ? '카드결제' : item.note?.includes('세금') ? '세금계산서' : item.note?.includes('계좌') ? '계좌이체' : '-'}
+                  </td>
                   <td className="px-4 py-3 text-center text-xs text-[var(--text-secondary)]">{item.paidAt || '-'}</td>
+                  <td className="px-4 py-3 text-center text-xs text-[var(--text-secondary)]">{item.note || '-'}</td>
                 </tr>
               ))}
             </tbody>
