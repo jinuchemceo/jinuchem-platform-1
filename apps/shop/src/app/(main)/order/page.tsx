@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Search, SlidersHorizontal, Grid3X3, List, ChevronDown, Truck, FlaskConical, ShoppingCart } from 'lucide-react';
 import { CardStructureImage } from '@/components/products/CardStructureImage';
+import { StructureSearchModal } from '@/components/products/StructureSearchModal';
 import { sampleReagents, supplierList, gradeList } from '@/lib/mock-data';
 import { formatCurrency } from '@jinuchem/shared';
 import { useCartStore } from '@/stores/cartStore';
@@ -21,6 +22,7 @@ export default function ReagentOrderPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [supplierSearch, setSupplierSearch] = useState('');
   const [toast, setToast] = useState<string | null>(null);
+  const [showStructureSearch, setShowStructureSearch] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -106,7 +108,10 @@ export default function ReagentOrderPage() {
             className="w-full pl-10 pr-4 h-[38px] border border-[var(--border)] rounded-lg bg-[var(--bg-card)] text-sm focus:outline-none focus:border-[var(--primary)] text-[var(--text)]"
           />
         </div>
-        <button className="h-[38px] px-4 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors">
+        <button
+          onClick={() => setShowStructureSearch(true)}
+          className="h-[38px] px-4 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors"
+        >
           구조식 검색
         </button>
         <select
@@ -255,6 +260,16 @@ export default function ReagentOrderPage() {
           {toast}
         </div>
       )}
+
+      {/* Structure Search Modal */}
+      <StructureSearchModal
+        isOpen={showStructureSearch}
+        onClose={() => setShowStructureSearch(false)}
+        onSearch={(query, type) => {
+          setSearchQuery(query);
+          setShowStructureSearch(false);
+        }}
+      />
     </div>
   );
 }
