@@ -142,7 +142,6 @@ export default function FavoritesPage() {
                 <h3 className="text-sm font-semibold text-[var(--text)] mb-1 line-clamp-2 min-h-[40px] group-hover:text-blue-600">
                   {fav.productName}
                 </h3>
-                {fav.casNumber && <p className="text-xs text-[var(--text-secondary)] mb-1">CAS: {fav.casNumber}</p>}
 
                 <div className="text-sm font-bold text-[var(--text)] mb-3 mt-2">{formatCurrency(fav.price)}</div>
 
