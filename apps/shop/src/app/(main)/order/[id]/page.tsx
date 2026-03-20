@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { sampleReagents } from '@/lib/mock-data';
 import { formatCurrency } from '@jinuchem/shared';
+import { useFavoriteStore } from '@/stores/favoriteStore';
 import { StructureImage } from '@/components/products/StructureImage';
 import { useCartStore } from '@/stores/cartStore';
 import type { VariantSummary } from '@jinuchem/shared';
@@ -30,10 +31,10 @@ export default function ReagentDetailPage() {
     reagent?.variants[0] ?? null
   );
   const [quantity, setQuantity] = useState(1);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [favoriteVariants, setFavoriteVariants] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
   const addToCart = useCartStore((s) => s.addItem);
+  const { isFavorite: checkFav, toggleFavorite } = useFavoriteStore();
+  const isFavorite = reagent ? checkFav(reagent.id) : false;
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -152,7 +153,12 @@ export default function ReagentDetailPage() {
 
           {/* Favorite */}
           <button
-            onClick={() => setIsFavorite(!isFavorite)}
+            onClick={() => {
+              if (!reagent) return;
+              const v = selectedVariant || reagent.variants[0];
+              const added = toggleFavorite({ productId: reagent.id, productName: reagent.name, productType: 'reagent', supplierName: reagent.supplierName, catalogNo: reagent.catalogNo, casNumber: reagent.casNumber, formula: reagent.formula, price: v?.salePrice ?? v?.listPrice ?? 0 });
+              showToast(added ? '즐겨찾기에 추가' : '즐겨찾기에서 제거');
+            }}
             className={`mb-4 flex items-center gap-1.5 text-sm ${isFavorite ? 'text-red-500' : 'text-[var(--text-secondary)]'} hover:text-red-500 transition-colors`}
           >
             <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} />
@@ -256,21 +262,23 @@ export default function ReagentDetailPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setFavoriteVariants((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(variant.id)) {
-                              next.delete(variant.id);
-                              showToast('즐겨찾기에서 제거되었습니다');
-                            } else {
-                              next.add(variant.id);
-                              showToast('즐겨찾기에 추가되었습니다');
-                            }
-                            return next;
+                          if (!reagent) return;
+                          const favId = `${reagent.id}_${variant.id}`;
+                          const added = toggleFavorite({
+                            productId: favId,
+                            productName: `${reagent.name} ${variant.size}${variant.unit}`,
+                            productType: 'reagent',
+                            supplierName: reagent.supplierName,
+                            catalogNo: reagent.catalogNo,
+                            casNumber: reagent.casNumber,
+                            formula: reagent.formula,
+                            price: variant.salePrice ?? variant.listPrice,
                           });
+                          showToast(added ? `${variant.size}${variant.unit} 즐겨찾기에 추가` : `${variant.size}${variant.unit} 즐겨찾기에서 제거`);
                         }}
-                        className={`transition-colors ${favoriteVariants.has(variant.id) ? 'text-red-500' : 'text-[var(--text-secondary)] hover:text-red-400'}`}
+                        className={`transition-colors ${reagent && checkFav(`${reagent.id}_${variant.id}`) ? 'text-red-500' : 'text-[var(--text-secondary)] hover:text-red-400'}`}
                       >
-                        <Heart size={14} fill={favoriteVariants.has(variant.id) ? 'currentColor' : 'none'} />
+                        <Heart size={14} fill={reagent && checkFav(`${reagent.id}_${variant.id}`) ? 'currentColor' : 'none'} />
                       </button>
                     </td>
                   </tr>
