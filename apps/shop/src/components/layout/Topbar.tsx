@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Bell, Sun, Moon, Search } from 'lucide-react';
+import { ShoppingCart, Bell, Sun, Moon } from 'lucide-react';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useCartStore } from '@/stores/cartStore';
 import { useThemeStore } from '@/stores/themeStore';
@@ -14,21 +14,9 @@ export function Topbar() {
   const { unreadCount, togglePanel } = useNotificationStore();
 
   return (
-    <header className="sticky top-0 z-30 h-14 bg-[var(--bg-card)] border-b border-[var(--border)] flex items-center justify-between px-6">
-      {/* Search */}
-      <div className="flex items-center flex-1 max-w-xl">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
-          <input
-            type="search"
-            placeholder="시약명, CAS번호, 분자식, 카탈로그번호..."
-            className="w-full pl-10 pr-4 h-[var(--btn-height)] border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm focus:outline-none focus:border-[var(--primary)] text-[var(--text)]"
-          />
-        </div>
-      </div>
-
+    <header className="sticky top-0 z-30 h-14 bg-[var(--bg-card)] border-b border-[var(--border)] flex items-center justify-end px-6">
       {/* Right Actions */}
-      <div className="flex items-center gap-2 ml-4">
+      <div className="flex items-center gap-2">
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
