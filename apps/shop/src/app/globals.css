@@ -1,0 +1,75 @@
+@import 'tailwindcss';
+
+/* ================================================================
+   JINUCHEM 디자인 시스템 — CSS Custom Properties
+   프로토타입 styles.css 4~29행에서 포팅
+   ================================================================ */
+
+:root {
+  /* Primary */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-light: #dbeafe;
+
+  /* Accents */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  /* Layout */
+  --sidebar-width: 250px;
+  --topbar-height: 56px;
+  --btn-height: 38px;
+
+  /* Light theme */
+  --bg: #f8fafc;
+  --bg-card: #ffffff;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #475569;
+}
+
+[data-theme='dark'] {
+  --bg: #0f172a;
+  --bg-card: #1e293b;
+  --text: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border: #334155;
+  --sidebar-bg: #1e293b;
+  --sidebar-text: #94a3b8;
+}
+
+/* Global resets */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Button height standard: 38px */
+button,
+.btn,
+select,
+input[type='search'] {
+  height: var(--btn-height);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}

@@ -1,0 +1,105 @@
+'use client';
+
+import { useState } from 'react';
+import { Heart, ShoppingCart, Trash2, FlaskConical } from 'lucide-react';
+import { sampleReagents } from '@/lib/mock-data';
+import { formatCurrency } from '@jinuchem/shared';
+import Link from 'next/link';
+
+export default function FavoritesPage() {
+  const [favorites, setFavorites] = useState(sampleReagents.slice(0, 5));
+
+  const removeFromFavorites = (id: string) => {
+    setFavorites((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-[var(--text)]">즐겨찾기</h1>
+        <span className="text-sm text-[var(--text-secondary)]">
+          총 {favorites.length}개 시약
+        </span>
+      </div>
+
+      {favorites.length === 0 ? (
+        <div className="text-center py-20 text-[var(--text-secondary)]">
+          <Heart size={48} className="mx-auto mb-4 opacity-30" />
+          <p className="text-lg font-medium mb-1">즐겨찾기가 비어있습니다</p>
+          <p className="text-sm mb-4">자주 구매하는 시약을 즐겨찾기에 추가해보세요</p>
+          <Link
+            href="/order"
+            className="inline-flex items-center gap-1.5 h-[38px] px-4 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+          >
+            <FlaskConical size={14} /> 시약 주문하러 가기
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-4 gap-4">
+          {favorites.map((reagent) => {
+            const firstVariant = reagent.variants[0];
+            const price = firstVariant?.salePrice ?? firstVariant?.listPrice ?? 0;
+
+            return (
+              <div key={reagent.id} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden hover:shadow-md transition-shadow group">
+                {/* Supplier Badge + Remove */}
+                <div className="px-4 pt-3 pb-1 flex items-center justify-between">
+                  <span className="text-xs text-blue-600 font-medium">{reagent.supplierName}</span>
+                  <button
+                    onClick={() => removeFromFavorites(reagent.id)}
+                    className="text-red-400 hover:text-red-600 transition-colors"
+                    title="즐겨찾기 해제"
+                  >
+                    <Heart size={16} fill="currentColor" />
+                  </button>
+                </div>
+
+                {/* Structure Image */}
+                <Link href={`/order/${reagent.id}`}>
+                  <div className="h-[140px] flex items-center justify-center bg-gray-50 mx-3 rounded-lg mb-2 cursor-pointer">
+                    <span className="text-3xl font-mono text-gray-300">{reagent.formula || '?'}</span>
+                  </div>
+                </Link>
+
+                {/* Info */}
+                <div className="px-4 pb-4">
+                  <Link href={`/order/${reagent.id}`}>
+                    <h3 className="text-sm font-semibold text-[var(--text)] mb-1 line-clamp-1 group-hover:text-blue-600 cursor-pointer">
+                      {reagent.name}
+                    </h3>
+                  </Link>
+                  <p className="text-xs text-[var(--text-secondary)] mb-1">CAS: {reagent.casNumber}</p>
+                  <p className="text-xs text-[var(--text-secondary)] mb-2">{reagent.formula} / MW: {reagent.molWeight}</p>
+
+                  <div className="flex items-baseline gap-2 mb-3">
+                    {firstVariant?.salePrice && (
+                      <span className="text-xs text-[var(--text-secondary)] line-through">
+                        {formatCurrency(firstVariant.listPrice)}
+                      </span>
+                    )}
+                    <span className="text-sm font-bold text-[var(--text)]">{formatCurrency(price)}</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => alert('장바구니에 추가되었습니다')}
+                      className="flex-1 h-[34px] bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <ShoppingCart size={12} /> 장바구니
+                    </button>
+                    <button
+                      onClick={() => removeFromFavorites(reagent.id)}
+                      className="w-[34px] h-[34px] border border-[var(--border)] rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-red-500 hover:border-red-300"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

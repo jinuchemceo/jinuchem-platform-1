@@ -1,0 +1,71 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+  FileText,
+  KeyRound,
+  BarChart3,
+  Rocket,
+  LogOut,
+} from 'lucide-react';
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ReactNode;
+}
+
+const navItems: NavItem[] = [
+  { label: 'API 문서', href: '/docs', icon: <FileText size={18} /> },
+  { label: 'API Keys', href: '/keys', icon: <KeyRound size={18} /> },
+  { label: '사용량', href: '/usage', icon: <BarChart3 size={18} /> },
+  { label: '시작하기', href: '/getting-started', icon: <Rocket size={18} /> },
+];
+
+export function Sidebar() {
+  const pathname = usePathname();
+
+  return (
+    <aside
+      className="fixed top-0 left-0 h-screen bg-[var(--sidebar-bg)] border-r border-[var(--border)] flex flex-col z-40"
+      style={{ width: 'var(--sidebar-width)' }}
+    >
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-5 h-14 border-b border-[var(--border)]">
+        <Link href="/docs" className="flex items-center gap-2 text-lg font-bold text-[var(--text)]">
+          <span className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-sm font-bold">
+            J
+          </span>
+          JINU API
+        </Link>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors ${
+              pathname === item.href
+                ? 'bg-blue-50 text-blue-600 font-semibold'
+                : 'text-[var(--sidebar-text)] hover:bg-gray-100'
+            }`}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </Link>
+        ))}
+      </nav>
+
+      {/* Bottom */}
+      <div className="border-t border-[var(--border)] px-3 py-3 space-y-1">
+        <button className="flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg text-[var(--sidebar-text)] hover:bg-gray-100 w-full">
+          <LogOut size={18} />
+          <span>로그아웃</span>
+        </button>
+      </div>
+    </aside>
+  );
+}

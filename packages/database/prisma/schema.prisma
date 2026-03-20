@@ -1,0 +1,1044 @@
+// ================================================================
+// JINUCHEM 통합 플랫폼 — Prisma Schema (v2.0)
+// 커머스 27개 + 데이터 플랫폼 10개 + ELN 5개 = 42 모델
+// ================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ================================================================
+// ENUMS
+// ================================================================
+
+enum ProductType {
+  reagent
+  supply
+}
+
+enum OrderStatus {
+  payment_pending
+  payment_done
+  preparing
+  shipping
+  delivered
+  cancelled
+}
+
+enum ApprovalStatus {
+  pending
+  approved
+  rejected
+}
+
+enum CancelType {
+  cancel
+  return_type @map("return")
+}
+
+enum CancelStatus {
+  received
+  processing
+  completed
+}
+
+enum QuoteStatus {
+  pending
+  arrived
+  ordered
+  expired
+}
+
+enum InquiryType {
+  order
+  delivery
+  product
+  account
+  etc
+}
+
+enum InquiryStatus {
+  received
+  processing
+  answered
+}
+
+enum DocType {
+  sds_kr
+  sds_en
+  coa
+  coo
+  spec
+  kc_cert
+}
+
+enum VoucherType {
+  estimate
+  transaction_report
+  delivery_confirm
+}
+
+enum SubscriptionInterval {
+  one_week     @map("1w")
+  two_weeks    @map("2w")
+  one_month    @map("1m")
+  two_months   @map("2m")
+  three_months @map("3m")
+}
+
+enum InventoryStatus {
+  normal
+  low
+  expired
+}
+
+enum RoleName {
+  researcher
+  org_admin
+  supplier
+  sys_admin
+}
+
+enum ApiTier {
+  free
+  basic
+  pro
+  enterprise
+}
+
+enum PredictionType {
+  consumption
+  budget
+  reorder
+}
+
+enum SourceApp {
+  shop
+  eln
+  supplier
+  admin
+}
+
+enum ExperimentStatus {
+  draft
+  in_progress
+  completed
+  archived
+}
+
+enum ReportType {
+  pattern
+  trend
+  seasonality
+}
+
+enum SearchType {
+  text
+  cas
+  formula
+  structure
+}
+
+enum DiscountType {
+  percent
+  fixed
+}
+
+// ================================================================
+// 1. 사용자 & 조직
+// ================================================================
+
+model Organization {
+  id             String   @id @default(uuid()) @map("org_id")
+  orgName        String   @map("org_name")
+  bizNo          String?  @map("biz_no")
+  representative String?
+  address        String?
+  phone          String?
+  budgetYearly   Float?   @map("budget_yearly")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  users    User[]
+  orders   Order[]
+  budgets  Budget[]
+  apiKeys  ApiKey[]
+  analytics AiAnalytics[]
+
+  @@map("organizations")
+}
+
+model User {
+  id           String   @id @default(uuid()) @map("user_id")
+  orgId        String?  @map("org_id")
+  roleName     RoleName @map("role_name")
+  name         String
+  email        String   @unique
+  phone        String?
+  department   String?
+  labName      String?  @map("lab_name")
+  avatarUrl    String?  @map("avatar_url")
+  metadata     Json?    @db.JsonB
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  organization      Organization?       @relation(fields: [orgId], references: [id])
+  shippingAddresses  ShippingAddress[]
+  notificationSetting NotificationSetting?
+  orders             Order[]
+  cart               Cart?
+  favorites          Favorite[]
+  recentlyViewed     RecentlyViewed[]
+  labInventory       LabInventory[]
+  subscriptions      Subscription[]
+  inquiries          Inquiry[]
+  chatRoomsAsUser    ChatRoom[]          @relation("ChatUser")
+  chatRoomsAsPartner ChatRoom[]          @relation("ChatPartner")
+  chatMessages       ChatMessage[]
+  approvalRequests   ApprovalRequest[]   @relation("Requester")
+  approvalResponses  ApprovalRequest[]   @relation("Approver")
+  cancelReturns      CancelReturn[]
+  voucherDocuments   VoucherDocument[]
+  quotes             Quote[]
+  recommendations    AiRecommendation[]
+  predictions        AiPrediction[]
+  dataEvents         DataEvent[]
+  searchLogs         SearchLog[]
+  experiments        Experiment[]
+  protocols          Protocol[]
+  usageRecords       UsageRecord[]
+  budgets            Budget[]
+
+  @@map("users")
+}
+
+model ShippingAddress {
+  id          String  @id @default(uuid()) @map("address_id")
+  userId      String  @map("user_id")
+  label       String
+  recipient   String
+  phone       String
+  address     String
+  building    String?
+  department  String?
+  labRoom     String? @map("lab_room")
+  isDefault   Boolean @default(false) @map("is_default")
+
+  user   User    @relation(fields: [userId], references: [id])
+  orders Order[]
+
+  @@map("shipping_addresses")
+}
+
+model NotificationSetting {
+  id         String  @id @default(uuid()) @map("setting_id")
+  userId     String  @unique @map("user_id")
+  quoteAlert Boolean @default(true) @map("quote_alert")
+  orderAlert Boolean @default(true) @map("order_alert")
+  shipAlert  Boolean @default(true) @map("ship_alert")
+  stockAlert Boolean @default(true) @map("stock_alert")
+  promoAlert Boolean @default(true) @map("promo_alert")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notification_settings")
+}
+
+// ================================================================
+// 2. 제품 카탈로그
+// ================================================================
+
+model Supplier {
+  id           String  @id @default(uuid()) @map("supplier_id")
+  name         String
+  code         String  @unique
+  contactEmail String? @map("contact_email")
+  contactPhone String? @map("contact_phone")
+  apiEndpoint  String? @map("api_endpoint")
+  isActive     Boolean @default(true) @map("is_active")
+
+  products Product[]
+  brands   Brand[]
+  quotes   Quote[]
+
+  @@map("suppliers")
+}
+
+model Brand {
+  id         String @id @default(uuid()) @map("brand_id")
+  brandName  String @map("brand_name")
+  supplierId String @map("supplier_id")
+
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+
+  @@map("brands")
+}
+
+model Category {
+  id          String      @id @default(uuid()) @map("category_id")
+  name        String
+  productType ProductType @map("product_type")
+  icon        String?
+  sortOrder   Int         @default(0) @map("sort_order")
+
+  subCategories SubCategory[]
+  products      Product[]
+
+  @@map("categories")
+}
+
+model SubCategory {
+  id         String @id @default(uuid()) @map("subcat_id")
+  categoryId String @map("category_id")
+  name       String
+  itemCount  Int    @default(0) @map("item_count")
+
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@map("sub_categories")
+}
+
+model Product {
+  id          String      @id @default(uuid()) @map("product_id")
+  supplierId  String      @map("supplier_id")
+  categoryId  String?     @map("category_id")
+  productType ProductType @map("product_type")
+  name        String
+  nameEn      String?     @map("name_en")
+  catalogNo   String?     @map("catalog_no")
+  description String?
+  imageUrl    String?     @map("image_url")
+  isActive    Boolean     @default(true) @map("is_active")
+  metadata    Json?       @db.JsonB
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  supplier       Supplier          @relation(fields: [supplierId], references: [id])
+  category       Category?         @relation(fields: [categoryId], references: [id])
+  reagentDetail  ReagentDetail?
+  supplyDetail   SupplyDetail?
+  variants       ProductVariant[]
+  documents      ProductDocument[]
+  orderItems     OrderItem[]
+  cartItems      CartItem[]
+  favorites      Favorite[]
+  recentlyViewed RecentlyViewed[]
+  labInventory   LabInventory[]
+  subscriptions  Subscription[]
+  quoteItems     QuoteItem[]
+  recommendations AiRecommendation[]
+  priceHistory   PriceHistory[]
+  usageRecords   UsageRecord[]
+  protocolReagents ProtocolReagent[]
+
+  @@index([supplierId, categoryId])
+  @@index([catalogNo])
+  @@map("products")
+}
+
+model ReagentDetail {
+  id            String  @id @default(uuid()) @map("reagent_id")
+  productId     String  @unique @map("product_id")
+  casNumber     String? @map("cas_number")
+  formula       String?
+  molWeight     Float?  @map("mol_weight")
+  purity        String?
+  grade         String?
+  synonyms      Json?   @db.JsonB
+  structureImg  String? @map("structure_img")
+  hazardClass   String? @map("hazard_class")
+  ghsPictograms Json?   @map("ghs_pictograms") @db.JsonB
+  hCodes        Json?   @map("h_codes") @db.JsonB
+  signalWord    String? @map("signal_word")
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([casNumber])
+  @@map("reagent_details")
+}
+
+model SupplyDetail {
+  id                    String  @id @default(uuid()) @map("supply_id")
+  productId             String  @unique @map("product_id")
+  material              String?
+  capacity              String?
+  isSterile             Boolean @default(false) @map("is_sterile")
+  certification         String?
+  subscriptionAvailable Boolean @default(false) @map("subscription_available")
+
+  product Product        @relation(fields: [productId], references: [id])
+  compats SupplyCompat[]
+
+  @@map("supply_details")
+}
+
+model SupplyCompat {
+  id           String  @id @default(uuid()) @map("compat_id")
+  supplyId     String  @map("supply_id")
+  equipment    String
+  isCompatible Boolean @map("is_compatible")
+
+  supplyDetail SupplyDetail @relation(fields: [supplyId], references: [id])
+
+  @@map("supply_compats")
+}
+
+model ProductVariant {
+  id           String   @id @default(uuid()) @map("variant_id")
+  productId    String   @map("product_id")
+  size         String
+  unit         String
+  listPrice    Float    @map("list_price")
+  salePrice    Float?   @map("sale_price")
+  discountRate Float?   @map("discount_rate")
+  stockQty     Int      @default(0) @map("stock_qty")
+  sameDayShip  Boolean  @default(false) @map("same_day_ship")
+  deliveryDate DateTime? @map("delivery_date")
+  isActive     Boolean  @default(true) @map("is_active")
+
+  product      Product       @relation(fields: [productId], references: [id])
+  orderItems   OrderItem[]
+  cartItems    CartItem[]
+  quoteItems   QuoteItem[]
+  subscriptions Subscription[]
+  priceHistory PriceHistory[]
+
+  @@index([productId, isActive])
+  @@map("product_variants")
+}
+
+model ProductDocument {
+  id        String   @id @default(uuid()) @map("doc_id")
+  productId String   @map("product_id")
+  docType   DocType  @map("doc_type")
+  fileUrl   String   @map("file_url")
+  lotNumber String?  @map("lot_number")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("product_documents")
+}
+
+// ================================================================
+// 3. 주문 & 거래
+// ================================================================
+
+model Order {
+  id                String      @id @default(uuid()) @map("order_id")
+  userId            String      @map("user_id")
+  orgId             String?     @map("org_id")
+  shippingAddressId String?     @map("shipping_address_id")
+  orderNumber       String      @unique @map("order_number")
+  poNumber          String?     @map("po_number")
+  status            OrderStatus @default(payment_pending)
+  subtotal          Float       @default(0)
+  discountAmount    Float       @default(0) @map("discount_amount")
+  vat               Float       @default(0)
+  totalAmount       Float       @default(0) @map("total_amount")
+  billingOrg        String?     @map("billing_org")
+  billingAddress    String?     @map("billing_address")
+  billingAccountNo  String?     @map("billing_account_no")
+  deliveryNote      String?     @map("delivery_note")
+  emailCc           Json?       @map("email_cc") @db.JsonB
+  metadata          Json?       @db.JsonB
+  orderedAt         DateTime    @default(now()) @map("ordered_at")
+  paidAt            DateTime?   @map("paid_at")
+  shippedAt         DateTime?   @map("shipped_at")
+  deliveredAt       DateTime?   @map("delivered_at")
+  estDeliveryDate   DateTime?   @map("est_delivery_date")
+
+  user            User              @relation(fields: [userId], references: [id])
+  organization    Organization?     @relation(fields: [orgId], references: [id])
+  shippingAddress ShippingAddress?  @relation(fields: [shippingAddressId], references: [id])
+  items           OrderItem[]
+  approval        ApprovalRequest?
+  cancelReturns   CancelReturn[]
+  vouchers        VoucherDocument[]
+  inquiries       Inquiry[]
+
+  @@index([userId, status])
+  @@index([orgId, orderedAt])
+  @@index([orderNumber])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String  @id @default(uuid()) @map("item_id")
+  orderId     String  @map("order_id")
+  productId   String  @map("product_id")
+  variantId   String  @map("variant_id")
+  productName String  @map("product_name")
+  catalogNo   String? @map("catalog_no")
+  size        String
+  quantity    Int
+  unitPrice   Float   @map("unit_price")
+  subtotal    Float
+  specialNote String? @map("special_note")
+
+  order   Order          @relation(fields: [orderId], references: [id])
+  product Product        @relation(fields: [productId], references: [id])
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model ApprovalRequest {
+  id           String         @id @default(uuid()) @map("approval_id")
+  orderId      String         @unique @map("order_id")
+  requesterId  String         @map("requester_id")
+  approverId   String?        @map("approver_id")
+  status       ApprovalStatus @default(pending)
+  rejectReason String?        @map("reject_reason")
+  requestedAt  DateTime       @default(now()) @map("requested_at")
+  respondedAt  DateTime?      @map("responded_at")
+
+  order     Order @relation(fields: [orderId], references: [id])
+  requester User  @relation("Requester", fields: [requesterId], references: [id])
+  approver  User? @relation("Approver", fields: [approverId], references: [id])
+
+  @@map("approval_requests")
+}
+
+model CancelReturn {
+  id            String       @id @default(uuid()) @map("cancel_id")
+  orderId       String       @map("order_id")
+  userId        String       @map("user_id")
+  receiptNumber String       @unique @map("receipt_number")
+  type          CancelType
+  reason        String
+  detail        String?
+  refundAmount  Float?       @map("refund_amount")
+  status        CancelStatus @default(received)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  completedAt   DateTime?    @map("completed_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@map("cancel_returns")
+}
+
+model Quote {
+  id           String      @id @default(uuid()) @map("quote_id")
+  userId       String      @map("user_id")
+  supplierId   String      @map("supplier_id")
+  quoteNumber  String      @unique @map("quote_number")
+  status       QuoteStatus @default(pending)
+  totalAmount  Float?      @map("total_amount")
+  validUntil   DateTime?   @map("valid_until")
+  requestedAt  DateTime    @default(now()) @map("requested_at")
+  respondedAt  DateTime?   @map("responded_at")
+
+  user     User        @relation(fields: [userId], references: [id])
+  supplier Supplier    @relation(fields: [supplierId], references: [id])
+  items    QuoteItem[]
+
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id          String @id @default(uuid()) @map("qi_id")
+  quoteId     String @map("quote_id")
+  productId   String @map("product_id")
+  variantId   String @map("variant_id")
+  quantity    Int
+  quotedPrice Float? @map("quoted_price")
+
+  quote   Quote          @relation(fields: [quoteId], references: [id])
+  product Product        @relation(fields: [productId], references: [id])
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@map("quote_items")
+}
+
+model VoucherDocument {
+  id        String      @id @default(uuid()) @map("voucher_id")
+  orderId   String      @map("order_id")
+  userId    String      @map("user_id")
+  docType   VoucherType @map("doc_type")
+  fileUrl   String?     @map("file_url")
+  issuedAt  DateTime    @default(now()) @map("issued_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@map("voucher_documents")
+}
+
+// ================================================================
+// 4. 장바구니
+// ================================================================
+
+model Cart {
+  id        String   @id @default(uuid()) @map("cart_id")
+  userId    String   @unique @map("user_id")
+  promoCode String?  @map("promo_code")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user  User       @relation(fields: [userId], references: [id])
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid()) @map("cart_item_id")
+  cartId    String   @map("cart_id")
+  productId String   @map("product_id")
+  variantId String   @map("variant_id")
+  quantity  Int      @default(1)
+  addedAt   DateTime @default(now()) @map("added_at")
+
+  cart    Cart           @relation(fields: [cartId], references: [id])
+  product Product        @relation(fields: [productId], references: [id])
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@map("cart_items")
+}
+
+// ================================================================
+// 5. 사용자 기능
+// ================================================================
+
+model Favorite {
+  id        String   @id @default(uuid()) @map("favorite_id")
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  addedAt   DateTime @default(now()) @map("added_at")
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("favorites")
+}
+
+model RecentlyViewed {
+  id        String   @id @default(uuid()) @map("rv_id")
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  viewedAt  DateTime @default(now()) @map("viewed_at")
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([userId, viewedAt])
+  @@map("recently_viewed")
+}
+
+model LabInventory {
+  id         String          @id @default(uuid()) @map("inventory_id")
+  userId     String          @map("user_id")
+  productId  String?         @map("product_id")
+  name       String
+  casNumber  String?         @map("cas_number")
+  currentQty Float           @map("current_qty")
+  unit       String
+  location   String?
+  expiryDate DateTime?       @map("expiry_date")
+  minStock   Float?          @map("min_stock")
+  status     InventoryStatus @default(normal)
+  addedAt    DateTime        @default(now()) @map("added_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id])
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@index([userId, status])
+  @@map("lab_inventory")
+}
+
+model Subscription {
+  id               String               @id @default(uuid()) @map("sub_id")
+  userId           String               @map("user_id")
+  productId        String               @map("product_id")
+  variantId        String               @map("variant_id")
+  interval         SubscriptionInterval
+  quantity         Int
+  nextDeliveryDate DateTime?            @map("next_delivery_date")
+  isActive         Boolean              @default(true) @map("is_active")
+  createdAt        DateTime             @default(now()) @map("created_at")
+
+  user    User           @relation(fields: [userId], references: [id])
+  product Product        @relation(fields: [productId], references: [id])
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@map("subscriptions")
+}
+
+// ================================================================
+// 6. 커뮤니케이션
+// ================================================================
+
+model Inquiry {
+  id            String        @id @default(uuid()) @map("inquiry_id")
+  userId        String        @map("user_id")
+  orderId       String?       @map("order_id")
+  inquiryType   InquiryType   @map("inquiry_type")
+  title         String
+  content       String
+  attachmentUrl String?       @map("attachment_url")
+  status        InquiryStatus @default(received)
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  user    User           @relation(fields: [userId], references: [id])
+  order   Order?         @relation(fields: [orderId], references: [id])
+  replies InquiryReply[]
+
+  @@index([userId, status])
+  @@map("inquiries")
+}
+
+model InquiryReply {
+  id        String   @id @default(uuid()) @map("reply_id")
+  inquiryId String   @map("inquiry_id")
+  userId    String   @map("user_id")
+  content   String
+  isAdmin   Boolean  @default(false) @map("is_admin")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  inquiry Inquiry @relation(fields: [inquiryId], references: [id])
+
+  @@map("inquiry_replies")
+}
+
+model ChatRoom {
+  id            String    @id @default(uuid()) @map("room_id")
+  userId        String    @map("user_id")
+  partnerId     String    @map("partner_id")
+  lastMessage   String?   @map("last_message")
+  lastMessageAt DateTime? @map("last_message_at")
+  unreadCount   Int       @default(0) @map("unread_count")
+
+  user     User          @relation("ChatUser", fields: [userId], references: [id])
+  partner  User          @relation("ChatPartner", fields: [partnerId], references: [id])
+  messages ChatMessage[]
+
+  @@map("chat_rooms")
+}
+
+model ChatMessage {
+  id       String   @id @default(uuid()) @map("message_id")
+  roomId   String   @map("room_id")
+  senderId String   @map("sender_id")
+  content  String
+  sentAt   DateTime @default(now()) @map("sent_at")
+  isRead   Boolean  @default(false) @map("is_read")
+
+  room   ChatRoom @relation(fields: [roomId], references: [id])
+  sender User     @relation(fields: [senderId], references: [id])
+
+  @@map("chat_messages")
+}
+
+model FAQ {
+  id        String      @id @default(uuid()) @map("faq_id")
+  category  InquiryType
+  question  String
+  answer    String
+  viewCount Int         @default(0) @map("view_count")
+  sortOrder Int         @default(0) @map("sort_order")
+  isActive  Boolean     @default(true) @map("is_active")
+
+  @@map("faqs")
+}
+
+model Notice {
+  id        String   @id @default(uuid()) @map("notice_id")
+  title     String
+  content   String
+  isPinned  Boolean  @default(false) @map("is_pinned")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notices")
+}
+
+model PromoCode {
+  id              String       @id @default(uuid()) @map("promo_id")
+  code            String       @unique
+  description     String?
+  discountType    DiscountType @map("discount_type")
+  discountValue   Float        @map("discount_value")
+  minOrderAmount  Float?       @map("min_order_amount")
+  maxDiscount     Float?       @map("max_discount")
+  validFrom       DateTime     @map("valid_from")
+  validUntil      DateTime     @map("valid_until")
+  isActive        Boolean      @default(true) @map("is_active")
+
+  @@map("promo_codes")
+}
+
+model Budget {
+  id            String   @id @default(uuid()) @map("budget_id")
+  orgId         String   @map("org_id")
+  userId        String?  @map("user_id")
+  year          Int
+  totalBudget   Float    @map("total_budget")
+  reagentBudget Float?   @map("reagent_budget")
+  supplyBudget  Float?   @map("supply_budget")
+  spentAmount   Float    @default(0) @map("spent_amount")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id])
+  user         User?        @relation(fields: [userId], references: [id])
+
+  @@map("budgets")
+}
+
+// ================================================================
+// 7. 데이터 플랫폼 — API
+// ================================================================
+
+model ApiKey {
+  id         String   @id @default(uuid()) @map("api_key_id")
+  orgId      String   @map("org_id")
+  keyHash    String   @unique @map("key_hash")
+  tier       ApiTier  @default(free)
+  rateLimit  Int      @default(100) @map("rate_limit")
+  scopes     Json?    @db.JsonB
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastUsedAt DateTime? @map("last_used_at")
+
+  organization Organization   @relation(fields: [orgId], references: [id])
+  usageLogs    ApiUsageLog[]
+
+  @@index([orgId, isActive])
+  @@map("api_keys")
+}
+
+model ApiUsageLog {
+  id          String   @id @default(uuid()) @map("usage_id")
+  keyId       String   @map("key_id")
+  endpoint    String
+  method      String
+  statusCode  Int      @map("status_code")
+  latencyMs   Int      @map("latency_ms")
+  requestBody Json?    @map("request_body") @db.JsonB
+  timestamp   DateTime @default(now())
+
+  apiKey ApiKey @relation(fields: [keyId], references: [id])
+
+  @@index([keyId, timestamp])
+  @@index([endpoint, timestamp])
+  @@map("api_usage_logs")
+}
+
+model ApiRateLimit {
+  id           String  @id @default(uuid()) @map("rate_limit_id")
+  tier         ApiTier @unique
+  dailyLimit   Int     @map("daily_limit")
+  monthlyLimit Int     @map("monthly_limit")
+  burstLimit   Int     @map("burst_limit")
+
+  @@map("api_rate_limits")
+}
+
+// ================================================================
+// 8. 데이터 플랫폼 — AI 2차 데이터
+// ================================================================
+
+model AiRecommendation {
+  id           String   @id @default(uuid()) @map("rec_id")
+  userId       String   @map("user_id")
+  productId    String   @map("product_id")
+  score        Float
+  reason       String
+  modelVersion String   @map("model_version")
+  generatedAt  DateTime @default(now()) @map("generated_at")
+  expiresAt    DateTime @map("expires_at")
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([userId, expiresAt])
+  @@map("ai_recommendations")
+}
+
+model AiPrediction {
+  id             String         @id @default(uuid()) @map("prediction_id")
+  userId         String         @map("user_id")
+  predictionType PredictionType @map("prediction_type")
+  data           Json           @db.JsonB
+  confidence     Float
+  modelVersion   String         @map("model_version")
+  generatedAt    DateTime       @default(now()) @map("generated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, predictionType])
+  @@map("ai_predictions")
+}
+
+model AiAnalytics {
+  id          String     @id @default(uuid()) @map("analytics_id")
+  orgId       String     @map("org_id")
+  reportType  ReportType @map("report_type")
+  data        Json       @db.JsonB
+  periodStart DateTime   @map("period_start")
+  periodEnd   DateTime   @map("period_end")
+  generatedAt DateTime   @default(now()) @map("generated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId, reportType])
+  @@map("ai_analytics")
+}
+
+model ChemKnowledge {
+  id         String   @id @default(uuid()) @map("knowledge_id")
+  casNumber  String   @unique @map("cas_number")
+  name       String
+  relations  Json     @db.JsonB
+  properties Json     @db.JsonB
+  source     String?
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("chem_knowledge")
+}
+
+// ================================================================
+// 9. 데이터 플랫폼 — 데이터 수집
+// ================================================================
+
+model DataEvent {
+  id        String    @id @default(uuid()) @map("event_id")
+  userId    String?   @map("user_id")
+  eventType String    @map("event_type")
+  payload   Json      @db.JsonB
+  sourceApp SourceApp @map("source_app")
+  ipAddress String?   @map("ip_address")
+  timestamp DateTime  @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId, eventType, timestamp])
+  @@index([sourceApp, timestamp])
+  @@map("data_events")
+}
+
+model PriceHistory {
+  id        String   @id @default(uuid()) @map("price_history_id")
+  productId String   @map("product_id")
+  variantId String   @map("variant_id")
+  listPrice Float    @map("list_price")
+  salePrice Float?   @map("sale_price")
+  recordedAt DateTime @default(now()) @map("recorded_at")
+
+  product Product        @relation(fields: [productId], references: [id])
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@index([productId, variantId, recordedAt])
+  @@map("price_history")
+}
+
+model SearchLog {
+  id               String     @id @default(uuid()) @map("search_id")
+  userId           String?    @map("user_id")
+  query            String
+  searchType       SearchType @map("search_type")
+  resultsCount     Int        @map("results_count")
+  clickedProductId String?    @map("clicked_product_id")
+  timestamp        DateTime   @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId, timestamp])
+  @@index([query, searchType])
+  @@map("search_logs")
+}
+
+// ================================================================
+// 10. ELN (전자실험노트)
+// ================================================================
+
+model Experiment {
+  id        String           @id @default(uuid()) @map("experiment_id")
+  userId    String           @map("user_id")
+  title     String
+  purpose   String?
+  method    String?
+  result    String?
+  status    ExperimentStatus @default(draft)
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  user         User              @relation(fields: [userId], references: [id])
+  logs         ExperimentLog[]
+  usageRecords UsageRecord[]
+
+  @@index([userId, status])
+  @@map("experiments")
+}
+
+model Protocol {
+  id          String   @id @default(uuid()) @map("protocol_id")
+  userId      String   @map("user_id")
+  title       String
+  description String?
+  steps       Json     @db.JsonB
+  isTemplate  Boolean  @default(false) @map("is_template")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user     User              @relation(fields: [userId], references: [id])
+  reagents ProtocolReagent[]
+
+  @@index([userId, isTemplate])
+  @@map("protocols")
+}
+
+model ProtocolReagent {
+  id         String  @id @default(uuid()) @map("pr_id")
+  protocolId String  @map("protocol_id")
+  productId  String? @map("product_id")
+  casNumber  String? @map("cas_number")
+  quantity   Float
+  unit       String
+  isMatched  Boolean @default(false) @map("is_matched")
+
+  protocol Protocol @relation(fields: [protocolId], references: [id])
+  product  Product? @relation(fields: [productId], references: [id])
+
+  @@index([protocolId])
+  @@map("protocol_reagents")
+}
+
+model ExperimentLog {
+  id           String   @id @default(uuid()) @map("log_id")
+  experimentId String   @map("experiment_id")
+  action       String
+  details      Json?    @db.JsonB
+  timestamp    DateTime @default(now())
+
+  experiment Experiment @relation(fields: [experimentId], references: [id])
+
+  @@index([experimentId, timestamp])
+  @@map("experiment_logs")
+}
+
+model UsageRecord {
+  id           String   @id @default(uuid()) @map("usage_id")
+  userId       String   @map("user_id")
+  productId    String   @map("product_id")
+  experimentId String?  @map("experiment_id")
+  quantityUsed Float    @map("quantity_used")
+  unit         String
+  lotNumber    String?  @map("lot_number")
+  timestamp    DateTime @default(now())
+
+  user       User        @relation(fields: [userId], references: [id])
+  product    Product     @relation(fields: [productId], references: [id])
+  experiment Experiment? @relation(fields: [experimentId], references: [id])
+
+  @@index([userId, timestamp])
+  @@index([productId, timestamp])
+  @@map("usage_records")
+}
