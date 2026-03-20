@@ -31,6 +31,7 @@ export default function ReagentDetailPage() {
   );
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteVariants, setFavoriteVariants] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
   const addToCart = useCartStore((s) => s.addItem);
 
@@ -195,6 +196,7 @@ export default function ReagentDetailPage() {
                   <th className="text-right px-4 py-2.5 font-medium text-[var(--text-secondary)]">할인가</th>
                   <th className="text-center px-4 py-2.5 font-medium text-[var(--text-secondary)]">재고</th>
                   <th className="text-center px-4 py-2.5 font-medium text-[var(--text-secondary)]">납품예정일</th>
+                  <th className="text-center px-4 py-2.5 font-medium text-[var(--text-secondary)]">찜</th>
                 </tr>
               </thead>
               <tbody>
@@ -249,6 +251,27 @@ export default function ReagentDetailPage() {
                         {variant.sameDayShip && <Truck size={12} className="text-emerald-600" />}
                         {variant.deliveryDate || '-'}
                       </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFavoriteVariants((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(variant.id)) {
+                              next.delete(variant.id);
+                              showToast('즐겨찾기에서 제거되었습니다');
+                            } else {
+                              next.add(variant.id);
+                              showToast('즐겨찾기에 추가되었습니다');
+                            }
+                            return next;
+                          });
+                        }}
+                        className={`transition-colors ${favoriteVariants.has(variant.id) ? 'text-red-500' : 'text-[var(--text-secondary)] hover:text-red-400'}`}
+                      >
+                        <Heart size={14} fill={favoriteVariants.has(variant.id) ? 'currentColor' : 'none'} />
+                      </button>
                     </td>
                   </tr>
                 ))}

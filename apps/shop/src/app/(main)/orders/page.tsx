@@ -38,10 +38,38 @@ export default function OrdersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const handlePeriodClick = (p: string) => {
+    setPeriod(p);
+    setStartDate('');
+    setEndDate('');
+  };
+
+  const handleDateSearch = () => {
+    if (startDate || endDate) {
+      setPeriod('custom');
+    }
+  };
 
   const filtered = sampleOrders.filter((o) => {
     if (statusFilter !== 'all' && o.status !== statusFilter) return false;
     if (searchQuery && !o.orderNumber.includes(searchQuery) && !o.products.includes(searchQuery)) return false;
+    // Date range filter
+    if (startDate && o.orderedAt < startDate) return false;
+    if (endDate && o.orderedAt > endDate) return false;
+    // Period-based filter (when not using custom date)
+    if (period !== 'custom') {
+      const now = new Date();
+      let cutoff = new Date();
+      if (period === '1w') cutoff.setDate(now.getDate() - 7);
+      else if (period === '1m') cutoff.setMonth(now.getMonth() - 1);
+      else if (period === '3m') cutoff.setMonth(now.getMonth() - 3);
+      else if (period === '6m') cutoff.setMonth(now.getMonth() - 6);
+      const cutoffStr = cutoff.toISOString().split('T')[0];
+      if (o.orderedAt < cutoffStr) return false;
+    }
     return true;
   });
 
@@ -94,7 +122,7 @@ export default function OrdersPage() {
         {['1w', '1m', '3m', '6m'].map((p) => (
           <button
             key={p}
-            onClick={() => setPeriod(p)}
+            onClick={() => handlePeriodClick(p)}
             className={`h-[38px] px-4 text-sm rounded-lg border transition-colors ${
               period === p ? 'bg-blue-600 text-white border-blue-600' : 'border-[var(--border)] text-[var(--text)] hover:border-blue-400'
             }`}
@@ -102,10 +130,23 @@ export default function OrdersPage() {
             {p === '1w' ? '1주일' : p === '1m' ? '1개월' : p === '3m' ? '3개월' : '6개월'}
           </button>
         ))}
-        <input type="date" defaultValue="2026-01-01" className="h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]" />
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
+        />
         <span className="text-[var(--text-secondary)]">~</span>
-        <input type="date" defaultValue="2026-03-20" className="h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]" />
-        <button className="h-[38px] px-5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 flex items-center gap-1.5">
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
+        />
+        <button
+          onClick={handleDateSearch}
+          className="h-[38px] px-5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 flex items-center gap-1.5"
+        >
           <Search size={14} /> 조회
         </button>
 

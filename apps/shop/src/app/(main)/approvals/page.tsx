@@ -384,7 +384,7 @@ export default function ApprovalsPage() {
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-[var(--text-secondary)] mt-2">법인카드/개인카드 모두 가능합니다</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-2">연구비카드 (온라인 상거래 플랫폼 연동 예정) / 법인카드 / 개인카드 모두 가능합니다</p>
             </div>
           )}
 
@@ -416,9 +416,11 @@ export default function ApprovalsPage() {
                   <option value="shinhan">신한은행</option>
                   <option value="woori">우리은행</option>
                   <option value="hana">하나은행</option>
+                  <option value="nonghyup">농협</option>
                   <option value="ibk">기업은행</option>
-                  <option value="nonghyup">농협은행</option>
-                  <option value="kakao">카카오뱅크</option>
+                  <option value="sc">SC제일은행</option>
+                  <option value="daegu">대구은행</option>
+                  <option value="busan">부산은행</option>
                 </select>
               </div>
               <div>
@@ -480,7 +482,14 @@ export default function ApprovalsPage() {
             <tbody>
               {completedItems.map((item) => (
                 <tr key={item.id} className="border-b border-[var(--border)] last:border-0">
-                  <td className="px-4 py-3 font-mono text-xs text-[var(--text)]">{item.orderNumber}</td>
+                  <td className="px-4 py-3 font-mono text-xs">
+                    <button
+                      onClick={() => setSelectedItem(item)}
+                      className="text-blue-600 hover:underline font-medium"
+                    >
+                      {item.orderNumber}
+                    </button>
+                  </td>
                   <td className="px-4 py-3 text-[var(--text)]">{item.products}</td>
                   <td className="px-4 py-3 text-right font-medium text-[var(--text)]">{formatCurrency(item.totalAmount)}</td>
                   <td className="px-4 py-3 text-center text-[var(--text)]">{item.requester}</td>
@@ -500,12 +509,12 @@ export default function ApprovalsPage() {
       {/* Detail Modal */}
       {selectedItem && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setSelectedItem(null)}>
-          <div className="bg-[var(--bg-card)] rounded-2xl w-[500px] p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[var(--bg-card)] rounded-2xl w-[600px] max-h-[80vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-[var(--text)]">결제 상세</h2>
+              <h2 className="text-lg font-bold text-[var(--text)]">주문 상세</h2>
               <button onClick={() => setSelectedItem(null)} className="text-[var(--text-secondary)] hover:text-[var(--text)] text-xl">&times;</button>
             </div>
-            <div className="space-y-3 text-sm">
+            <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-3">
                 <div><span className="text-[var(--text-secondary)]">주문번호</span><p className="font-mono font-medium text-[var(--text)]">{selectedItem.orderNumber}</p></div>
                 <div><span className="text-[var(--text-secondary)]">요청자</span><p className="font-medium text-[var(--text)]">{selectedItem.requester}</p></div>
@@ -514,6 +523,40 @@ export default function ApprovalsPage() {
                 <div><span className="text-[var(--text-secondary)]">금액</span><p className="font-bold text-[var(--text)]">{formatCurrency(selectedItem.totalAmount)}</p></div>
                 <div><span className="text-[var(--text-secondary)]">상태</span><p><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[selectedItem.status]}`}>{statusLabels[selectedItem.status]}</span></p></div>
               </div>
+
+              {/* Order Items */}
+              <div className="border-t border-[var(--border)] pt-4">
+                <h3 className="text-sm font-semibold text-[var(--text)] mb-3">주문 품목</h3>
+                <div className="bg-[var(--bg)] rounded-lg p-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--text)]">{selectedItem.products}</span>
+                    <span className="font-medium text-[var(--text)]">{formatCurrency(selectedItem.totalAmount)}</span>
+                  </div>
+                  {selectedItem.itemCount > 1 && (
+                    <p className="text-xs text-[var(--text-secondary)] mt-1">외 {selectedItem.itemCount - 1}건</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Shipping Info */}
+              <div className="border-t border-[var(--border)] pt-4">
+                <h3 className="text-sm font-semibold text-[var(--text)] mb-3">배송지 정보</h3>
+                <div className="text-sm text-[var(--text-secondary)] space-y-1">
+                  <p>경상국립대학교 {selectedItem.department}</p>
+                  <p>경상남도 진주시 진주대로501 자연과학대학</p>
+                  <p>{selectedItem.requester} / 055-772-1234</p>
+                </div>
+              </div>
+
+              {/* Payment Info */}
+              <div className="border-t border-[var(--border)] pt-4">
+                <h3 className="text-sm font-semibold text-[var(--text)] mb-3">결제 정보</h3>
+                <div className="text-sm text-[var(--text-secondary)] space-y-1">
+                  <p>청구기관: 경상국립대학교 산학협력단</p>
+                  <p>PO번호: {selectedItem.orderNumber.replace('ORD-', '')}-{selectedItem.requester}</p>
+                </div>
+              </div>
+
               {selectedItem.note && (
                 <div className="border-t border-[var(--border)] pt-3">
                   <span className="text-[var(--text-secondary)]">비고</span>

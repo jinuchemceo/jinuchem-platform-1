@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, Grid3X3, List, Truck, ChevronDown, ChevronRight, RefreshCw, Package, ShoppingCart, Minus, Plus } from 'lucide-react';
+import { Search, Grid3X3, List, Truck, ChevronDown, ChevronRight, RefreshCw, Package, ShoppingCart, Minus, Plus, Heart } from 'lucide-react';
 import { sampleSupplies } from '@/lib/mock-data';
 import { formatCurrency, SUPPLY_CATEGORIES } from '@jinuchem/shared';
 import { useCartStore } from '@/stores/cartStore';
@@ -236,6 +236,7 @@ function SupplyGridCard({ supply, showToast }: { supply: SupplyCardData; showToa
   const [quantity, setQuantity] = useState(1);
   const [subPeriod, setSubPeriod] = useState('1m');
   const [useSubscription, setUseSubscription] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
   const addToCart = useCartStore((s) => s.addItem);
   const firstVariant = supply.variants[0];
   const price = firstVariant?.listPrice ?? 0;
@@ -266,9 +267,17 @@ function SupplyGridCard({ supply, showToast }: { supply: SupplyCardData; showToa
         </span>
       </div>
 
-      <h3 className="text-sm font-semibold text-[var(--text)] mb-3 line-clamp-2 min-h-[40px] group-hover:text-blue-600">
-        {supply.name}
-      </h3>
+      <div className="flex items-start justify-between mb-3">
+        <h3 className="text-sm font-semibold text-[var(--text)] line-clamp-2 min-h-[40px] group-hover:text-blue-600 flex-1">
+          {supply.name}
+        </h3>
+        <button
+          onClick={(e) => { e.stopPropagation(); setIsFavorite(!isFavorite); showToast(isFavorite ? '즐겨찾기에서 제거' : '즐겨찾기에 추가'); }}
+          className={`shrink-0 ml-2 transition-colors ${isFavorite ? 'text-red-500' : 'text-[var(--text-secondary)] hover:text-red-400'}`}
+        >
+          <Heart size={14} fill={isFavorite ? 'currentColor' : 'none'} />
+        </button>
+      </div>
 
       <p className="text-xs text-[var(--text-secondary)] mb-2">{supply.catalogNo}</p>
 
@@ -346,6 +355,7 @@ function SupplyGridCard({ supply, showToast }: { supply: SupplyCardData; showToa
 function SupplyListCard({ supply, showToast }: { supply: SupplyCardData; showToast: (msg: string) => void }) {
   const [quantity, setQuantity] = useState(1);
   const [subPeriod, setSubPeriod] = useState('1m');
+  const [isFavorite, setIsFavorite] = useState(false);
   const addToCart = useCartStore((s) => s.addItem);
   const firstVariant = supply.variants[0];
   const price = firstVariant?.listPrice ?? 0;
@@ -392,6 +402,12 @@ function SupplyListCard({ supply, showToast }: { supply: SupplyCardData; showToa
             <span className="text-xs text-violet-600">정기배송</span>
           </div>
         )}
+        <button
+          onClick={(e) => { e.stopPropagation(); setIsFavorite(!isFavorite); showToast(isFavorite ? '즐겨찾기에서 제거' : '즐겨찾기에 추가'); }}
+          className={`transition-colors ${isFavorite ? 'text-red-500' : 'text-[var(--text-secondary)] hover:text-red-400'}`}
+        >
+          <Heart size={14} fill={isFavorite ? 'currentColor' : 'none'} />
+        </button>
       </div>
 
       {/* Subscription Period */}
@@ -407,35 +423,36 @@ function SupplyListCard({ supply, showToast }: { supply: SupplyCardData; showToa
         </select>
       )}
 
-      {/* Quantity */}
-      <div className="flex items-center border border-[var(--border)] rounded-lg overflow-hidden shrink-0">
-        <button
-          onClick={() => setQuantity(Math.max(1, quantity - 1))}
-          className="w-[30px] h-[34px] flex items-center justify-center hover:bg-gray-100 text-[var(--text)]"
-        >
-          <Minus size={12} />
-        </button>
-        <input
-          type="number"
-          value={quantity}
-          onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-          className="w-[40px] h-[34px] text-center text-xs font-medium border-x border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)]"
-          min={1}
-        />
-        <button
-          onClick={() => setQuantity(quantity + 1)}
-          className="w-[30px] h-[34px] flex items-center justify-center hover:bg-gray-100 text-[var(--text)]"
-        >
-          <Plus size={12} />
-        </button>
-      </div>
-
       <div className="text-right shrink-0">
         <span className="text-base font-bold text-[var(--text)]">{formatCurrency(price)}</span>
-        <br />
+      </div>
+
+      {/* Quantity + Add to cart */}
+      <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center border border-[var(--border)] rounded-lg overflow-hidden">
+          <button
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            className="w-[30px] h-[34px] flex items-center justify-center hover:bg-gray-100 text-[var(--text)]"
+          >
+            <Minus size={12} />
+          </button>
+          <input
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+            className="w-[40px] h-[34px] text-center text-xs font-medium border-x border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)]"
+            min={1}
+          />
+          <button
+            onClick={() => setQuantity(quantity + 1)}
+            className="w-[30px] h-[34px] flex items-center justify-center hover:bg-gray-100 text-[var(--text)]"
+          >
+            <Plus size={12} />
+          </button>
+        </div>
         <button
           onClick={handleAddToCart}
-          className="mt-1 h-[34px] px-4 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+          className="h-[34px] px-4 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
         >
           <ShoppingCart size={12} /> 담기
         </button>

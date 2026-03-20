@@ -165,7 +165,15 @@ export default function MyPage() {
       <div className="space-y-6 max-w-[800px]">
         {/* Profile Section */}
         <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-6">
-          <h2 className="text-lg font-semibold text-[var(--text)] mb-5">프로필 정보</h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-semibold text-[var(--text)]">프로필 정보</h2>
+            <button
+              onClick={() => setShowProfileEdit(true)}
+              className="h-[30px] px-3 text-xs border border-[var(--border)] text-[var(--text-secondary)] rounded-lg hover:border-blue-400 hover:text-blue-600 flex items-center gap-1"
+            >
+              <Pencil size={12} /> 프로필 수정
+            </button>
+          </div>
           <div className="flex items-start gap-6">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-2xl font-bold shrink-0">
               K
@@ -215,12 +223,6 @@ export default function MyPage() {
               </div>
             </div>
           </div>
-          <button
-            onClick={() => setShowProfileEdit(true)}
-            className="mt-5 h-[38px] px-4 border border-[var(--border)] text-sm text-[var(--text)] rounded-lg hover:border-blue-400 flex items-center gap-1.5"
-          >
-            <Pencil size={14} /> 프로필 수정
-          </button>
         </div>
 
         {/* Shipping Addresses */}
@@ -353,9 +355,9 @@ export default function MyPage() {
           <h2 className="text-lg font-semibold text-[var(--text)] mb-5 flex items-center gap-2">
             <Bell size={18} /> 알림 설정
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-1">
             {notifications.map((notif) => (
-              <div key={notif.key} className="flex items-center justify-between py-3 border-b border-[var(--border)] last:border-0">
+              <div key={notif.key} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
                 <div className="flex items-center gap-3">
                   <span className="text-[var(--text-secondary)]">{notif.icon}</span>
                   <div>
@@ -365,13 +367,13 @@ export default function MyPage() {
                 </div>
                 <button
                   onClick={() => toggleNotification(notif.key)}
-                  className={`w-11 h-6 rounded-full transition-colors relative ${
+                  className={`w-10 h-5 rounded-full transition-colors relative ${
                     notif.enabled ? 'bg-blue-600' : 'bg-gray-300'
                   }`}
                 >
                   <span
-                    className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                      notif.enabled ? 'translate-x-[22px]' : 'translate-x-0.5'
+                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                      notif.enabled ? 'translate-x-[20px]' : 'translate-x-0.5'
                     }`}
                   />
                 </button>
