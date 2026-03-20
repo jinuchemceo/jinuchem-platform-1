@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { User, Mail, Phone, Building2, FlaskConical, Shield, MapPin, Plus, Trash2, Bell, Package, CreditCard, Truck, AlertTriangle, Tag } from 'lucide-react';
+import { User, Mail, Phone, Building2, FlaskConical, Shield, MapPin, Plus, Trash2, Bell, Package, CreditCard, Truck, AlertTriangle, Tag, Pencil, Search, X } from 'lucide-react';
 
 interface Address {
   id: string;
@@ -10,6 +10,7 @@ interface Address {
   phone: string;
   address: string;
   detail: string;
+  memo: string;
   isDefault: boolean;
 }
 
@@ -21,6 +22,7 @@ const initialAddresses: Address[] = [
     phone: '055-772-1234',
     address: '경상남도 진주시 진주대로501',
     detail: '자연과학대학 3층 302호 유기화학실험실',
+    memo: '수위실에 맡겨주세요',
     isDefault: true,
   },
   {
@@ -30,6 +32,7 @@ const initialAddresses: Address[] = [
     phone: '055-772-1235',
     address: '경상남도 진주시 진주대로501',
     detail: '자연과학대학 2층 203호',
+    memo: '',
     isDefault: false,
   },
 ];
@@ -42,14 +45,34 @@ interface NotifSetting {
   enabled: boolean;
 }
 
+// 도로명 주소 검색 샘플 결과
+const addressSearchResults = [
+  '경상남도 진주시 진주대로501',
+  '경상남도 진주시 동진로 33',
+  '경상남도 진주시 남강로 1',
+  '서울특별시 관악구 관악로 1',
+  '대전광역시 유성구 대학로 99',
+  '부산광역시 금정구 부산대학로63번길 2',
+];
+
 export default function MyPage() {
   const [addresses, setAddresses] = useState(initialAddresses);
   const [showAddAddress, setShowAddAddress] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [newLabel, setNewLabel] = useState('');
   const [newRecipient, setNewRecipient] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newAddress, setNewAddress] = useState('');
   const [newDetail, setNewDetail] = useState('');
+  const [newMemo, setNewMemo] = useState('');
+  const [addressQuery, setAddressQuery] = useState('');
+  const [showAddressSearch, setShowAddressSearch] = useState(false);
+
+  // 프로필 수정
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: '김연구', phone: '055-772-1234', department: '화학과', labName: '유기화학실험실',
+  });
 
   const [notifications, setNotifications] = useState<NotifSetting[]>([
     { key: 'quote', label: '견적 알림', description: '견적 도착 및 변경 시 알림', icon: <CreditCard size={16} />, enabled: true },
@@ -65,21 +88,34 @@ export default function MyPage() {
     );
   };
 
+  const resetAddressForm = () => {
+    setNewLabel(''); setNewRecipient(''); setNewPhone(''); setNewAddress(''); setNewDetail(''); setNewMemo(''); setAddressQuery(''); setShowAddressSearch(false);
+  };
+
   const handleAddAddress = () => {
     if (!newLabel || !newRecipient || !newAddress) return;
-    const newAddr: Address = {
-      id: String(Date.now()),
-      label: newLabel,
-      recipient: newRecipient,
-      phone: newPhone,
-      address: newAddress,
-      detail: newDetail,
-      isDefault: false,
-    };
-    setAddresses((prev) => [...prev, newAddr]);
+    if (editingAddressId) {
+      // 수정
+      setAddresses((prev) => prev.map((a) => a.id === editingAddressId ? { ...a, label: newLabel, recipient: newRecipient, phone: newPhone, address: newAddress, detail: newDetail, memo: newMemo } : a));
+      setEditingAddressId(null);
+    } else {
+      // 추가
+      const newAddr: Address = { id: String(Date.now()), label: newLabel, recipient: newRecipient, phone: newPhone, address: newAddress, detail: newDetail, memo: newMemo, isDefault: false };
+      setAddresses((prev) => [...prev, newAddr]);
+    }
     setShowAddAddress(false);
-    setNewLabel(''); setNewRecipient(''); setNewPhone(''); setNewAddress(''); setNewDetail('');
+    resetAddressForm();
   };
+
+  const startEditAddress = (addr: Address) => {
+    setEditingAddressId(addr.id);
+    setNewLabel(addr.label); setNewRecipient(addr.recipient); setNewPhone(addr.phone); setNewAddress(addr.address); setNewDetail(addr.detail); setNewMemo(addr.memo);
+    setShowAddAddress(true);
+  };
+
+  const filteredAddressResults = addressQuery.length >= 1
+    ? addressSearchResults.filter((a) => a.includes(addressQuery))
+    : [];
 
   const removeAddress = (id: string) => {
     setAddresses((prev) => prev.filter((a) => a.id !== id));
@@ -152,8 +188,11 @@ export default function MyPage() {
               </div>
             </div>
           </div>
-          <button className="mt-5 h-[38px] px-4 border border-[var(--border)] text-sm text-[var(--text-secondary)] rounded-lg hover:border-blue-400">
-            프로필 수정
+          <button
+            onClick={() => setShowProfileEdit(true)}
+            className="mt-5 h-[38px] px-4 border border-[var(--border)] text-sm text-[var(--text)] rounded-lg hover:border-blue-400 flex items-center gap-1.5"
+          >
+            <Pencil size={14} /> 프로필 수정
           </button>
         </div>
 
@@ -188,6 +227,7 @@ export default function MyPage() {
                     <p className="text-sm text-[var(--text)]">{addr.recipient} / {addr.phone}</p>
                     <p className="text-sm text-[var(--text-secondary)]">{addr.address}</p>
                     <p className="text-sm text-[var(--text-secondary)]">{addr.detail}</p>
+                    {addr.memo && <p className="text-xs text-amber-600 mt-1">메모: {addr.memo}</p>}
                   </div>
                   <div className="flex items-center gap-1">
                     {!addr.isDefault && (
@@ -199,8 +239,16 @@ export default function MyPage() {
                       </button>
                     )}
                     <button
+                      onClick={() => startEditAddress(addr)}
+                      className="h-[30px] w-[30px] border border-[var(--border)] rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-blue-500 hover:border-blue-300"
+                      title="수정"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                    <button
                       onClick={() => removeAddress(addr.id)}
                       className="h-[30px] w-[30px] border border-[var(--border)] rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-red-500 hover:border-red-300"
+                      title="삭제"
                     >
                       <Trash2 size={12} />
                     </button>
@@ -210,35 +258,71 @@ export default function MyPage() {
             ))}
           </div>
 
-          {/* Add Address Form */}
+          {/* Add/Edit Address Form */}
           {showAddAddress && (
-            <div className="mt-4 p-4 border border-dashed border-[var(--border)] rounded-lg space-y-3">
-              <h3 className="text-sm font-semibold text-[var(--text)]">새 배송지 추가</h3>
+            <div className="mt-4 p-5 border border-blue-200 bg-blue-50/30 rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-[var(--text)]">{editingAddressId ? '배송지 수정' : '새 배송지 추가'}</h3>
+                <button onClick={() => { setShowAddAddress(false); setEditingAddressId(null); resetAddressForm(); }} className="text-[var(--text-secondary)] hover:text-[var(--text)]"><X size={16} /></button>
+              </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs text-[var(--text-secondary)] mb-1">배송지명</label>
-                  <input type="text" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder="예: 연구실" className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm text-[var(--text)]" />
+                  <label className="block text-xs text-[var(--text-secondary)] mb-1">배송지명 *</label>
+                  <input type="text" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder="예: 연구실" className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-white text-sm text-[var(--text)]" />
                 </div>
                 <div>
-                  <label className="block text-xs text-[var(--text-secondary)] mb-1">수령인</label>
-                  <input type="text" value={newRecipient} onChange={(e) => setNewRecipient(e.target.value)} placeholder="이름" className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm text-[var(--text)]" />
+                  <label className="block text-xs text-[var(--text-secondary)] mb-1">수령인 *</label>
+                  <input type="text" value={newRecipient} onChange={(e) => setNewRecipient(e.target.value)} placeholder="이름" className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-white text-sm text-[var(--text)]" />
                 </div>
                 <div>
                   <label className="block text-xs text-[var(--text-secondary)] mb-1">연락처</label>
-                  <input type="text" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="전화번호" className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm text-[var(--text)]" />
+                  <input type="text" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="전화번호" className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-white text-sm text-[var(--text)]" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-[var(--text-secondary)] mb-1">주소</label>
-                <input type="text" value={newAddress} onChange={(e) => setNewAddress(e.target.value)} placeholder="기본 주소" className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm text-[var(--text)]" />
+                <label className="block text-xs text-[var(--text-secondary)] mb-1">주소 * (도로명 주소 검색)</label>
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-[11px] text-[var(--text-secondary)]" />
+                  <input
+                    type="text"
+                    value={addressQuery || newAddress}
+                    onChange={(e) => { setAddressQuery(e.target.value); setShowAddressSearch(true); if (!e.target.value) setNewAddress(''); }}
+                    onFocus={() => { if (addressQuery) setShowAddressSearch(true); }}
+                    placeholder="도로명, 건물명 또는 지번으로 검색"
+                    className="w-full h-[38px] pl-9 pr-3 border border-[var(--border)] rounded-lg bg-white text-sm text-[var(--text)]"
+                  />
+                  {showAddressSearch && filteredAddressResults.length > 0 && (
+                    <div className="absolute left-0 right-0 top-[40px] bg-white border border-[var(--border)] rounded-lg shadow-lg z-10 max-h-[180px] overflow-y-auto">
+                      {filteredAddressResults.map((addr, i) => (
+                        <button
+                          key={i}
+                          onClick={() => { setNewAddress(addr); setAddressQuery(''); setShowAddressSearch(false); }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-[var(--text)] hover:bg-blue-50 flex items-center gap-2 border-b border-[var(--border)] last:border-0"
+                        >
+                          <MapPin size={12} className="text-blue-500 shrink-0" />
+                          {addr}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {newAddress && (
+                  <p className="mt-1 text-xs text-blue-600 flex items-center gap-1">
+                    <MapPin size={10} /> {newAddress}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-xs text-[var(--text-secondary)] mb-1">상세 주소</label>
-                <input type="text" value={newDetail} onChange={(e) => setNewDetail(e.target.value)} placeholder="상세 주소" className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm text-[var(--text)]" />
+                <input type="text" value={newDetail} onChange={(e) => setNewDetail(e.target.value)} placeholder="건물명, 층, 호, 실험실 등" className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-white text-sm text-[var(--text)]" />
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => setShowAddAddress(false)} className="h-[38px] px-4 border border-[var(--border)] text-sm text-[var(--text-secondary)] rounded-lg hover:border-blue-400">취소</button>
-                <button onClick={handleAddAddress} className="h-[38px] px-4 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">추가</button>
+              <div>
+                <label className="block text-xs text-[var(--text-secondary)] mb-1">배송 메모</label>
+                <input type="text" value={newMemo} onChange={(e) => setNewMemo(e.target.value)} placeholder="예: 수위실에 맡겨주세요, 부재 시 연락 바랍니다" className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-white text-sm text-[var(--text)]" />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => { setShowAddAddress(false); setEditingAddressId(null); resetAddressForm(); }} className="h-[38px] px-4 border border-[var(--border)] text-sm text-[var(--text-secondary)] rounded-lg hover:border-blue-400">취소</button>
+                <button onClick={handleAddAddress} className="h-[38px] px-4 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">{editingAddressId ? '수정 완료' : '추가'}</button>
               </div>
             </div>
           )}
@@ -276,6 +360,40 @@ export default function MyPage() {
           </div>
         </div>
       </div>
+
+      {/* Profile Edit Modal */}
+      {showProfileEdit && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowProfileEdit(false)}>
+          <div className="bg-[var(--bg-card)] rounded-2xl w-[480px] p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-[var(--text)]">프로필 수정</h2>
+              <button onClick={() => setShowProfileEdit(false)} className="text-[var(--text-secondary)] hover:text-[var(--text)]"><X size={18} /></button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">이름</label>
+                <input type="text" value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm text-[var(--text)]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">전화번호</label>
+                <input type="text" value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm text-[var(--text)]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">부서/학과</label>
+                <input type="text" value={profileForm.department} onChange={(e) => setProfileForm({ ...profileForm, department: e.target.value })} className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm text-[var(--text)]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">연구실명</label>
+                <input type="text" value={profileForm.labName} onChange={(e) => setProfileForm({ ...profileForm, labName: e.target.value })} className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm text-[var(--text)]" />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => setShowProfileEdit(false)} className="flex-1 h-[38px] border border-[var(--border)] text-sm rounded-lg text-[var(--text)]">취소</button>
+                <button onClick={() => setShowProfileEdit(false)} className="flex-1 h-[38px] bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">저장</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

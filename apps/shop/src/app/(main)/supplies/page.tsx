@@ -160,9 +160,7 @@ export default function SupplyOrderPage() {
                   }`}
                 >
                   <span>{cat.name}</span>
-                  <span className="text-xs text-[var(--text-secondary)]">
-                    {cat.subcategories.length}
-                  </span>
+                  {expandedCategories[cat.id] ? <ChevronDown size={12} className="text-[var(--text-secondary)]" /> : <ChevronRight size={12} className="text-[var(--text-secondary)]" />}
                 </button>
                 {expandedCategories[cat.id] && (
                   <div className="ml-4 mt-0.5 space-y-0.5">
@@ -237,6 +235,7 @@ export default function SupplyOrderPage() {
 function SupplyGridCard({ supply, showToast }: { supply: SupplyCardData; showToast: (msg: string) => void }) {
   const [quantity, setQuantity] = useState(1);
   const [subPeriod, setSubPeriod] = useState('1m');
+  const [useSubscription, setUseSubscription] = useState(false);
   const addToCart = useCartStore((s) => s.addItem);
   const firstVariant = supply.variants[0];
   const price = firstVariant?.listPrice ?? 0;
@@ -283,21 +282,22 @@ function SupplyGridCard({ supply, showToast }: { supply: SupplyCardData; showToa
           </div>
         )}
         {supply.subscriptionAvailable && (
-          <div className="flex items-center gap-1">
+          <label className="flex items-center gap-1 cursor-pointer" onClick={(e) => e.stopPropagation()}>
+            <input type="checkbox" checked={useSubscription} onChange={(e) => setUseSubscription(e.target.checked)} className="accent-violet-600 w-3 h-3" />
             <RefreshCw size={12} className="text-violet-600" />
             <span className="text-xs text-violet-600 font-medium">정기배송</span>
-          </div>
+          </label>
         )}
       </div>
 
-      {/* Subscription Period */}
-      {supply.subscriptionAvailable && (
+      {/* Subscription Period — 체크 시에만 표시 */}
+      {supply.subscriptionAvailable && useSubscription && (
         <div className="mb-3">
           <select
             value={subPeriod}
             onChange={(e) => { e.stopPropagation(); setSubPeriod(e.target.value); }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full h-[30px] px-2 border border-[var(--border)] rounded text-xs bg-[var(--bg-card)] text-[var(--text)]"
+            className="w-full h-[30px] px-2 border border-violet-300 rounded text-xs bg-violet-50 text-violet-700"
           >
             {SUBSCRIPTION_PERIODS.map((p) => (
               <option key={p.value} value={p.value}>정기배송: {p.label}</option>

@@ -32,7 +32,9 @@ export default function FavoritesPage() {
   }, [favorites, searchQuery]);
 
   const removeFromFavorites = (id: string) => {
+    const item = favorites.find((r) => r.id === id);
     setFavorites((prev) => prev.filter((r) => r.id !== id));
+    showToast(`${item?.name || '제품'} 즐겨찾기에서 삭제되었습니다`);
   };
 
   const handleAddToCart = (reagent: typeof sampleReagents[0]) => {
