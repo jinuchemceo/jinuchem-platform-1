@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Search, Atom, FileText, FlaskConical, RotateCcw, ZoomIn, ZoomOut, Eraser } from 'lucide-react';
+import { X, Search, Atom, FileText, FlaskConical } from 'lucide-react';
+import { StructureEditor } from './StructureEditor';
 
 type TabType = 'draw' | 'smiles' | 'formula';
 
@@ -104,39 +105,7 @@ export function StructureSearchModal({ isOpen, onClose, onSearch }: StructureSea
 
           {/* Draw Tab */}
           {activeTab === 'draw' && (
-            <div>
-              {/* Toolbar */}
-              <div className="flex items-center gap-1 mb-3 p-2 bg-gray-50 rounded-lg border border-[var(--border)]">
-                {['C', 'N', 'O', 'S', 'P', 'F', 'Cl', 'Br'].map((el) => (
-                  <button key={el} className="w-8 h-8 text-xs font-bold text-[var(--text)] border border-[var(--border)] rounded hover:bg-blue-50 hover:border-blue-400 bg-white">
-                    {el}
-                  </button>
-                ))}
-                <div className="w-px h-6 bg-[var(--border)] mx-1" />
-                <button className="w-8 h-8 flex items-center justify-center text-[var(--text-secondary)] border border-[var(--border)] rounded hover:bg-blue-50 bg-white" title="되돌리기">
-                  <RotateCcw size={14} />
-                </button>
-                <button className="w-8 h-8 flex items-center justify-center text-[var(--text-secondary)] border border-[var(--border)] rounded hover:bg-blue-50 bg-white" title="지우기">
-                  <Eraser size={14} />
-                </button>
-                <button className="w-8 h-8 flex items-center justify-center text-[var(--text-secondary)] border border-[var(--border)] rounded hover:bg-blue-50 bg-white" title="확대">
-                  <ZoomIn size={14} />
-                </button>
-                <button className="w-8 h-8 flex items-center justify-center text-[var(--text-secondary)] border border-[var(--border)] rounded hover:bg-blue-50 bg-white" title="축소">
-                  <ZoomOut size={14} />
-                </button>
-              </div>
-
-              {/* Canvas */}
-              <div className="w-full h-[280px] border-2 border-dashed border-[var(--border)] rounded-xl flex items-center justify-center bg-white">
-                <div className="text-center text-[var(--text-secondary)]">
-                  <FlaskConical size={48} className="mx-auto mb-3 opacity-20" />
-                  <p className="text-sm font-medium">구조식 에디터 영역</p>
-                  <p className="text-xs mt-1">원소 버튼을 선택하고 캔버스에 그리세요</p>
-                  <p className="text-xs mt-0.5">또는 SMILES/분자식 탭을 이용하세요</p>
-                </div>
-              </div>
-            </div>
+            <StructureEditor />
           )}
 
           {/* SMILES Tab */}
