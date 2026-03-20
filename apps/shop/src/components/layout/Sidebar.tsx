@@ -179,7 +179,13 @@ export function Sidebar() {
           <User size={18} />
           <span>마이페이지</span>
         </Link>
-        <button className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg w-full ${inactiveCls}`}>
+        <button
+          onClick={async () => {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+          }}
+          className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg w-full ${inactiveCls}`}
+        >
           <LogOut size={18} />
           <span>로그아웃</span>
         </button>
