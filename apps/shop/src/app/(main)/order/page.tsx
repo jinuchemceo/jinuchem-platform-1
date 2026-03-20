@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Search, SlidersHorizontal, Grid3X3, List, ChevronDown, Truck, FlaskConical } from 'lucide-react';
+import { CardStructureImage } from '@/components/products/CardStructureImage';
 import { sampleReagents, supplierList, gradeList } from '@/lib/mock-data';
 import { formatCurrency } from '@jinuchem/shared';
 
@@ -255,10 +256,12 @@ function ReagentGridCard({ reagent }: { reagent: ReagentCardData }) {
         <span className="text-xs text-blue-600 font-medium">{reagent.supplierName}</span>
       </div>
 
-      {/* Structure Image */}
-      <div className="h-[140px] flex items-center justify-center bg-gray-50 mx-3 rounded-lg mb-2">
-        <span className="text-3xl font-mono text-gray-300">{reagent.formula || '?'}</span>
-      </div>
+      {/* Structure Image (PubChem) */}
+      <CardStructureImage
+        casNumber={reagent.casNumber}
+        fallbackFormula={reagent.formula}
+        className="h-[140px] mx-3 rounded-lg mb-2"
+      />
 
       {/* Info */}
       <div className="px-4 pb-4">
@@ -302,10 +305,12 @@ function ReagentListCard({ reagent }: { reagent: ReagentCardData }) {
 
   return (
     <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 flex gap-4 items-center hover:shadow-md transition-shadow cursor-pointer group">
-      {/* Structure */}
-      <div className="w-[100px] h-[100px] flex items-center justify-center bg-gray-50 rounded-lg shrink-0">
-        <span className="text-xl font-mono text-gray-300">{reagent.formula || '?'}</span>
-      </div>
+      {/* Structure (PubChem) */}
+      <CardStructureImage
+        casNumber={reagent.casNumber}
+        fallbackFormula={reagent.formula}
+        className="w-[100px] h-[100px] rounded-lg shrink-0"
+      />
 
       {/* Info */}
       <div className="flex-1 min-w-0">
