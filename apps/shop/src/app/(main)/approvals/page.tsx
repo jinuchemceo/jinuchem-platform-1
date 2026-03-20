@@ -160,17 +160,22 @@ export default function ApprovalsPage() {
 
     const count = selectedIds.size;
     const methodLabel = paymentMethod === 'card' ? '카드결제' : paymentMethod === 'tax_invoice' ? '세금계산서' : '계좌이체';
+    const isImmediate = paymentMethod === 'card';
+    const statusResult = isImmediate ? 'approved' as const : 'pending' as const;
+    const noteResult = isImmediate
+      ? `${methodLabel} 결제완료`
+      : `${methodLabel} 결제요청 (입금 확인 후 결제완료)`;
 
     setApprovals((prev) =>
       prev.map((a) =>
-        selectedIds.has(a.id) ? { ...a, status: 'approved' as const, note: `${methodLabel} ${paymentMethod === 'bank_transfer' ? '(입금 확인 대기)' : '완료'}`, paidAt: new Date().toISOString().split('T')[0] } : a
+        selectedIds.has(a.id) ? { ...a, status: statusResult, note: noteResult, paidAt: isImmediate ? new Date().toISOString().split('T')[0] : undefined } : a
       )
     );
     setSelectedIds(new Set());
     showToast(
-      paymentMethod === 'bank_transfer'
-        ? `${count}건 계좌이체 신청 완료. 입금 확인 후 처리됩니다.`
-        : `${count}건 결제가 완료되었습니다.`
+      isImmediate
+        ? `${count}건 카드결제 완료`
+        : `${count}건 ${methodLabel} 결제요청 완료. 입금 확인 후 결제완료 처리됩니다.`
     );
   };
 
