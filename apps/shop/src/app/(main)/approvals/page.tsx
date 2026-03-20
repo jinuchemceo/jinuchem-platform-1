@@ -403,39 +403,38 @@ export default function ApprovalsPage() {
           )}
 
           {paymentMethod === 'bank_transfer' && (
-            <div className="space-y-3">
-              <div className="flex items-end gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text)] mb-2">은행 선택</label>
-                  <select
-                    value={selectedBank}
-                    onChange={(e) => setSelectedBank(e.target.value)}
-                    className="w-[180px] h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
-                  >
-                    <option value="">은행 선택</option>
-                    <option value="kookmin">국민은행</option>
-                    <option value="shinhan">신한은행</option>
-                    <option value="woori">우리은행</option>
-                    <option value="hana">하나은행</option>
-                    <option value="nonghyup">농협</option>
-                    <option value="ibk">기업은행</option>
-                    <option value="sc">SC제일은행</option>
-                    <option value="daegu">대구은행</option>
-                    <option value="busan">부산은행</option>
-                  </select>
-                </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-[var(--text)] mb-2">계좌번호</label>
-                  <input
-                    type="text"
-                    value={accountNo}
-                    onChange={(e) => setAccountNo(e.target.value.replace(/\D/g, ''))}
-                    placeholder="계좌번호 입력 (숫자만)"
-                    className="w-full h-[38px] px-4 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
-                  />
+            <div className="space-y-4">
+              {/* 지누켐 입금 계좌 안내 */}
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm font-semibold text-blue-800 mb-2">입금 계좌 안내</p>
+                <div className="flex items-center gap-6 text-sm">
+                  <div>
+                    <span className="text-blue-600">은행</span>
+                    <p className="font-bold text-[var(--text)]">국민은행</p>
+                  </div>
+                  <div>
+                    <span className="text-blue-600">계좌번호</span>
+                    <p className="font-bold text-[var(--text)]">000-000-00-000000</p>
+                  </div>
+                  <div>
+                    <span className="text-blue-600">예금주</span>
+                    <p className="font-bold text-[var(--text)]">(주)지누켐</p>
+                  </div>
                 </div>
               </div>
-              <p className="text-xs text-[var(--text-secondary)]">입금 확인까지 1~2영업일이 소요될 수 있습니다</p>
+
+              {/* 입금자 정보 */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-2">입금자명</label>
+                <input
+                  type="text"
+                  value={accountNo}
+                  onChange={(e) => setAccountNo(e.target.value)}
+                  placeholder="입금자명 (미입력 시 주문자명)"
+                  className="w-[300px] h-[38px] px-4 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
+                />
+              </div>
+              <p className="text-xs text-[var(--text-secondary)]">입금 확인까지 1~2영업일이 소요될 수 있습니다. 주문금액과 동일하게 입금해주세요.</p>
             </div>
           )}
         </div>
