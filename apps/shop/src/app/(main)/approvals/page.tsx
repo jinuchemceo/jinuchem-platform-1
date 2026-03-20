@@ -15,6 +15,7 @@ interface ApprovalItem {
   requestedAt: string;
   status: 'pending' | 'approved' | 'rejected';
   note?: string;
+  paidAt?: string;
 }
 
 const sampleApprovals: ApprovalItem[] = [
@@ -51,6 +52,7 @@ const sampleApprovals: ApprovalItem[] = [
     requestedAt: '2026-03-17',
     status: 'approved',
     note: '긴급 실험 건으로 승인',
+    paidAt: '2026-03-18',
   },
   {
     id: '4',
@@ -161,7 +163,7 @@ export default function ApprovalsPage() {
 
     setApprovals((prev) =>
       prev.map((a) =>
-        selectedIds.has(a.id) ? { ...a, status: 'approved' as const, note: `${methodLabel} ${paymentMethod === 'bank_transfer' ? '(입금 확인 대기)' : '완료'}` } : a
+        selectedIds.has(a.id) ? { ...a, status: 'approved' as const, note: `${methodLabel} ${paymentMethod === 'bank_transfer' ? '(입금 확인 대기)' : '완료'}`, paidAt: new Date().toISOString().split('T')[0] } : a
       )
     );
     setSelectedIds(new Set());
@@ -480,6 +482,7 @@ export default function ApprovalsPage() {
                 <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">요청자</th>
                 <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">상태</th>
                 <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">비고</th>
+                <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">결제일자</th>
               </tr>
             </thead>
             <tbody>
@@ -502,6 +505,7 @@ export default function ApprovalsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center text-xs text-[var(--text-secondary)]">{item.note || '-'}</td>
+                  <td className="px-4 py-3 text-center text-xs text-[var(--text-secondary)]">{item.paidAt || '-'}</td>
                 </tr>
               ))}
             </tbody>
