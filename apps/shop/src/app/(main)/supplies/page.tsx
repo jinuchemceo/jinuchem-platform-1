@@ -315,12 +315,12 @@ function SupplyGridCard({ supply, showToast }: { supply: SupplyCardData; showToa
         </div>
       )}
 
-      {/* Quantity */}
-      <div className="flex items-center gap-2 mb-3" onClick={(e) => e.stopPropagation()}>
+      {/* Quantity + Cart Button - 한 줄 */}
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center border border-[var(--border)] rounded-lg overflow-hidden">
           <button
             onClick={() => setQuantity(Math.max(1, quantity - 1))}
-            className="w-[28px] h-[28px] flex items-center justify-center hover:bg-gray-100 text-[var(--text)]"
+            className="w-[28px] h-[34px] flex items-center justify-center hover:bg-gray-100 text-[var(--text)]"
           >
             <Minus size={12} />
           </button>
@@ -328,25 +328,23 @@ function SupplyGridCard({ supply, showToast }: { supply: SupplyCardData; showToa
             type="number"
             value={quantity}
             onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-[36px] h-[28px] text-center text-xs font-medium border-x border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)]"
+            className="w-[36px] h-[34px] text-center text-xs font-medium border-x border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)]"
             min={1}
           />
           <button
             onClick={() => setQuantity(quantity + 1)}
-            className="w-[28px] h-[28px] flex items-center justify-center hover:bg-gray-100 text-[var(--text)]"
+            className="w-[28px] h-[34px] flex items-center justify-center hover:bg-gray-100 text-[var(--text)]"
           >
             <Plus size={12} />
           </button>
         </div>
-        <span className="text-xs text-[var(--text-secondary)]">개</span>
+        <button
+          className="flex-1 h-[34px] bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
+          onClick={handleAddToCart}
+        >
+          <ShoppingCart size={12} /> 담기
+        </button>
       </div>
-
-      <button
-        className="w-full h-[34px] bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
-        onClick={handleAddToCart}
-      >
-        <ShoppingCart size={12} /> 장바구니 담기
-      </button>
     </div>
   );
 }
