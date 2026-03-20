@@ -9,6 +9,7 @@
     "./utils": "./src/utils.ts",
     "./constants": "./src/constants.ts",
     "./validators": "./src/validators.ts",
-    "./types": "./src/types/index.ts"
+    "./types": "./src/types/index.ts",
+    "./services/pubchem": "./src/services/pubchem.ts"
   }
 }
