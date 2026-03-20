@@ -403,35 +403,37 @@ export default function ApprovalsPage() {
           )}
 
           {paymentMethod === 'bank_transfer' && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-2">은행 선택</label>
-                <select
-                  value={selectedBank}
-                  onChange={(e) => setSelectedBank(e.target.value)}
-                  className="w-[200px] h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
-                >
-                  <option value="">은행 선택</option>
-                  <option value="kookmin">국민은행</option>
-                  <option value="shinhan">신한은행</option>
-                  <option value="woori">우리은행</option>
-                  <option value="hana">하나은행</option>
-                  <option value="nonghyup">농협</option>
-                  <option value="ibk">기업은행</option>
-                  <option value="sc">SC제일은행</option>
-                  <option value="daegu">대구은행</option>
-                  <option value="busan">부산은행</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-2">계좌번호</label>
-                <input
-                  type="text"
-                  value={accountNo}
-                  onChange={(e) => setAccountNo(e.target.value.replace(/\D/g, ''))}
-                  placeholder="계좌번호 입력 (숫자만)"
-                  className="w-[300px] h-[38px] px-4 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
-                />
+            <div className="space-y-3">
+              <div className="flex items-end gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text)] mb-2">은행 선택</label>
+                  <select
+                    value={selectedBank}
+                    onChange={(e) => setSelectedBank(e.target.value)}
+                    className="w-[180px] h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
+                  >
+                    <option value="">은행 선택</option>
+                    <option value="kookmin">국민은행</option>
+                    <option value="shinhan">신한은행</option>
+                    <option value="woori">우리은행</option>
+                    <option value="hana">하나은행</option>
+                    <option value="nonghyup">농협</option>
+                    <option value="ibk">기업은행</option>
+                    <option value="sc">SC제일은행</option>
+                    <option value="daegu">대구은행</option>
+                    <option value="busan">부산은행</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-[var(--text)] mb-2">계좌번호</label>
+                  <input
+                    type="text"
+                    value={accountNo}
+                    onChange={(e) => setAccountNo(e.target.value.replace(/\D/g, ''))}
+                    placeholder="계좌번호 입력 (숫자만)"
+                    className="w-full h-[38px] px-4 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
+                  />
+                </div>
               </div>
               <p className="text-xs text-[var(--text-secondary)]">입금 확인까지 1~2영업일이 소요될 수 있습니다</p>
             </div>
