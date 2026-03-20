@@ -179,7 +179,7 @@ export default function DocumentsPage() {
 
   ${stampSection}
 
-  <p class="footer">본 문서는 JINU Shop(jinuchem.com)에서 전자 발행되었습니다.<br/>문의: 070-8027-2696 | jinuchem.ceo@gmail.com</p>
+  <p class="footer">본 문서는 JINU Shop(jinuchem.com)에서 전자 발행되었습니다.<br/>문의: 010-5651-1053 | jinuchem.ceo@gmail.com</p>
   <script>window.onload=function(){window.print();}</script>
 </body></html>`);
     pw.document.close();
