@@ -107,7 +107,7 @@ export default function ChatPage() {
               <button
                 key={room.id}
                 onClick={() => setActiveRoomId(room.id)}
-                className={`w-full px-4 py-4 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-[var(--border)] last:border-0 ${
+                className={`w-full px-4 py-5 text-left flex items-center gap-4 hover:bg-gray-50 transition-colors border-b border-[var(--border)] last:border-0 ${
                   activeRoomId === room.id ? 'bg-blue-50' : ''
                 }`}
               >
