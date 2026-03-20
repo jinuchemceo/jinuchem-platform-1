@@ -83,6 +83,7 @@ export default function MyPage() {
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [profileForm, setProfileForm] = useState({
     name: '김연구', phone: '055-772-1234', department: '화학과', labName: '유기화학실험실',
+    advisorName: '김교수', advisorEmail: 'professor@gnu.ac.kr',
   });
 
   const [notifications, setNotifications] = useState<NotifSetting[]>([
@@ -212,6 +213,20 @@ export default function MyPage() {
                   <p className="font-medium text-[var(--text)]">
                     <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">연구원</span>
                   </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <User size={16} className="text-[var(--text-secondary)]" />
+                <div>
+                  <p className="text-xs text-[var(--text-secondary)]">지도교수</p>
+                  <p className="font-medium text-[var(--text)]">{profileForm.advisorName}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail size={16} className="text-[var(--text-secondary)]" />
+                <div>
+                  <p className="text-xs text-[var(--text-secondary)]">지도교수 이메일</p>
+                  <p className="font-medium text-[var(--text)]">{profileForm.advisorEmail}</p>
                 </div>
               </div>
             </div>
@@ -406,6 +421,17 @@ export default function MyPage() {
               <div>
                 <label className="block text-sm font-medium text-[var(--text)] mb-1">연구실명</label>
                 <input type="text" value={profileForm.labName} onChange={(e) => setProfileForm({ ...profileForm, labName: e.target.value })} className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm text-[var(--text)]" />
+              </div>
+              <div className="col-span-1 border-t border-[var(--border)] pt-3 mt-1">
+                <p className="text-xs text-[var(--text-secondary)] mb-3">지도교수 정보 (연구원만 해당)</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">지도교수명</label>
+                <input type="text" value={profileForm.advisorName} onChange={(e) => setProfileForm({ ...profileForm, advisorName: e.target.value })} className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm text-[var(--text)]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">지도교수 이메일</label>
+                <input type="email" value={profileForm.advisorEmail} onChange={(e) => setProfileForm({ ...profileForm, advisorEmail: e.target.value })} className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm text-[var(--text)]" />
               </div>
               <div className="flex gap-2 pt-2">
                 <button onClick={() => setShowProfileEdit(false)} className="flex-1 h-[38px] border border-[var(--border)] text-sm rounded-lg text-[var(--text)]">취소</button>
