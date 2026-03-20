@@ -24,7 +24,7 @@ export function Footer() {
             <p>대표자명 : 김병선</p>
             <p>주소 : 경상남도 진주시 진주대로501, 창업보육센터 C동 214호</p>
             <p>연락처 : 010-5651-1053</p>
-            <p>e-mail : jinuchem.ceo@gmail.com</p>
+            <p>e-mail : jinuchem.reagent@gmail.com</p>
           </div>
           <div className="text-slate-500 text-xs mt-2">
             Copyright &copy; JINUCHEM All rights reserved.
