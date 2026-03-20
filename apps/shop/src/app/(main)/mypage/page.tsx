@@ -3,11 +3,31 @@
 import { useState } from 'react';
 import { User, Mail, Phone, Building2, FlaskConical, Shield, MapPin, Plus, Trash2, Bell, Package, CreditCard, Truck, AlertTriangle, Tag, Pencil, Search, X } from 'lucide-react';
 
+// 다음 우편번호 API 타입
+declare global {
+  interface Window {
+    daum: {
+      Postcode: new (options: {
+        oncomplete: (data: {
+          zonecode: string;
+          roadAddress: string;
+          jibunAddress: string;
+          buildingName: string;
+          apartment: string;
+        }) => void;
+        width?: string | number;
+        height?: string | number;
+      }) => { open: () => void };
+    };
+  }
+}
+
 interface Address {
   id: string;
   label: string;
   recipient: string;
   phone: string;
+  zonecode: string;
   address: string;
   detail: string;
   memo: string;
@@ -20,6 +40,7 @@ const initialAddresses: Address[] = [
     label: '연구실',
     recipient: '김연구',
     phone: '055-772-1234',
+    zonecode: '52828',
     address: '경상남도 진주시 진주대로501',
     detail: '자연과학대학 3층 302호 유기화학실험실',
     memo: '수위실에 맡겨주세요',
@@ -30,6 +51,7 @@ const initialAddresses: Address[] = [
     label: '사무실',
     recipient: '김연구',
     phone: '055-772-1235',
+    zonecode: '52828',
     address: '경상남도 진주시 진주대로501',
     detail: '자연과학대학 2층 203호',
     memo: '',
@@ -45,16 +67,6 @@ interface NotifSetting {
   enabled: boolean;
 }
 
-// 도로명 주소 검색 샘플 결과
-const addressSearchResults = [
-  '경상남도 진주시 진주대로501',
-  '경상남도 진주시 동진로 33',
-  '경상남도 진주시 남강로 1',
-  '서울특별시 관악구 관악로 1',
-  '대전광역시 유성구 대학로 99',
-  '부산광역시 금정구 부산대학로63번길 2',
-];
-
 export default function MyPage() {
   const [addresses, setAddresses] = useState(initialAddresses);
   const [showAddAddress, setShowAddAddress] = useState(false);
@@ -62,11 +74,10 @@ export default function MyPage() {
   const [newLabel, setNewLabel] = useState('');
   const [newRecipient, setNewRecipient] = useState('');
   const [newPhone, setNewPhone] = useState('');
+  const [newZonecode, setNewZonecode] = useState('');
   const [newAddress, setNewAddress] = useState('');
   const [newDetail, setNewDetail] = useState('');
   const [newMemo, setNewMemo] = useState('');
-  const [addressQuery, setAddressQuery] = useState('');
-  const [showAddressSearch, setShowAddressSearch] = useState(false);
 
   // 프로필 수정
   const [showProfileEdit, setShowProfileEdit] = useState(false);
@@ -89,18 +100,16 @@ export default function MyPage() {
   };
 
   const resetAddressForm = () => {
-    setNewLabel(''); setNewRecipient(''); setNewPhone(''); setNewAddress(''); setNewDetail(''); setNewMemo(''); setAddressQuery(''); setShowAddressSearch(false);
+    setNewLabel(''); setNewRecipient(''); setNewPhone(''); setNewZonecode(''); setNewAddress(''); setNewDetail(''); setNewMemo('');
   };
 
   const handleAddAddress = () => {
     if (!newLabel || !newRecipient || !newAddress) return;
     if (editingAddressId) {
-      // 수정
-      setAddresses((prev) => prev.map((a) => a.id === editingAddressId ? { ...a, label: newLabel, recipient: newRecipient, phone: newPhone, address: newAddress, detail: newDetail, memo: newMemo } : a));
+      setAddresses((prev) => prev.map((a) => a.id === editingAddressId ? { ...a, label: newLabel, recipient: newRecipient, phone: newPhone, zonecode: newZonecode, address: newAddress, detail: newDetail, memo: newMemo } : a));
       setEditingAddressId(null);
     } else {
-      // 추가
-      const newAddr: Address = { id: String(Date.now()), label: newLabel, recipient: newRecipient, phone: newPhone, address: newAddress, detail: newDetail, memo: newMemo, isDefault: false };
+      const newAddr: Address = { id: String(Date.now()), label: newLabel, recipient: newRecipient, phone: newPhone, zonecode: newZonecode, address: newAddress, detail: newDetail, memo: newMemo, isDefault: false };
       setAddresses((prev) => [...prev, newAddr]);
     }
     setShowAddAddress(false);
@@ -109,13 +118,32 @@ export default function MyPage() {
 
   const startEditAddress = (addr: Address) => {
     setEditingAddressId(addr.id);
-    setNewLabel(addr.label); setNewRecipient(addr.recipient); setNewPhone(addr.phone); setNewAddress(addr.address); setNewDetail(addr.detail); setNewMemo(addr.memo);
+    setNewLabel(addr.label); setNewRecipient(addr.recipient); setNewPhone(addr.phone); setNewZonecode(addr.zonecode); setNewAddress(addr.address); setNewDetail(addr.detail); setNewMemo(addr.memo);
     setShowAddAddress(true);
   };
 
-  const filteredAddressResults = addressQuery.length >= 1
-    ? addressSearchResults.filter((a) => a.includes(addressQuery))
-    : [];
+  // 다음 우편번호 API 호출
+  const openPostcode = () => {
+    if (!window.daum) {
+      // 스크립트 동적 로드
+      const script = document.createElement('script');
+      script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+      script.onload = () => execPostcode();
+      document.head.appendChild(script);
+    } else {
+      execPostcode();
+    }
+  };
+
+  const execPostcode = () => {
+    new window.daum.Postcode({
+      oncomplete: (data) => {
+        const fullAddress = data.roadAddress || data.jibunAddress;
+        setNewZonecode(data.zonecode);
+        setNewAddress(fullAddress + (data.buildingName ? ` (${data.buildingName})` : ''));
+      },
+    }).open();
+  };
 
   const removeAddress = (id: string) => {
     setAddresses((prev) => prev.filter((a) => a.id !== id));
@@ -225,7 +253,7 @@ export default function MyPage() {
                       )}
                     </div>
                     <p className="text-sm text-[var(--text)]">{addr.recipient} / {addr.phone}</p>
-                    <p className="text-sm text-[var(--text-secondary)]">{addr.address}</p>
+                    <p className="text-sm text-[var(--text-secondary)]">[{addr.zonecode}] {addr.address}</p>
                     <p className="text-sm text-[var(--text-secondary)]">{addr.detail}</p>
                     {addr.memo && <p className="text-xs text-amber-600 mt-1">메모: {addr.memo}</p>}
                   </div>
@@ -280,37 +308,30 @@ export default function MyPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-[var(--text-secondary)] mb-1">주소 * (도로명 주소 검색)</label>
-                <div className="relative">
-                  <Search size={14} className="absolute left-3 top-[11px] text-[var(--text-secondary)]" />
+                <label className="block text-xs text-[var(--text-secondary)] mb-1">주소 *</label>
+                <div className="flex gap-2 mb-2">
                   <input
                     type="text"
-                    value={addressQuery || newAddress}
-                    onChange={(e) => { setAddressQuery(e.target.value); setShowAddressSearch(true); if (!e.target.value) setNewAddress(''); }}
-                    onFocus={() => { if (addressQuery) setShowAddressSearch(true); }}
-                    placeholder="도로명, 건물명 또는 지번으로 검색"
-                    className="w-full h-[38px] pl-9 pr-3 border border-[var(--border)] rounded-lg bg-white text-sm text-[var(--text)]"
+                    value={newZonecode}
+                    readOnly
+                    placeholder="우편번호"
+                    className="w-[120px] h-[38px] px-3 border border-[var(--border)] rounded-lg bg-gray-50 text-sm text-[var(--text)] cursor-default"
                   />
-                  {showAddressSearch && filteredAddressResults.length > 0 && (
-                    <div className="absolute left-0 right-0 top-[40px] bg-white border border-[var(--border)] rounded-lg shadow-lg z-10 max-h-[180px] overflow-y-auto">
-                      {filteredAddressResults.map((addr, i) => (
-                        <button
-                          key={i}
-                          onClick={() => { setNewAddress(addr); setAddressQuery(''); setShowAddressSearch(false); }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-[var(--text)] hover:bg-blue-50 flex items-center gap-2 border-b border-[var(--border)] last:border-0"
-                        >
-                          <MapPin size={12} className="text-blue-500 shrink-0" />
-                          {addr}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    onClick={openPostcode}
+                    className="h-[38px] px-4 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 flex items-center gap-1.5"
+                  >
+                    <Search size={14} /> 주소 찾기
+                  </button>
                 </div>
-                {newAddress && (
-                  <p className="mt-1 text-xs text-blue-600 flex items-center gap-1">
-                    <MapPin size={10} /> {newAddress}
-                  </p>
-                )}
+                <input
+                  type="text"
+                  value={newAddress}
+                  readOnly
+                  placeholder="주소 찾기 버튼을 클릭하세요"
+                  className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg bg-gray-50 text-sm text-[var(--text)] cursor-default"
+                />
               </div>
               <div>
                 <label className="block text-xs text-[var(--text-secondary)] mb-1">상세 주소</label>
