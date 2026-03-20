@@ -18,7 +18,7 @@ async function main() {
     data: { orgName: '서울대학교 생명과학부', bizNo: '120-82-00310', representative: '이교수', address: '서울특별시 관악구 관악로1', phone: '02-880-6700', budgetYearly: 50000000 },
   });
   const orgSupplier = await prisma.organization.create({
-    data: { orgName: '(주)지누켐', bizNo: '470-81-02870', representative: '김병선', address: '경상남도 진주시 진주대로501, 창업보육센터 C동 214호', phone: '070-8027-2696' },
+    data: { orgName: '(주)지누켐', bizNo: '470-81-02870', representative: '김병선', address: '경상남도 진주시 진주대로501, 창업보육센터 C동 214호', phone: '010-5651-1053' },
   });
 
   // 2. 사용자
@@ -30,7 +30,7 @@ async function main() {
     data: { orgId: org1.id, roleName: 'org_admin', name: '김교수', email: 'professor@gnu.ac.kr', phone: '010-9876-5432', department: '화학과', labName: '유기화학실험실' },
   });
   const supplier = await prisma.user.create({
-    data: { orgId: orgSupplier.id, roleName: 'supplier', name: '김공급', email: 'supplier@jinuchem.com', phone: '070-8027-2696', department: '영업팀' },
+    data: { orgId: orgSupplier.id, roleName: 'supplier', name: '김공급', email: 'supplier@jinuchem.com', phone: '010-5651-1053', department: '영업팀' },
   });
   const sysAdmin = await prisma.user.create({
     data: { orgId: orgSupplier.id, roleName: 'sys_admin', name: '관리자', email: 'admin@jinuchem.com', phone: '070-8027-2697', department: '개발팀' },

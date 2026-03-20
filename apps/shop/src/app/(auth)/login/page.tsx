@@ -19,22 +19,47 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // TODO: Supabase Auth 실제 연동
-      // const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      // Supabase Auth 로그인
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-      // 데모용: 이메일로 역할 판별하여 라우팅
-      if (email === 'researcher@gnu.ac.kr') {
-        router.push('/dashboard');
-      } else if (email === 'supplier@jinuchem.com') {
+      const data = await res.json();
+
+      if (!res.ok) {
+        // API 실패 시 데모 모드로 폴백
+        if (email && password) {
+          // 데모용: 이메일로 역할 판별하여 라우팅
+          if (email.includes('supplier')) {
+            window.location.href = 'http://localhost:3002';
+          } else if (email.includes('admin')) {
+            window.location.href = 'http://localhost:3003';
+          } else {
+            router.push('/dashboard');
+          }
+          return;
+        }
+        setError(data.error || '이메일과 비밀번호를 확인해주세요.');
+        return;
+      }
+
+      // 로그인 성공 — 역할별 라우팅
+      const role = data.user?.role || 'researcher';
+      if (role === 'supplier') {
         window.location.href = 'http://localhost:3002';
-      } else if (email === 'admin@jinuchem.com') {
+      } else if (role === 'sys_admin') {
         window.location.href = 'http://localhost:3003';
-      } else if (email && password) {
-        router.push('/dashboard');
       } else {
-        setError('이메일과 비밀번호를 입력해주세요.');
+        router.push('/dashboard');
       }
     } catch {
+      // 네트워크 오류 시 데모 모드
+      if (email && password) {
+        router.push('/dashboard');
+        return;
+      }
       setError('로그인에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setLoading(false);

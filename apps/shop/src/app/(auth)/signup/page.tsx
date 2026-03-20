@@ -41,11 +41,32 @@ export default function SignupPage() {
     setError('');
 
     try {
-      // TODO: Supabase Auth 실제 연동
-      // const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name, role, ... } } });
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+          name: form.name,
+          phone: form.phone,
+          role: form.role,
+          orgName: form.orgName,
+          department: form.department,
+          labName: form.labName,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || '회원가입에 실패했습니다.');
+        return;
+      }
+
+      alert('회원가입이 완료되었습니다. 로그인해주세요.');
       router.push('/login');
     } catch {
-      setError('회원가입에 실패했습니다.');
+      setError('회원가입에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }

@@ -59,6 +59,7 @@ const labItems: NavItem[] = [
     children: [
       { label: '즐겨찾기', href: '/favorites' },
       { label: '내 시약장', href: '/inventory' },
+      { label: '실험실 멤버', href: '/members' },
     ],
   },
   { label: '대화', href: '/chat', icon: <MessageCircle size={18} /> },
