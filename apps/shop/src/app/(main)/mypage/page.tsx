@@ -207,26 +207,10 @@ export default function MyPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Shield size={16} className="text-[var(--text-secondary)]" />
-                <div>
-                  <p className="text-xs text-[var(--text-secondary)]">역할</p>
-                  <p className="font-medium text-[var(--text)]">
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">연구원</span>
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
                 <User size={16} className="text-[var(--text-secondary)]" />
                 <div>
                   <p className="text-xs text-[var(--text-secondary)]">지도교수</p>
                   <p className="font-medium text-[var(--text)]">{profileForm.advisorName}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Mail size={16} className="text-[var(--text-secondary)]" />
-                <div>
-                  <p className="text-xs text-[var(--text-secondary)]">지도교수 이메일</p>
-                  <p className="font-medium text-[var(--text)]">{profileForm.advisorEmail}</p>
                 </div>
               </div>
             </div>
