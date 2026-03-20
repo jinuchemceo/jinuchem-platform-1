@@ -3,10 +3,13 @@
 import Link from 'next/link';
 import { ShoppingCart, Bell, Sun, Moon, Search } from 'lucide-react';
 import { useState } from 'react';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { NotificationPanel } from '@/components/notifications/NotificationPanel';
 
 export function Topbar() {
   const [isDark, setIsDark] = useState(false);
-  const cartCount = 3; // TODO: Zustand store 연동
+  const cartCount = 3; // TODO: Zustand cart store 연동
+  const { unreadCount, togglePanel } = useNotificationStore();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -52,12 +55,20 @@ export function Topbar() {
         </Link>
 
         {/* Notifications */}
-        <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-gray-100 transition-colors">
-          <Bell size={18} />
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-            2
-          </span>
-        </button>
+        <div className="relative">
+          <button
+            onClick={togglePanel}
+            className="relative w-9 h-9 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-gray-100 transition-colors"
+          >
+            <Bell size={18} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+          <NotificationPanel />
+        </div>
 
         {/* User */}
         <div className="flex items-center gap-2 ml-2 pl-2 border-l border-[var(--border)]">

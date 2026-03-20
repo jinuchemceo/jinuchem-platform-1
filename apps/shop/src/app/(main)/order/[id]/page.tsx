@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { sampleReagents } from '@/lib/mock-data';
 import { formatCurrency } from '@jinuchem/shared';
+import { StructureImage } from '@/components/products/StructureImage';
 import type { VariantSummary } from '@jinuchem/shared';
 
 // GHS 픽토그램 매핑 (SVG 아이콘 대체)
@@ -59,9 +60,11 @@ export default function ReagentDetailPage() {
       <div className="grid grid-cols-[1fr_1fr] gap-8">
         {/* Left: Structure Image */}
         <div>
-          <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-8 flex items-center justify-center min-h-[350px]">
-            <span className="text-6xl font-mono text-gray-300">{reagent.formula || '?'}</span>
-          </div>
+          <StructureImage
+            casNumber={reagent.casNumber}
+            productName={reagent.nameEn}
+            fallbackFormula={reagent.formula}
+          />
 
           {/* GHS Hazard Pictograms */}
           {reagent.ghsPictograms && reagent.ghsPictograms.length > 0 && (
