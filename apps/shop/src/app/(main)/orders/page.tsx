@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Download, Eye, Calendar, ChevronDown, ClipboardList, Trash2 } from 'lucide-react';
+import { Search, Download, Eye, Calendar, ChevronDown, ClipboardList, Trash2, Truck, Package, MapPin, CheckCircle, Clock } from 'lucide-react';
 import { formatCurrency, ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from '@jinuchem/shared';
 
 interface OrderData {
@@ -13,11 +13,14 @@ interface OrderData {
   status: string;
   orderedAt: string;
   deliveryDate?: string;
+  carrierCode?: string;
+  carrierName?: string;
+  trackingNumber?: string;
 }
 
 const sampleOrders: OrderData[] = [
-  { id: '1', orderNumber: 'ORD-20260317-001', products: 'Ethyl alcohol, Pure 500mL', itemCount: 3, totalAmount: 598830, status: 'shipping', orderedAt: '2026-03-17', deliveryDate: '2026-03-21' },
-  { id: '2', orderNumber: 'ORD-20260315-003', products: 'Acetone, ACS Grade 2.5L', itemCount: 1, totalAmount: 96580, status: 'delivered', orderedAt: '2026-03-15' },
+  { id: '1', orderNumber: 'ORD-20260317-001', products: 'Ethyl alcohol, Pure 500mL', itemCount: 3, totalAmount: 598830, status: 'shipping', orderedAt: '2026-03-17', deliveryDate: '2026-03-21', carrierCode: '04', carrierName: 'CJ대한통운', trackingNumber: '640123456789' },
+  { id: '2', orderNumber: 'ORD-20260315-003', products: 'Acetone, ACS Grade 2.5L', itemCount: 1, totalAmount: 96580, status: 'delivered', orderedAt: '2026-03-15', carrierCode: '04', carrierName: 'CJ대한통운', trackingNumber: '640987654321' },
   { id: '3', orderNumber: 'ORD-20260312-002', products: 'PIPES, 고순도 5G', itemCount: 1, totalAmount: 248820, status: 'delivered', orderedAt: '2026-03-12' },
   { id: '4', orderNumber: 'ORD-20260310-001', products: 'Methanol, HPLC Grade 4L', itemCount: 2, totalAmount: 175890, status: 'delivered', orderedAt: '2026-03-10' },
   { id: '5', orderNumber: 'ORD-20260305-004', products: 'Sodium Hydroxide 1kg', itemCount: 1, totalAmount: 98670, status: 'delivered', orderedAt: '2026-03-05' },
@@ -270,6 +273,72 @@ export default function OrdersPage() {
                   </div>
                 </div>
               </div>
+
+              {/* 배송 추적 */}
+              {selectedOrder.trackingNumber && (
+                <div className="border-t border-[var(--border)] pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-[var(--text)] flex items-center gap-1.5">
+                      <Truck size={14} /> 배송 추적
+                    </h3>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-[var(--text-secondary)]">{selectedOrder.carrierName}</span>
+                      <span className="font-mono text-blue-600">{selectedOrder.trackingNumber}</span>
+                    </div>
+                  </div>
+
+                  {/* 배송 상태 진행 바 */}
+                  <div className="flex items-center justify-between mb-4 px-2">
+                    {[
+                      { label: '주문확인', icon: <Package size={14} />, done: true },
+                      { label: '상품준비', icon: <Clock size={14} />, done: ['preparing', 'shipping', 'delivered'].includes(selectedOrder.status) },
+                      { label: '배송중', icon: <Truck size={14} />, done: ['shipping', 'delivered'].includes(selectedOrder.status) },
+                      { label: '배송완료', icon: <CheckCircle size={14} />, done: selectedOrder.status === 'delivered' },
+                    ].map((step, i) => (
+                      <div key={step.label} className="flex flex-col items-center gap-1 relative">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step.done ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-400'}`}>
+                          {step.icon}
+                        </div>
+                        <span className={`text-[10px] ${step.done ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>{step.label}</span>
+                        {i < 3 && (
+                          <div className={`absolute top-4 left-[calc(100%)] w-[60px] h-0.5 ${step.done ? 'bg-blue-600' : 'bg-gray-200'}`} style={{ marginLeft: '4px' }} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 배송 타임라인 */}
+                  <div className="bg-[var(--bg)] rounded-lg p-3 space-y-0">
+                    {[
+                      { time: '03/20 09:30', location: '진주시 집배점', desc: '배달 출발', active: true },
+                      { time: '03/20 07:15', location: '옥천 HUB', desc: '간선 상차', active: false },
+                      { time: '03/19 22:40', location: '옥천 HUB', desc: '간선 하차', active: false },
+                      { time: '03/19 18:30', location: '대전 대덕 집하점', desc: '집하 완료', active: false },
+                      { time: '03/19 16:00', location: '(주)지누켐', desc: '상품 인수', active: false },
+                    ].map((item, i) => (
+                      <div key={i} className="flex gap-3 py-2">
+                        <div className="flex flex-col items-center">
+                          <div className={`w-2.5 h-2.5 rounded-full ${item.active ? 'bg-blue-600' : 'bg-gray-300'}`} />
+                          {i < 4 && <div className="w-px h-full bg-gray-200 mt-0.5" />}
+                        </div>
+                        <div className="flex-1 flex items-start justify-between">
+                          <div>
+                            <p className={`text-xs ${item.active ? 'font-semibold text-blue-600' : 'text-[var(--text)]'}`}>{item.desc}</p>
+                            <p className="text-[10px] text-[var(--text-secondary)] flex items-center gap-1"><MapPin size={8} />{item.location}</p>
+                          </div>
+                          <span className="text-[10px] text-[var(--text-secondary)] shrink-0">{item.time}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {selectedOrder.deliveryDate && (
+                    <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+                      <CheckCircle size={12} /> 예상 도착일: {selectedOrder.deliveryDate}
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="border-t border-[var(--border)] pt-4">
                 <h3 className="text-sm font-semibold text-[var(--text)] mb-3">배송지 정보</h3>
