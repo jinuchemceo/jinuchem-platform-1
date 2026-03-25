@@ -10,7 +10,7 @@ const SWEET_TRACKER_API_KEY = process.env.SWEET_TRACKER_API_KEY || '';
 const SWEET_TRACKER_BASE = 'http://info.sweettracker.co.kr/api/v1';
 
 // 택배사 코드 매핑
-export const CARRIER_CODES: Record<string, { code: string; name: string }> = {
+const CARRIER_CODES: Record<string, { code: string; name: string }> = {
   cj: { code: '04', name: 'CJ대한통운' },
   lotte: { code: '08', name: '롯데택배' },
   hanjin: { code: '05', name: '한진택배' },

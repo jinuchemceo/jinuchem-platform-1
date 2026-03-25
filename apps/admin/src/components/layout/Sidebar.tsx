@@ -6,12 +6,14 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Users,
+  Truck,
   Package,
   BrainCircuit,
   KeyRound,
   Database,
   Settings,
   LogOut,
+  Megaphone,
 } from 'lucide-react';
 
 interface NavItem {
@@ -22,10 +24,12 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: '대시보드', href: '/dashboard', icon: <LayoutDashboard size={18} /> },
-  { label: '사용자 관리', href: '/users', icon: <Users size={18} /> },
+  { label: '고객 관리', href: '/customers', icon: <Users size={18} /> },
+  { label: '공급자 관리', href: '/suppliers-mgmt', icon: <Truck size={18} /> },
   { label: '제품 관리', href: '/products', icon: <Package size={18} /> },
   { label: 'AI 모니터링', href: '/ai-monitor', icon: <BrainCircuit size={18} /> },
   { label: 'API 관리', href: '/api-management', icon: <KeyRound size={18} /> },
+  { label: '게시판 관리', href: '/board', icon: <Megaphone size={18} /> },
   { label: '데이터 파이프라인', href: '/data-pipeline', icon: <Database size={18} /> },
   { label: '설정', href: '/settings', icon: <Settings size={18} /> },
 ];

@@ -5,7 +5,9 @@ import {
   Users, Building2, Activity, Search, Plus, MoreHorizontal,
   Edit, Trash2, Filter, Download, ChevronDown, Eye, Mail,
   Phone, Calendar, Shield, X, UserCheck, UserX, UserPlus,
-  GraduationCap, Building, AlertTriangle, ExternalLink, UserMinus,
+  Building, AlertTriangle, ExternalLink, UserMinus,
+  Package, RefreshCw, Link2, Globe,
+  FileSpreadsheet, Printer, DollarSign, TrendingUp, Calculator, CheckCircle,
 } from 'lucide-react';
 import { AdminTabs } from '@/components/shared/AdminTabs';
 import { Modal } from '@/components/shared/Modal';
@@ -17,39 +19,39 @@ import {
   mockUsers,
   mockOrganizations,
   mockActivityLogs,
+  mockSupplierMappings,
+  mockSupplierSettlements,
+  mockAdminProducts,
   type User,
   type Organization,
+  type SupplierMapping,
+  type SupplierSettlement,
 } from '@/lib/admin-mock-data';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-type Role = '전체' | '연구원' | '조직장' | '기업장' | '공급자' | '시스템관리자';
-const roles: Role[] = ['전체', '연구원', '조직장', '기업장', '공급자', '시스템관리자'];
+type SupplierRole = '전체' | '공급자' | '기업장';
+const supplierRoles: SupplierRole[] = ['전체', '공급자', '기업장'];
 
 const roleColors: Record<string, string> = {
-  연구원: 'bg-blue-100 text-blue-700',
-  조직장: 'bg-purple-100 text-purple-700',
-  기업장: 'bg-indigo-100 text-indigo-700',
   공급자: 'bg-emerald-100 text-emerald-700',
-  시스템관리자: 'bg-orange-100 text-orange-700',
+  기업장: 'bg-indigo-100 text-indigo-700',
 };
-
-/** 기관 유형에 따라 선택 가능한 역할 목록 반환 */
-function getRolesForOrg(orgId: string, orgs: Organization[]): User['role'][] {
-  const org = orgs.find((o) => o.id === orgId);
-  if (!org) return ['연구원'];
-  if (org.name === '(주)지누켐') return ['연구원', '시스템관리자'];
-  if (org.type === '대학') return ['연구원', '조직장'];
-  if (org.type === '기업') return ['연구원', '기업장', '공급자'];
-  if (org.type === '연구소') return ['연구원', '기업장'];
-  return ['연구원'];
-}
 
 const orgTypeColors: Record<string, string> = {
-  대학: 'bg-blue-100 text-blue-700',
   기업: 'bg-purple-100 text-purple-700',
-  연구소: 'bg-emerald-100 text-emerald-700',
 };
+
+const syncStatusColors: Record<string, string> = {
+  성공: 'bg-emerald-100 text-emerald-700',
+  실패: 'bg-red-100 text-red-700',
+  '동기화중': 'bg-amber-100 text-amber-700',
+};
+
+/** 기업 유형 기관에서 선택 가능한 역할 (공급자/기업장만) */
+function getRolesForSupplierOrg(): User['role'][] {
+  return ['공급자', '기업장'];
+}
 
 type ActionType = '전체' | '로그인' | '주문' | '설정변경' | '역할변경' | '제품등록' | 'API호출';
 const actionTypes: ActionType[] = ['전체', '로그인', '주문', '설정변경', '역할변경', '제품등록', 'API호출'];
@@ -66,31 +68,22 @@ const actionColors: Record<string, string> = {
 const USERS_PER_PAGE = 8;
 
 const tabs = [
-  { id: '사용자 목록', label: '사용자 목록' },
-  { id: '기관 관리', label: '기관 관리' },
+  { id: '공급자 목록', label: '공급자 목록' },
+  { id: '공급사 관리', label: '공급사 관리' },
+  { id: '정산 관리', label: '정산 관리' },
   { id: '활동 로그', label: '활동 로그' },
 ];
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function formatBudget(v: number) {
-  if (v === 0) return '-';
-  if (v >= 100000000) return `${(v / 100000000).toFixed(1)}억`;
-  return `${(v / 10000).toLocaleString()}만`;
-}
-
-function budgetPercent(used: number, total: number) {
-  if (total === 0) return 0;
-  return Math.round((used / total) * 100);
-}
-
 // ─── Page ────────────────────────────────────────────────────────────────────
 
-export default function UsersPage() {
-  const { usersTab, setUsersTab, selectedUserIds, toggleUserSelection, selectAllUsers, clearUserSelection, activeModal, modalData, openModal, closeModal } = useAdminStore();
+export default function SuppliersMgmtPage() {
+  const { selectedUserIds, toggleUserSelection, selectAllUsers, clearUserSelection, activeModal, modalData, openModal, closeModal } = useAdminStore();
+
+  // Local tab state
+  const [suppliersTab, setSuppliersTab] = useState('공급자 목록');
 
   // Mutable data (local state)
-  const [users, setUsers] = useState<User[]>([...mockUsers]);
+  const [users, setUsers] = useState<User[]>(() => mockUsers.filter((u) => u.role === '공급자' || u.role === '기업장'));
   const [organizations, setOrganizations] = useState<Organization[]>([...mockOrganizations]);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -101,13 +94,16 @@ export default function UsersPage() {
 
   // Tab 1 state
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRole, setSelectedRole] = useState<Role>('전체');
-  const [statusFilter, setStatusFilter] = useState<'전체' | '활성' | '비활성' | '다중 소속'>('전체');
+  const [selectedRole, setSelectedRole] = useState<SupplierRole>('전체');
+  const [statusFilter, setStatusFilter] = useState<'전체' | '활성' | '비활성'>('전체');
   const [currentPage, setCurrentPage] = useState(1);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   // Tab 2 state
   const [orgSearch, setOrgSearch] = useState('');
+
+  // Settlement tab state
+  const [settlementPeriod, setSettlementPeriod] = useState('2026-03');
 
   // Tab 3 state
   const [logSearch, setLogSearch] = useState('');
@@ -123,14 +119,23 @@ export default function UsersPage() {
   const [orgForm, setOrgForm] = useState<Partial<Organization>>({});
 
   // Add user form state
-  const [addUserForm, setAddUserForm] = useState<Partial<User>>({ role: '연구원', status: '활성', orgIds: [] });
+  const [addUserForm, setAddUserForm] = useState<Partial<User>>({ role: '공급자', status: '활성', orgIds: [] });
 
-  // ─── Tab 1: Filtered users ──────────────────────────────────────────────
+  // ─── Supplier orgs (기업 type only) ─────────────────────────────────────
+  const supplierOrgs = useMemo(() => {
+    return organizations.filter((o) => o.type === '기업');
+  }, [organizations]);
 
+  // ─── Supplier user IDs (for log filtering) ──────────────────────────────
+  const supplierUserIds = useMemo(() => {
+    return users.map((u) => u.id);
+  }, [users]);
+
+  // ─── Tab 1: Filtered supplier users ─────────────────────────────────────
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       const matchRole = selectedRole === '전체' || u.role === selectedRole;
-      const matchStatus = statusFilter === '전체' || statusFilter === '다중 소속' ? (statusFilter === '다중 소속' ? (u.orgIds ?? []).length > 1 : true) : u.status === statusFilter;
+      const matchStatus = statusFilter === '전체' || u.status === statusFilter;
       const q = searchQuery.toLowerCase();
       const matchSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.org.toLowerCase().includes(q);
       return matchRole && matchStatus && matchSearch;
@@ -143,22 +148,20 @@ export default function UsersPage() {
 
   const activeCount = users.filter((u) => u.status === '활성').length;
   const inactiveCount = users.filter((u) => u.status === '비활성').length;
-  const newThisMonth = users.filter((u) => u.createdAt >= '2026-03-01').length;
+  const supplierCount = users.filter((u) => u.role === '공급자').length;
+  const ceoCount = users.filter((u) => u.role === '기업장').length;
 
-  // ─── Tab 2: Filtered orgs ──────────────────────────────────────────────
-
+  // ─── Tab 2: Filtered supplier orgs ──────────────────────────────────────
   const filteredOrgs = useMemo(() => {
     const q = orgSearch.toLowerCase();
-    return organizations.filter((o) => !q || o.name.toLowerCase().includes(q) || o.admin.toLowerCase().includes(q));
-  }, [orgSearch, organizations]);
+    return supplierOrgs.filter((o) => !q || o.name.toLowerCase().includes(q) || o.admin.toLowerCase().includes(q));
+  }, [orgSearch, supplierOrgs]);
 
-  const uniCount = organizations.filter((o) => o.type === '대학').length;
-  const corpCount = organizations.filter((o) => o.type === '기업' || o.type === '연구소').length;
-
-  // ─── Tab 3: Filtered logs ──────────────────────────────────────────────
-
+  // ─── Tab 3: Filtered logs (supplier users only) ─────────────────────────
   const filteredLogs = useMemo(() => {
     return mockActivityLogs.filter((log) => {
+      const isSupplierUser = supplierUserIds.includes(log.userId);
+      if (!isSupplierUser) return false;
       const matchAction = logActionFilter === '전체' || log.action === logActionFilter;
       const q = logSearch.toLowerCase();
       const matchSearch = !q || log.userName.toLowerCase().includes(q) || log.details.toLowerCase().includes(q);
@@ -166,9 +169,25 @@ export default function UsersPage() {
       const matchDateTo = !logDateTo || log.timestamp <= logDateTo + ' 23:59:59';
       return matchAction && matchSearch && matchDateFrom && matchDateTo;
     });
-  }, [logActionFilter, logSearch, logDateFrom, logDateTo]);
+  }, [logActionFilter, logSearch, logDateFrom, logDateTo, supplierUserIds]);
 
   const visibleLogs = filteredLogs.slice(0, logVisibleCount);
+
+  // ─── Settlement tab: Filtered settlements ─────────────────────────────
+  const filteredSettlements = useMemo(() => {
+    return mockSupplierSettlements.filter((s) => s.period === settlementPeriod);
+  }, [settlementPeriod]);
+
+  const settlementTotals = useMemo(() => {
+    const totalProducts = filteredSettlements.reduce((a, s) => a + s.productCount, 0);
+    const totalOrders = filteredSettlements.reduce((a, s) => a + s.orderCount, 0);
+    const totalSales = filteredSettlements.reduce((a, s) => a + s.totalSales, 0);
+    const totalCommission = filteredSettlements.reduce((a, s) => a + s.commission, 0);
+    const totalNetPayment = filteredSettlements.reduce((a, s) => a + s.netPayment, 0);
+    const completedCount = filteredSettlements.filter((s) => s.status === '정산완료').length;
+    const pendingCount = filteredSettlements.length - completedCount;
+    return { totalProducts, totalOrders, totalSales, totalCommission, totalNetPayment, completedCount, pendingCount };
+  }, [filteredSettlements]);
 
   // ─── Modal helpers ─────────────────────────────────────────────────────
 
@@ -186,7 +205,7 @@ export default function UsersPage() {
   }
 
   function handleAddOrg() {
-    setOrgForm({ type: '대학', status: '활성' });
+    setOrgForm({ type: '기업', status: '활성' });
     openModal('orgAdd', null);
   }
 
@@ -234,8 +253,8 @@ export default function UsersPage() {
     if (activeModal === 'orgAdd') {
       const newOrg: Organization = {
         id: `ORG-${String(organizations.length + 1).padStart(3, '0')}`,
-        name: orgForm.name || '새 기관',
-        type: orgForm.type || '대학',
+        name: orgForm.name || '새 공급사',
+        type: '기업',
         memberCount: 0,
         admin: orgForm.admin || '-',
         budget: orgForm.budget || 0,
@@ -259,20 +278,25 @@ export default function UsersPage() {
 
   function handleAddUserToOrg(orgId: string) {
     const org = organizations.find((o) => o.id === orgId);
-    setAddUserForm({ role: '연구원', status: '활성', orgId, orgIds: [orgId], org: org?.name || '' });
+    setAddUserForm({ role: '공급자', status: '활성', orgId, orgIds: [orgId], org: org?.name || '' });
     closeModal();
     openModal('addUserToOrg', org);
   }
 
   function handleSaveNewUser() {
+    const allUsers = [...mockUsers, ...users];
+    const maxId = allUsers.reduce((max, u) => {
+      const num = parseInt(u.id.replace('USR-', ''), 10);
+      return num > max ? num : max;
+    }, 0);
     const newUser: User = {
-      id: `USR-${String(users.length + 1).padStart(3, '0')}`,
+      id: `USR-${String(maxId + 1).padStart(3, '0')}`,
       name: addUserForm.name || '',
       email: addUserForm.email || '',
       org: addUserForm.org || '',
       orgId: addUserForm.orgId || '',
       orgIds: addUserForm.orgIds || [],
-      role: (addUserForm.role as User['role']) || '연구원',
+      role: (addUserForm.role as User['role']) || '공급자',
       status: (addUserForm.status as User['status']) || '활성',
       lastLogin: '-',
       loginCount: 0,
@@ -289,6 +313,11 @@ export default function UsersPage() {
     closeModal();
   }
 
+  // ─── Helper: get supplier mapping for an org ────────────────────────────
+  function getSupplierMapping(orgName: string): SupplierMapping | undefined {
+    return mockSupplierMappings.find((s) => orgName.toLowerCase().includes(s.name.toLowerCase()) || s.name.toLowerCase().includes(orgName.toLowerCase().replace(/\(주\)/g, '').trim()));
+  }
+
   // ─── Render ────────────────────────────────────────────────────────────
 
   return (
@@ -296,25 +325,25 @@ export default function UsersPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text)]">사용자 관리</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">사용자, 기관, 활동 로그를 관리합니다</p>
+          <h1 className="text-2xl font-bold text-[var(--text)]">공급자 관리</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">공급사 및 공급자를 관리합니다</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <AdminTabs tabs={tabs} activeTab={usersTab} onTabChange={(t) => { setUsersTab(t); clearUserSelection(); }} />
+      <AdminTabs tabs={tabs} activeTab={suppliersTab} onTabChange={(t) => { setSuppliersTab(t); clearUserSelection(); }} />
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          Tab 1: 사용자 목록
+          Tab 1: 공급자 목록
           ═══════════════════════════════════════════════════════════════════ */}
-      {usersTab === '사용자 목록' && (
+      {suppliersTab === '공급자 목록' && (
         <div className="space-y-5">
           {/* Stats */}
           <div className="grid grid-cols-4 gap-4">
-            <StatCard icon={<Users size={20} />} label="전체 사용자" value={String(users.length)} change="+12%" up />
-            <StatCard icon={<UserCheck size={20} />} label="활성" value={String(activeCount)} change="+8%" up />
-            <StatCard icon={<UserX size={20} />} label="비활성" value={String(inactiveCount)} change="-3%" up={false} />
-            <StatCard icon={<UserPlus size={20} />} label="이번 달 신규" value={String(newThisMonth)} change="+2명" up />
+            <StatCard icon={<Users size={20} />} label="전체 공급자" value={String(users.length)} change="+3" up />
+            <StatCard icon={<UserCheck size={20} />} label="활성" value={String(activeCount)} change="+2" up />
+            <StatCard icon={<UserX size={20} />} label="비활성" value={String(inactiveCount)} change="0" up={false} />
+            <StatCard icon={<Building size={20} />} label="공급사 수" value={String(supplierOrgs.length)} change="+1" up />
           </div>
 
           {/* Filter bar */}
@@ -335,7 +364,7 @@ export default function UsersPage() {
               {/* Role pills */}
               <div className="flex items-center gap-1">
                 <Filter size={16} className="text-[var(--text-secondary)] mr-1" />
-                {roles.map((role) => (
+                {supplierRoles.map((role) => (
                   <button
                     key={role}
                     onClick={() => { setSelectedRole(role); setCurrentPage(1); }}
@@ -353,13 +382,12 @@ export default function UsersPage() {
               {/* Status dropdown */}
               <select
                 value={statusFilter}
-                onChange={(e) => { setStatusFilter(e.target.value as any); setCurrentPage(1); }}
+                onChange={(e) => { setStatusFilter(e.target.value as '전체' | '활성' | '비활성'); setCurrentPage(1); }}
                 className="h-[var(--btn-height)] px-3 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="전체">상태: 전체</option>
                 <option value="활성">활성</option>
                 <option value="비활성">비활성</option>
-                <option value="다중 소속">다중 소속</option>
               </select>
             </div>
           </div>
@@ -398,7 +426,7 @@ export default function UsersPage() {
                     </th>
                     <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">이름</th>
                     <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">이메일</th>
-                    <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">소속</th>
+                    <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">소속 공급사</th>
                     <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">역할</th>
                     <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">상태</th>
                     <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">마지막 접속</th>
@@ -431,16 +459,7 @@ export default function UsersPage() {
                         </div>
                       </td>
                       <td className="px-5 py-3.5 text-[var(--text-secondary)]">{user.email}</td>
-                      <td className="px-5 py-3.5 text-[var(--text)]">
-                        <div className="flex items-center gap-1.5">
-                          <span>{user.org}</span>
-                          {(user.orgIds ?? []).length > 1 && (
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-medium" title={`${user.orgIds.length}개 기관 소속: ${user.orgIds.map((oid) => organizations.find((o) => o.id === oid)?.name || oid).join(', ')}`}>
-                              +{user.orgIds.length - 1}
-                            </span>
-                          )}
-                        </div>
-                      </td>
+                      <td className="px-5 py-3.5 text-[var(--text)]">{user.org}</td>
                       <td className="px-5 py-3.5">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleColors[user.role] || ''}`}>
                           {user.role}
@@ -507,15 +526,15 @@ export default function UsersPage() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          Tab 2: 기관 관리
+          Tab 2: 공급사 관리
           ═══════════════════════════════════════════════════════════════════ */}
-      {usersTab === '기관 관리' && (
+      {suppliersTab === '공급사 관리' && (
         <div className="space-y-5">
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4">
-            <StatCard icon={<Building2 size={20} />} label="전체 기관" value={String(organizations.length)} change="+2" up />
-            <StatCard icon={<GraduationCap size={20} />} label="대학" value={String(uniCount)} change="+1" up />
-            <StatCard icon={<Building size={20} />} label="기업/연구소" value={String(corpCount)} change="+1" up />
+            <StatCard icon={<Building2 size={20} />} label="전체 공급사" value={String(supplierOrgs.length)} change="+1" up />
+            <StatCard icon={<Package size={20} />} label="총 등록 제품" value={mockSupplierMappings.reduce((s, m) => s + m.productCount, 0).toLocaleString()} change="+150" up />
+            <StatCard icon={<RefreshCw size={20} />} label="동기화 성공률" value={`${Math.round((mockSupplierMappings.filter((m) => m.syncStatus === '성공').length / mockSupplierMappings.length) * 100)}%`} change="+2%" up />
           </div>
 
           {/* Filter + Add */}
@@ -526,7 +545,7 @@ export default function UsersPage() {
                 type="text"
                 value={orgSearch}
                 onChange={(e) => setOrgSearch(e.target.value)}
-                placeholder="기관명, 관리자 검색..."
+                placeholder="공급사명, 관리자 검색..."
                 className="w-full h-[var(--btn-height)] pl-9 pr-4 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
@@ -535,7 +554,7 @@ export default function UsersPage() {
               className="h-[var(--btn-height)] px-4 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 transition-colors flex items-center gap-2"
             >
               <Plus size={16} />
-              기관 추가
+              공급사 추가
             </button>
           </div>
 
@@ -545,19 +564,20 @@ export default function UsersPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-[var(--bg)] border-b border-[var(--border)]">
-                    <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">기관명</th>
+                    <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">공급사명</th>
                     <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">유형</th>
                     <th className="text-center px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">회원수</th>
                     <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">관리자</th>
-                    <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider min-w-[200px]">예산</th>
+                    <th className="text-center px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">등록 제품수</th>
+                    <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">동기화 상태</th>
+                    <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">API URL</th>
                     <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">상태</th>
-                    <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">생성일</th>
                     <th className="text-center px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">관리</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredOrgs.map((org) => {
-                    const pct = budgetPercent(org.usedBudget, org.budget);
+                    const mapping = getSupplierMapping(org.name);
                     return (
                       <tr
                         key={org.id}
@@ -568,17 +588,6 @@ export default function UsersPage() {
                           <span className="font-medium text-orange-600 hover:text-orange-700 hover:underline cursor-pointer">
                             {org.name}
                           </span>
-                          {(() => {
-                            const members = users.filter((u) => (u.orgIds ?? [u.orgId]).includes(org.id));
-                            const emailDomain = members.length > 0 ? members[0].email.split('@')[1] : '';
-                            const hasMismatch = emailDomain && members.some((u) => u.email.split('@')[1] !== emailDomain);
-                            const hasDuplicate = members.some((m) => users.some((u) => u.id !== m.id && u.name === m.name && u.orgId !== org.id));
-                            return (hasMismatch || hasDuplicate) ? (
-                              <span className="ml-1.5 inline-flex items-center" title={hasMismatch ? '이메일 도메인 불일치 사용자 있음' : '동명이인 의심 사용자 있음'}>
-                                <AlertTriangle size={13} className="text-amber-500" />
-                              </span>
-                            ) : null;
-                          })()}
                         </td>
                         <td className="px-5 py-3.5">
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${orgTypeColors[org.type] || ''}`}>
@@ -587,26 +596,33 @@ export default function UsersPage() {
                         </td>
                         <td className="px-5 py-3.5 text-center text-[var(--text)]">{org.memberCount}명</td>
                         <td className="px-5 py-3.5 text-[var(--text)]">{org.admin}</td>
+                        <td className="px-5 py-3.5 text-center">
+                          {mapping ? (
+                            <span className="text-[var(--text)] font-medium">{mapping.productCount.toLocaleString()}</span>
+                          ) : (
+                            <span className="text-[var(--text-secondary)]">-</span>
+                          )}
+                        </td>
                         <td className="px-5 py-3.5">
-                          {org.budget > 0 ? (
-                            <div className="space-y-1">
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="text-[var(--text-secondary)]">{formatBudget(org.usedBudget)} / {formatBudget(org.budget)}</span>
-                                <span className={`font-medium ${pct > 80 ? 'text-red-600' : pct > 60 ? 'text-amber-600' : 'text-emerald-600'}`}>{pct}%</span>
-                              </div>
-                              <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full ${pct > 80 ? 'bg-red-500' : pct > 60 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                                  style={{ width: `${pct}%` }}
-                                />
-                              </div>
+                          {mapping ? (
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${syncStatusColors[mapping.syncStatus] || ''}`}>
+                                {mapping.syncStatus}
+                              </span>
+                              <span className="text-xs text-[var(--text-secondary)]">{mapping.lastSync}</span>
                             </div>
+                          ) : (
+                            <span className="text-xs text-[var(--text-secondary)]">미연동</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {mapping ? (
+                            <span className="text-xs text-[var(--text-secondary)] font-mono">{mapping.apiUrl}</span>
                           ) : (
                             <span className="text-xs text-[var(--text-secondary)]">-</span>
                           )}
                         </td>
                         <td className="px-5 py-3.5"><StatusBadge status={org.status} /></td>
-                        <td className="px-5 py-3.5 text-[var(--text-secondary)]">{org.createdAt}</td>
                         <td className="px-5 py-3.5 text-center" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => handleEditOrg(org)}
@@ -620,7 +636,7 @@ export default function UsersPage() {
                   })}
                   {filteredOrgs.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="px-5 py-12 text-center text-[var(--text-secondary)]">
+                      <td colSpan={9} className="px-5 py-12 text-center text-[var(--text-secondary)]">
                         검색 결과가 없습니다.
                       </td>
                     </tr>
@@ -633,9 +649,168 @@ export default function UsersPage() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          Tab 3: 활동 로그
+          Tab 3: 정산 관리
           ═══════════════════════════════════════════════════════════════════ */}
-      {usersTab === '활동 로그' && (
+      {suppliersTab === '정산 관리' && (
+        <div className="space-y-5">
+          {/* Header with period selector and action buttons */}
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium text-[var(--text)]">정산 기간</label>
+                <select
+                  value={settlementPeriod}
+                  onChange={(e) => setSettlementPeriod(e.target.value)}
+                  className="h-[var(--btn-height)] px-3 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="2026-03">2026-03</option>
+                  <option value="2026-02">2026-02</option>
+                  <option value="2026-01">2026-01</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const pending = filteredSettlements.filter((s) => s.status !== '정산완료').length;
+                    showToast(`${pending}건의 정산이 확정되었습니다`);
+                  }}
+                  className="h-[var(--btn-height)] px-4 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-1.5"
+                >
+                  <CheckCircle size={15} />
+                  정산 확정
+                </button>
+                <button
+                  onClick={() => showToast('정산서 PDF 생성 중...')}
+                  className="h-[var(--btn-height)] px-4 text-sm font-medium text-[var(--text)] bg-[var(--bg)] border border-[var(--border)] rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+                >
+                  <Printer size={15} />
+                  정산서 출력
+                </button>
+                <button
+                  onClick={() => showToast('정산 데이터 Excel 다운로드 완료')}
+                  className="h-[var(--btn-height)] px-4 text-sm font-medium text-[var(--text)] bg-[var(--bg)] border border-[var(--border)] rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+                >
+                  <FileSpreadsheet size={15} />
+                  Excel 다운로드
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Summary stat cards */}
+          <div className="grid grid-cols-4 gap-4">
+            <StatCard
+              icon={<DollarSign size={20} />}
+              label="총 매출"
+              value={`₩${Math.round(settlementTotals.totalSales / 10000).toLocaleString('ko-KR')}만`}
+              change="+12%"
+              up
+            />
+            <StatCard
+              icon={<Calculator size={20} />}
+              label="총 수수료"
+              value={`₩${Math.round(settlementTotals.totalCommission / 10000).toLocaleString('ko-KR')}만`}
+              change="+10%"
+              up
+            />
+            <StatCard
+              icon={<TrendingUp size={20} />}
+              label="총 지급액"
+              value={`₩${Math.round(settlementTotals.totalNetPayment / 10000).toLocaleString('ko-KR')}만`}
+              change="+12%"
+              up
+            />
+            <StatCard
+              icon={<Activity size={20} />}
+              label="처리 상태"
+              value={`${settlementTotals.completedCount}건 완료 / ${settlementTotals.pendingCount}건 대기`}
+              change=""
+              up={false}
+            />
+          </div>
+
+          {/* Settlement table */}
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-[var(--bg)] border-b border-[var(--border)]">
+                    <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">공급사</th>
+                    <th className="text-right px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">제품 수</th>
+                    <th className="text-right px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">주문 건수</th>
+                    <th className="text-right px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider whitespace-nowrap">총 매출 (₩)</th>
+                    <th className="text-center px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">수수료율</th>
+                    <th className="text-right px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider whitespace-nowrap">수수료 (₩)</th>
+                    <th className="text-right px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider whitespace-nowrap">지급액 (₩)</th>
+                    <th className="text-center px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">상태</th>
+                    <th className="text-center px-5 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">관리</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSettlements.map((s) => (
+                    <tr key={s.supplierId} className="border-b border-[var(--border)] hover:bg-[var(--bg)] transition-colors">
+                      <td className="px-5 py-3.5 font-semibold text-[var(--text)]">{s.supplierName}</td>
+                      <td className="px-5 py-3.5 text-right text-[var(--text)]">{s.productCount.toLocaleString('ko-KR')}개</td>
+                      <td className="px-5 py-3.5 text-right text-[var(--text)]">{s.orderCount.toLocaleString('ko-KR')}건</td>
+                      <td className="px-5 py-3.5 text-right text-[var(--text)]">₩{s.totalSales.toLocaleString('ko-KR')}</td>
+                      <td className="px-5 py-3.5 text-center text-[var(--text)]">{s.commissionRate}%</td>
+                      <td className="px-5 py-3.5 text-right text-[var(--text)]">₩{s.commission.toLocaleString('ko-KR')}</td>
+                      <td className="px-5 py-3.5 text-right font-semibold text-[var(--text)]">₩{s.netPayment.toLocaleString('ko-KR')}</td>
+                      <td className="px-5 py-3.5 text-center"><StatusBadge status={s.status} /></td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => openModal('settlementDetail', s)}
+                            className="w-7 h-7 inline-flex items-center justify-center rounded text-[var(--text-secondary)] hover:bg-gray-100 transition-colors"
+                            title="상세"
+                          >
+                            <Eye size={14} />
+                          </button>
+                          {s.status !== '정산완료' && (
+                            <button
+                              onClick={() => showToast(`${s.supplierName} 정산이 확정되었습니다`)}
+                              className="w-7 h-7 inline-flex items-center justify-center rounded text-orange-500 hover:bg-orange-50 hover:text-orange-700 transition-colors"
+                              title="확정"
+                            >
+                              <CheckCircle size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredSettlements.length === 0 && (
+                    <tr>
+                      <td colSpan={9} className="px-5 py-12 text-center text-[var(--text-secondary)]">
+                        해당 기간의 정산 내역이 없습니다.
+                      </td>
+                    </tr>
+                  )}
+                  {/* Total row */}
+                  {filteredSettlements.length > 0 && (
+                    <tr className="bg-[var(--bg)] border-t-2 border-[var(--border)] font-bold">
+                      <td className="px-5 py-3.5 text-[var(--text)]">합계</td>
+                      <td className="px-5 py-3.5 text-right text-[var(--text)]">{settlementTotals.totalProducts.toLocaleString('ko-KR')}개</td>
+                      <td className="px-5 py-3.5 text-right text-[var(--text)]">{settlementTotals.totalOrders.toLocaleString('ko-KR')}건</td>
+                      <td className="px-5 py-3.5 text-right text-[var(--text)]">₩{settlementTotals.totalSales.toLocaleString('ko-KR')}</td>
+                      <td className="px-5 py-3.5 text-center text-[var(--text-secondary)]">-</td>
+                      <td className="px-5 py-3.5 text-right text-[var(--text)]">₩{settlementTotals.totalCommission.toLocaleString('ko-KR')}</td>
+                      <td className="px-5 py-3.5 text-right text-[var(--text)]">₩{settlementTotals.totalNetPayment.toLocaleString('ko-KR')}</td>
+                      <td className="px-5 py-3.5 text-center text-[var(--text-secondary)]">-</td>
+                      <td className="px-5 py-3.5 text-center text-[var(--text-secondary)]">-</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          Tab 4: 활동 로그
+          ═══════════════════════════════════════════════════════════════════ */}
+      {suppliersTab === '활동 로그' && (
         <div className="space-y-5">
           {/* Filters */}
           <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
@@ -665,7 +840,7 @@ export default function UsersPage() {
                   type="text"
                   value={logSearch}
                   onChange={(e) => { setLogSearch(e.target.value); setLogVisibleCount(10); }}
-                  placeholder="사용자 검색..."
+                  placeholder="공급자 검색..."
                   className="w-full h-[var(--btn-height)] pl-9 pr-4 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
               </div>
@@ -729,7 +904,7 @@ export default function UsersPage() {
                   {visibleLogs.length === 0 && (
                     <tr>
                       <td colSpan={5} className="px-5 py-12 text-center text-[var(--text-secondary)]">
-                        검색 결과가 없습니다.
+                        공급자 활동 로그가 없습니다.
                       </td>
                     </tr>
                   )}
@@ -758,7 +933,7 @@ export default function UsersPage() {
           ═══════════════════════════════════════════════════════════════════ */}
 
       {/* User Detail Modal */}
-      <Modal isOpen={activeModal === 'userDetail'} onClose={closeModal} title="사용자 상세" size="lg">
+      <Modal isOpen={activeModal === 'userDetail'} onClose={closeModal} title="공급자 상세" size="lg">
         {activeModal === 'userDetail' && modalData && (() => {
           const user = modalData as User;
           const userLogs = mockActivityLogs.filter((l) => l.userId === user.id).slice(0, 5);
@@ -790,38 +965,10 @@ export default function UsersPage() {
                   <span className="text-[var(--text-secondary)]">전화번호</span>
                   <span className="ml-auto text-[var(--text)]">{user.phone}</span>
                 </div>
-                <div className="flex items-start gap-2 text-sm col-span-2">
-                  <Building2 size={15} className="text-[var(--text-secondary)] mt-0.5" />
-                  <span className="text-[var(--text-secondary)]">소속</span>
-                  <div className="ml-auto space-y-1.5">
-                    {(user.orgIds ?? [user.orgId]).map((oid) => {
-                      const o = organizations.find((org) => org.id === oid);
-                      const isPrimary = oid === user.orgId;
-                      return (
-                        <div key={oid} className="flex items-center gap-2">
-                          <span className="text-[var(--text)]">{o?.name || oid}</span>
-                          {isPrimary && <span className="text-xs px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-medium">주 소속</span>}
-                          {!isPrimary && <span className="text-xs px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-medium">겸임</span>}
-                          {(user.orgIds ?? []).length > 1 && (
-                            <button
-                              onClick={() => {
-                                handleRemoveFromOrg(user, oid);
-                                // 모달을 다시 열어서 업데이트된 유저를 반영
-                                setTimeout(() => {
-                                  const updated = users.find((u) => u.id === user.id);
-                                  if (updated && (updated.orgIds ?? []).length > 0) openModal('userDetail', updated);
-                                }, 100);
-                              }}
-                              className="w-5 h-5 inline-flex items-center justify-center rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                              title={isPrimary ? '주 소속 해제' : '겸임 해제'}
-                            >
-                              <X size={12} />
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Building2 size={15} className="text-[var(--text-secondary)]" />
+                  <span className="text-[var(--text-secondary)]">소속 공급사</span>
+                  <span className="ml-auto text-[var(--text)]">{user.org}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Users size={15} className="text-[var(--text-secondary)]" />
@@ -891,7 +1038,7 @@ export default function UsersPage() {
       </Modal>
 
       {/* User Edit Modal */}
-      <Modal isOpen={activeModal === 'userEdit'} onClose={closeModal} title="사용자 수정" size="lg">
+      <Modal isOpen={activeModal === 'userEdit'} onClose={closeModal} title="공급자 수정" size="lg">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -922,7 +1069,7 @@ export default function UsersPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">소속</label>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">소속 공급사</label>
               <select
                 value={editForm.orgId || ''}
                 onChange={(e) => {
@@ -931,7 +1078,7 @@ export default function UsersPage() {
                 }}
                 className="w-full h-[var(--btn-height)] px-3 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
-                {organizations.map((o) => (
+                {supplierOrgs.map((o) => (
                   <option key={o.id} value={o.id}>{o.name}</option>
                 ))}
               </select>
@@ -948,11 +1095,11 @@ export default function UsersPage() {
             <div>
               <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">역할</label>
               <select
-                value={editForm.role || '연구원'}
+                value={editForm.role || '공급자'}
                 onChange={(e) => setEditForm((prev) => ({ ...prev, role: e.target.value as User['role'] }))}
                 className="w-full h-[var(--btn-height)] px-3 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
-                {getRolesForOrg(editForm.orgId || '', organizations).map((r) => (
+                {getRolesForSupplierOrg().map((r) => (
                   <option key={r} value={r}>{r}</option>
                 ))}
               </select>
@@ -986,35 +1133,18 @@ export default function UsersPage() {
       </Modal>
 
       {/* Org Detail Modal */}
-      <Modal isOpen={activeModal === 'orgDetail'} onClose={closeModal} title="기관 상세" size="xl">
+      <Modal isOpen={activeModal === 'orgDetail'} onClose={closeModal} title="공급사 상세" size="xl">
         {activeModal === 'orgDetail' && modalData && (() => {
           const org = modalData as Organization;
           const orgMembers = users.filter((u) => (u.orgIds ?? [u.orgId]).includes(org.id));
-          const pct = budgetPercent(org.usedBudget, org.budget);
-
-          // 다중 소속: 이 기관 외에 다른 기관에도 속한 사용자
-          const multiOrgUsers = orgMembers.filter((u) => (u.orgIds ?? [u.orgId]).length > 1);
-
-          // 중복 검출: 같은 기관 내 동일 이메일 도메인이 아닌 사용자 (외부 소속 의심)
-          const orgEmailDomain = orgMembers.filter((u) => u.orgId === org.id).length > 0
-            ? orgMembers.find((u) => u.orgId === org.id)!.email.split('@')[1]
-            : (orgMembers.length > 0 ? orgMembers[0].email.split('@')[1] : '');
-          const mismatchedUsers = orgMembers.filter((u) => {
-            const domain = u.email.split('@')[1];
-            return orgEmailDomain && domain !== orgEmailDomain;
-          });
-
-          // 중복 검출: 다른 기관에도 등록된 이름 (동명이인 or 중복 등록)
-          const duplicateNameUsers = orgMembers.filter((member) => {
-            return users.some((u) => u.id !== member.id && u.name === member.name && u.orgId !== org.id);
-          });
+          const mapping = getSupplierMapping(org.name);
 
           return (
             <div className="space-y-6">
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-orange-100 text-orange-700 rounded-lg flex items-center justify-center text-sm font-bold">
+                  <div className="w-10 h-10 bg-purple-100 text-purple-700 rounded-lg flex items-center justify-center text-sm font-bold">
                     {org.name.charAt(0)}
                   </div>
                   <div>
@@ -1030,7 +1160,7 @@ export default function UsersPage() {
                   onClick={() => { closeModal(); handleEditOrg(org); }}
                   className="h-[var(--btn-height)] px-4 bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5"
                 >
-                  <Edit size={14} /> 기관 정보 수정
+                  <Edit size={14} /> 공급사 정보 수정
                 </button>
               </div>
 
@@ -1050,87 +1180,54 @@ export default function UsersPage() {
                 </div>
               </div>
 
-              {/* Budget */}
-              {org.budget > 0 && (
-                <div className="p-4 bg-[var(--bg)] rounded-lg">
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="font-medium text-[var(--text)]">예산 현황</span>
-                    <span className={`font-semibold ${pct > 80 ? 'text-red-600' : pct > 60 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                      {formatBudget(org.usedBudget)} / {formatBudget(org.budget)} ({pct}%)
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${pct > 80 ? 'bg-red-500' : pct > 60 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                      style={{ width: `${pct}%` }}
-                    />
+              {/* Supplier Mapping Info */}
+              {mapping && (
+                <div className="p-4 bg-[var(--bg)] rounded-lg space-y-3">
+                  <h4 className="text-sm font-semibold text-[var(--text)] flex items-center gap-2">
+                    <Link2 size={15} className="text-[var(--text-secondary)]" />
+                    API 연동 정보
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Package size={14} className="text-[var(--text-secondary)]" />
+                      <span className="text-[var(--text-secondary)]">등록 제품수</span>
+                      <span className="ml-auto font-medium text-[var(--text)]">{mapping.productCount.toLocaleString()}개</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <RefreshCw size={14} className="text-[var(--text-secondary)]" />
+                      <span className="text-[var(--text-secondary)]">동기화 상태</span>
+                      <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-medium ${syncStatusColors[mapping.syncStatus] || ''}`}>
+                        {mapping.syncStatus}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Globe size={14} className="text-[var(--text-secondary)]" />
+                      <span className="text-[var(--text-secondary)]">API URL</span>
+                      <span className="ml-auto text-xs font-mono text-[var(--text)]">{mapping.apiUrl}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar size={14} className="text-[var(--text-secondary)]" />
+                      <span className="text-[var(--text-secondary)]">마지막 동기화</span>
+                      <span className="ml-auto text-[var(--text)]">{mapping.lastSync}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail size={14} className="text-[var(--text-secondary)]" />
+                      <span className="text-[var(--text-secondary)]">API 담당자</span>
+                      <span className="ml-auto text-[var(--text)]">{mapping.contact}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Activity size={14} className="text-[var(--text-secondary)]" />
+                      <span className="text-[var(--text-secondary)]">평균 제품 가격</span>
+                      <span className="ml-auto text-[var(--text)]">{mapping.avgPrice.toLocaleString()}원</span>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* 다중 소속 / 중복 / 이상 경고 */}
-              {(multiOrgUsers.length > 0 || mismatchedUsers.length > 0 || duplicateNameUsers.length > 0) && (
-                <div className="space-y-2">
-                  {multiOrgUsers.length > 0 && (
-                    <div className="flex items-start gap-2 p-3 bg-violet-50 border border-violet-200 rounded-lg">
-                      <Building2 size={16} className="text-violet-600 mt-0.5 flex-shrink-0" />
-                      <div className="text-sm">
-                        <span className="font-medium text-violet-800">다중 소속 사용자 {multiOrgUsers.length}명</span>
-                        <p className="text-violet-700 mt-0.5">
-                          {multiOrgUsers.map((u) => {
-                            const otherOrgs = (u.orgIds ?? []).filter((oid) => oid !== org.id).map((oid) => organizations.find((o) => o.id === oid)?.name || oid);
-                            return `${u.name} → ${otherOrgs.join(', ')}에도 소속`;
-                          }).join('; ')}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  {mismatchedUsers.length > 0 && (
-                    <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                      <AlertTriangle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
-                      <div className="text-sm">
-                        <span className="font-medium text-amber-800">이메일 도메인 불일치</span>
-                        <p className="text-amber-700 mt-0.5">
-                          {mismatchedUsers.map((u) => `${u.name} (${u.email})`).join(', ')} -
-                          기관 도메인(@{orgEmailDomain})과 다른 이메일을 사용 중입니다. 소속 확인이 필요합니다.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  {duplicateNameUsers.length > 0 && (
-                    <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <AlertTriangle size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div className="text-sm">
-                        <span className="font-medium text-blue-800">동명이인 / 중복 등록 의심</span>
-                        <p className="text-blue-700 mt-0.5">
-                          {duplicateNameUsers.map((u) => {
-                            const otherOrgs = users.filter((o) => o.name === u.name && o.id !== u.id).map((o) => o.org);
-                            return `${u.name} → 다른 기관(${otherOrgs.join(', ')})에도 동일 이름 존재`;
-                          }).join('; ')}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Members Table - Full featured */}
+              {/* Members Table */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-semibold text-[var(--text)]">소속 회원 ({orgMembers.length}명)</h4>
-                  <button
-                    onClick={() => {
-                      closeModal();
-                      setSearchQuery(org.name);
-                      setSelectedRole('전체');
-                      setStatusFilter('전체');
-                      setCurrentPage(1);
-                      setUsersTab('사용자 목록');
-                    }}
-                    className="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1"
-                  >
-                    <ExternalLink size={12} /> 사용자 목록에서 보기
-                  </button>
+                  <h4 className="text-sm font-semibold text-[var(--text)]">소속 공급자 ({orgMembers.length}명)</h4>
                 </div>
                 {orgMembers.length > 0 ? (
                   <div className="border border-[var(--border)] rounded-lg overflow-hidden">
@@ -1147,70 +1244,57 @@ export default function UsersPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {orgMembers.map((m) => {
-                          const isMultiOrg = multiOrgUsers.some((d) => d.id === m.id);
-                          const isDuplicate = duplicateNameUsers.some((d) => d.id === m.id);
-                          const isMismatched = mismatchedUsers.some((d) => d.id === m.id);
-                          return (
-                            <tr key={m.id} className={`border-t border-[var(--border)] hover:bg-[var(--bg)] transition-colors ${isMultiOrg ? 'bg-violet-50/50' : isDuplicate ? 'bg-blue-50/50' : isMismatched ? 'bg-amber-50/50' : ''}`}>
-                              <td className="px-4 py-2.5">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-7 h-7 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
-                                    {m.name.charAt(0)}
-                                  </div>
-                                  <div>
-                                    <span className="font-medium text-[var(--text)]">{m.name}</span>
-                                    {isMultiOrg && (
-                                      <span className="ml-1 text-xs px-1 py-0.5 rounded bg-violet-100 text-violet-700 font-medium" title={`다중 소속: ${(m.orgIds ?? []).map((oid) => organizations.find((o) => o.id === oid)?.name || oid).join(', ')}`}>
-                                        +{(m.orgIds ?? []).length - 1}
-                                      </span>
-                                    )}
-                                    {isDuplicate && <span className="ml-1 text-xs text-blue-600" title="동명이인 의심">*</span>}
-                                  </div>
+                        {orgMembers.map((m) => (
+                          <tr key={m.id} className="border-t border-[var(--border)] hover:bg-[var(--bg)] transition-colors">
+                            <td className="px-4 py-2.5">
+                              <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                  {m.name.charAt(0)}
                                 </div>
-                              </td>
-                              <td className="px-4 py-2.5 text-[var(--text-secondary)] text-xs">{m.email}</td>
-                              <td className="px-4 py-2.5 text-[var(--text)] text-xs">{m.department}</td>
-                              <td className="px-4 py-2.5">
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleColors[m.role] || ''}`}>{m.role}</span>
-                              </td>
-                              <td className="px-4 py-2.5"><StatusBadge status={m.status} /></td>
-                              <td className="px-4 py-2.5 text-[var(--text-secondary)] text-xs whitespace-nowrap">{m.lastLogin}</td>
-                              <td className="px-4 py-2.5">
-                                <div className="flex items-center justify-center gap-1">
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); closeModal(); handleViewUser(m); }}
-                                    className="w-7 h-7 inline-flex items-center justify-center rounded text-[var(--text-secondary)] hover:bg-gray-100 transition-colors"
-                                    title="상세보기"
-                                  >
-                                    <Eye size={14} />
-                                  </button>
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); closeModal(); handleEditUser(m); }}
-                                    className="w-7 h-7 inline-flex items-center justify-center rounded text-[var(--text-secondary)] hover:bg-gray-100 transition-colors"
-                                    title="수정"
-                                  >
-                                    <Edit size={14} />
-                                  </button>
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); openModal('confirmRemoveFromOrg', m); }}
-                                    className="w-7 h-7 inline-flex items-center justify-center rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                                    title="기관에서 제거"
-                                  >
-                                    <UserMinus size={14} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
+                                <span className="font-medium text-[var(--text)]">{m.name}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2.5 text-[var(--text-secondary)] text-xs">{m.email}</td>
+                            <td className="px-4 py-2.5 text-[var(--text)] text-xs">{m.department}</td>
+                            <td className="px-4 py-2.5">
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleColors[m.role] || ''}`}>{m.role}</span>
+                            </td>
+                            <td className="px-4 py-2.5"><StatusBadge status={m.status} /></td>
+                            <td className="px-4 py-2.5 text-[var(--text-secondary)] text-xs whitespace-nowrap">{m.lastLogin}</td>
+                            <td className="px-4 py-2.5">
+                              <div className="flex items-center justify-center gap-1">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); closeModal(); handleViewUser(m); }}
+                                  className="w-7 h-7 inline-flex items-center justify-center rounded text-[var(--text-secondary)] hover:bg-gray-100 transition-colors"
+                                  title="상세보기"
+                                >
+                                  <Eye size={14} />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); closeModal(); handleEditUser(m); }}
+                                  className="w-7 h-7 inline-flex items-center justify-center rounded text-[var(--text-secondary)] hover:bg-gray-100 transition-colors"
+                                  title="수정"
+                                >
+                                  <Edit size={14} />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); openModal('confirmRemoveFromOrg', m); }}
+                                  className="w-7 h-7 inline-flex items-center justify-center rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                                  title="공급사에서 제거"
+                                >
+                                  <UserMinus size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
                 ) : (
                   <div className="text-center py-8 text-[var(--text-secondary)] bg-[var(--bg)] rounded-lg">
                     <Users size={32} className="mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">소속 회원이 없습니다.</p>
+                    <p className="text-sm">소속 공급자가 없습니다.</p>
                   </div>
                 )}
               </div>
@@ -1221,13 +1305,13 @@ export default function UsersPage() {
                   onClick={() => handleAddUserToOrg(org.id)}
                   className="h-[var(--btn-height)] px-4 bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5"
                 >
-                  <Plus size={14} /> 이 기관에 사용자 추가
+                  <Plus size={14} /> 이 공급사에 사용자 추가
                 </button>
                 <button
                   onClick={() => { closeModal(); handleEditOrg(org); }}
                   className="h-[var(--btn-height)] px-4 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 transition-colors flex items-center gap-1.5"
                 >
-                  <Edit size={14} /> 기관 수정
+                  <Edit size={14} /> 공급사 수정
                 </button>
               </div>
             </div>
@@ -1235,7 +1319,7 @@ export default function UsersPage() {
         })()}
       </Modal>
 
-      {/* 기관에서 사용자 제거 확인 모달 */}
+      {/* 공급사에서 사용자 제거 확인 모달 */}
       <Modal isOpen={activeModal === 'confirmRemoveFromOrg'} onClose={closeModal} title="사용자 제거 확인" size="sm">
         {activeModal === 'confirmRemoveFromOrg' && modalData && (() => {
           const user = modalData as User;
@@ -1244,10 +1328,10 @@ export default function UsersPage() {
               <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <AlertTriangle size={20} className="text-red-500 mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
-                  <p className="font-medium text-red-800">정말 이 사용자를 기관에서 제거하시겠습니까?</p>
+                  <p className="font-medium text-red-800">정말 이 사용자를 공급사에서 제거하시겠습니까?</p>
                   <p className="text-red-700 mt-1">
-                    <strong>{user.name}</strong> ({user.email})이(가) 소속 기관에서 제거됩니다.
-                    계정 자체는 삭제되지 않으며, 기관 미소속 상태로 변경됩니다.
+                    <strong>{user.name}</strong> ({user.email})이(가) 소속 공급사에서 제거됩니다.
+                    계정 자체는 삭제되지 않으며, 공급사 미소속 상태로 변경됩니다.
                   </p>
                 </div>
               </div>
@@ -1265,11 +1349,11 @@ export default function UsersPage() {
       </Modal>
 
       {/* Org Add / Edit Modal */}
-      <Modal isOpen={activeModal === 'orgAdd' || activeModal === 'orgEdit'} onClose={closeModal} title={activeModal === 'orgAdd' ? '기관 추가' : '기관 수정'} size="lg">
+      <Modal isOpen={activeModal === 'orgAdd' || activeModal === 'orgEdit'} onClose={closeModal} title={activeModal === 'orgAdd' ? '공급사 추가' : '공급사 수정'} size="lg">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">기관명</label>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">공급사명</label>
               <input
                 type="text"
                 value={orgForm.name || ''}
@@ -1280,24 +1364,12 @@ export default function UsersPage() {
             <div>
               <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">유형</label>
               <select
-                value={orgForm.type || '대학'}
+                value={orgForm.type || '기업'}
                 onChange={(e) => setOrgForm((prev) => ({ ...prev, type: e.target.value as Organization['type'] }))}
                 className="w-full h-[var(--btn-height)] px-3 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
-                <option value="대학">대학</option>
                 <option value="기업">기업</option>
-                <option value="연구소">연구소</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">예산 한도 (원)</label>
-              <input
-                type="number"
-                value={orgForm.budget || ''}
-                onChange={(e) => setOrgForm((prev) => ({ ...prev, budget: Number(e.target.value) }))}
-                placeholder="0"
-                className="w-full h-[var(--btn-height)] px-3 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
             </div>
             <div>
               <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">우편번호</label>
@@ -1337,7 +1409,7 @@ export default function UsersPage() {
                 className="w-full h-[var(--btn-height)] px-3 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="">관리자 선택...</option>
-                {users.filter((u) => ['조직장', '기업장', '시스템관리자'].includes(u.role)).map((u) => (
+                {users.filter((u) => u.role === '기업장').map((u) => (
                   <option key={u.id} value={u.name}>{u.name} ({u.org})</option>
                 ))}
               </select>
@@ -1357,7 +1429,7 @@ export default function UsersPage() {
       </Modal>
 
       {/* Add User to Org Modal */}
-      <Modal isOpen={activeModal === 'addUserToOrg'} onClose={closeModal} title={`사용자 추가 — ${(modalData as Organization)?.name || ''}`} size="lg">
+      <Modal isOpen={activeModal === 'addUserToOrg'} onClose={closeModal} title={`사용자 추가 -- ${(modalData as Organization)?.name || ''}`} size="lg">
         {activeModal === 'addUserToOrg' && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -1379,14 +1451,14 @@ export default function UsersPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">역할</label>
-                <select value={addUserForm.role || '연구원'} onChange={(e) => setAddUserForm((p) => ({ ...p, role: e.target.value as User['role'] }))} className="w-full h-[var(--btn-height)] px-3 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-orange-500">
-                  {getRolesForOrg(addUserForm.orgId || '', organizations).map((r) => (
+                <select value={addUserForm.role || '공급자'} onChange={(e) => setAddUserForm((p) => ({ ...p, role: e.target.value as User['role'] }))} className="w-full h-[var(--btn-height)] px-3 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-orange-500">
+                  {getRolesForSupplierOrg().map((r) => (
                     <option key={r} value={r}>{r}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">소속 기관</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">소속 공급사</label>
                 <input type="text" value={addUserForm.org || ''} disabled className="w-full h-[var(--btn-height)] px-3 text-sm bg-gray-100 border border-[var(--border)] rounded-lg text-[var(--text-secondary)] cursor-not-allowed" />
               </div>
             </div>
@@ -1400,6 +1472,95 @@ export default function UsersPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Settlement Detail Modal */}
+      <Modal isOpen={activeModal === 'settlementDetail'} onClose={closeModal} title="정산 상세" size="lg">
+        {activeModal === 'settlementDetail' && modalData && (() => {
+          const settlement = modalData as SupplierSettlement;
+          const periodYear = settlement.period.split('-')[0];
+          const periodMonth = parseInt(settlement.period.split('-')[1], 10);
+          const supplierProducts = mockAdminProducts.filter((p) => p.supplier === settlement.supplierName);
+          return (
+            <div className="space-y-6">
+              {/* Header */}
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--text)]">
+                  {settlement.supplierName} -- {periodYear}년 {periodMonth}월 정산 내역
+                </h3>
+              </div>
+
+              {/* Summary card */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-[var(--bg)] rounded-lg p-4 border border-[var(--border)]">
+                  <p className="text-xs text-[var(--text-secondary)] mb-1">총 매출</p>
+                  <p className="text-lg font-bold text-[var(--text)]">₩{settlement.totalSales.toLocaleString('ko-KR')}</p>
+                </div>
+                <div className="bg-[var(--bg)] rounded-lg p-4 border border-[var(--border)]">
+                  <p className="text-xs text-[var(--text-secondary)] mb-1">수수료 ({settlement.commissionRate}%)</p>
+                  <p className="text-lg font-bold text-[var(--text)]">₩{settlement.commission.toLocaleString('ko-KR')}</p>
+                </div>
+                <div className="bg-[var(--bg)] rounded-lg p-4 border border-[var(--border)]">
+                  <p className="text-xs text-[var(--text-secondary)] mb-1">지급액</p>
+                  <p className="text-lg font-bold text-orange-600">₩{settlement.netPayment.toLocaleString('ko-KR')}</p>
+                </div>
+              </div>
+
+              {/* Product breakdown */}
+              <div>
+                <h4 className="text-sm font-semibold text-[var(--text)] mb-3">제품별 매출 상세 (공급사별 제품 목록)</h4>
+                {supplierProducts.length > 0 ? (
+                  <div className="overflow-x-auto border border-[var(--border)] rounded-lg">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-[var(--bg)] border-b border-[var(--border)]">
+                          <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)] text-xs">카탈로그 No.</th>
+                          <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)] text-xs">제품명</th>
+                          <th className="text-center px-4 py-2.5 font-semibold text-[var(--text-secondary)] text-xs">유형</th>
+                          <th className="text-center px-4 py-2.5 font-semibold text-[var(--text-secondary)] text-xs">규격 수</th>
+                          <th className="text-right px-4 py-2.5 font-semibold text-[var(--text-secondary)] text-xs">추정 매출</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {supplierProducts.map((p) => {
+                          const estSales = p.variants.reduce((a, v) => a + v.salePrice * Math.max(1, v.stock), 0);
+                          return (
+                            <tr key={p.id} className="border-b border-[var(--border)] hover:bg-[var(--bg)] transition-colors">
+                              <td className="px-4 py-2.5 text-[var(--text)] font-mono text-xs">{p.catalogNo}</td>
+                              <td className="px-4 py-2.5 text-[var(--text)]">{p.name}</td>
+                              <td className="px-4 py-2.5 text-center"><StatusBadge status={p.type === '시약' ? '시약' : '소모품'} colorMap={{ '시약': 'blue', '소모품': 'purple' }} /></td>
+                              <td className="px-4 py-2.5 text-center text-[var(--text)]">{p.variants.length}개</td>
+                              <td className="px-4 py-2.5 text-right text-[var(--text)]">₩{estSales.toLocaleString('ko-KR')}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-[var(--text-secondary)] bg-[var(--bg)] rounded-lg">
+                    <Package size={32} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">등록된 제품이 없습니다.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-[var(--border)]">
+                {settlement.status === '정산완료' ? (
+                  <p className="text-sm text-[var(--text-secondary)]">정산일: {settlement.settledAt}</p>
+                ) : (
+                  <button
+                    onClick={() => { showToast(`${settlement.supplierName} 정산이 확정되었습니다`); closeModal(); }}
+                    className="h-[var(--btn-height)] px-4 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-1.5"
+                  >
+                    <CheckCircle size={14} /> 정산 확정
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </Modal>
 
       {/* Toast */}

@@ -23,50 +23,43 @@ import {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-type Role = '전체' | '연구원' | '조직장' | '기업장' | '공급자' | '시스템관리자';
-const roles: Role[] = ['전체', '연구원', '조직장', '기업장', '공급자', '시스템관리자'];
+/** Customer roles only */
+type CustomerRole = '전체' | '연구원' | '조직장';
+const customerRoles: CustomerRole[] = ['전체', '연구원', '조직장'];
 
 const roleColors: Record<string, string> = {
   연구원: 'bg-blue-100 text-blue-700',
   조직장: 'bg-purple-100 text-purple-700',
-  기업장: 'bg-indigo-100 text-indigo-700',
-  공급자: 'bg-emerald-100 text-emerald-700',
-  시스템관리자: 'bg-orange-100 text-orange-700',
 };
 
-/** 기관 유형에 따라 선택 가능한 역할 목록 반환 */
+/** 기관 유형에 따라 선택 가능한 역할 목록 반환 (고객 전용: 연구원/조직장만) */
 function getRolesForOrg(orgId: string, orgs: Organization[]): User['role'][] {
   const org = orgs.find((o) => o.id === orgId);
   if (!org) return ['연구원'];
-  if (org.name === '(주)지누켐') return ['연구원', '시스템관리자'];
   if (org.type === '대학') return ['연구원', '조직장'];
-  if (org.type === '기업') return ['연구원', '기업장', '공급자'];
-  if (org.type === '연구소') return ['연구원', '기업장'];
+  if (org.type === '연구소') return ['연구원', '조직장'];
   return ['연구원'];
 }
 
 const orgTypeColors: Record<string, string> = {
   대학: 'bg-blue-100 text-blue-700',
-  기업: 'bg-purple-100 text-purple-700',
   연구소: 'bg-emerald-100 text-emerald-700',
 };
 
-type ActionType = '전체' | '로그인' | '주문' | '설정변경' | '역할변경' | '제품등록' | 'API호출';
-const actionTypes: ActionType[] = ['전체', '로그인', '주문', '설정변경', '역할변경', '제품등록', 'API호출'];
+type ActionType = '전체' | '로그인' | '주문' | '설정변경' | '역할변경';
+const actionTypes: ActionType[] = ['전체', '로그인', '주문', '설정변경', '역할변경'];
 
 const actionColors: Record<string, string> = {
   로그인: 'bg-blue-100 text-blue-700',
   주문: 'bg-emerald-100 text-emerald-700',
   설정변경: 'bg-amber-100 text-amber-700',
   역할변경: 'bg-purple-100 text-purple-700',
-  제품등록: 'bg-teal-100 text-teal-700',
-  API호출: 'bg-orange-100 text-orange-700',
 };
 
-const USERS_PER_PAGE = 8;
+const CUSTOMERS_PER_PAGE = 8;
 
 const tabs = [
-  { id: '사용자 목록', label: '사용자 목록' },
+  { id: '고객 목록', label: '고객 목록' },
   { id: '기관 관리', label: '기관 관리' },
   { id: '활동 로그', label: '활동 로그' },
 ];
@@ -86,11 +79,14 @@ function budgetPercent(used: number, total: number) {
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
-export default function UsersPage() {
-  const { usersTab, setUsersTab, selectedUserIds, toggleUserSelection, selectAllUsers, clearUserSelection, activeModal, modalData, openModal, closeModal } = useAdminStore();
+export default function CustomersPage() {
+  const { selectedUserIds, toggleUserSelection, selectAllUsers, clearUserSelection, activeModal, modalData, openModal, closeModal } = useAdminStore();
 
-  // Mutable data (local state)
-  const [users, setUsers] = useState<User[]>([...mockUsers]);
+  // Local tab state (no customersTab in store)
+  const [activeTab, setActiveTab] = useState('고객 목록');
+
+  // Mutable data (local state) — filtered to customers only (연구원 + 조직장)
+  const [allUsers, setAllUsers] = useState<User[]>([...mockUsers]);
   const [organizations, setOrganizations] = useState<Organization[]>([...mockOrganizations]);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -99,9 +95,18 @@ export default function UsersPage() {
     setTimeout(() => setToast(null), 2500);
   }
 
+  // Only customer users (연구원 + 조직장)
+  const customers = useMemo(() => allUsers.filter((u) => u.role === '연구원' || u.role === '조직장'), [allUsers]);
+
+  // Only customer-type organizations (대학 + 연구소, NOT 기업)
+  const customerOrgs = useMemo(() => organizations.filter((o) => o.type === '대학' || o.type === '연구소'), [organizations]);
+
+  // Customer user IDs for filtering activity logs
+  const customerUserIds = useMemo(() => new Set(customers.map((u) => u.id)), [customers]);
+
   // Tab 1 state
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRole, setSelectedRole] = useState<Role>('전체');
+  const [selectedRole, setSelectedRole] = useState<CustomerRole>('전체');
   const [statusFilter, setStatusFilter] = useState<'전체' | '활성' | '비활성' | '다중 소속'>('전체');
   const [currentPage, setCurrentPage] = useState(1);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
@@ -125,40 +130,42 @@ export default function UsersPage() {
   // Add user form state
   const [addUserForm, setAddUserForm] = useState<Partial<User>>({ role: '연구원', status: '활성', orgIds: [] });
 
-  // ─── Tab 1: Filtered users ──────────────────────────────────────────────
+  // ─── Tab 1: Filtered customers ──────────────────────────────────────────
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
+  const filteredCustomers = useMemo(() => {
+    return customers.filter((u) => {
       const matchRole = selectedRole === '전체' || u.role === selectedRole;
       const matchStatus = statusFilter === '전체' || statusFilter === '다중 소속' ? (statusFilter === '다중 소속' ? (u.orgIds ?? []).length > 1 : true) : u.status === statusFilter;
       const q = searchQuery.toLowerCase();
       const matchSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.org.toLowerCase().includes(q);
       return matchRole && matchStatus && matchSearch;
     });
-  }, [selectedRole, statusFilter, searchQuery, users]);
+  }, [selectedRole, statusFilter, searchQuery, customers]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PER_PAGE));
-  const pagedUsers = filteredUsers.slice((currentPage - 1) * USERS_PER_PAGE, currentPage * USERS_PER_PAGE);
-  const pagedUserIds = pagedUsers.map((u) => u.id);
+  const totalPages = Math.max(1, Math.ceil(filteredCustomers.length / CUSTOMERS_PER_PAGE));
+  const pagedCustomers = filteredCustomers.slice((currentPage - 1) * CUSTOMERS_PER_PAGE, currentPage * CUSTOMERS_PER_PAGE);
+  const pagedCustomerIds = pagedCustomers.map((u) => u.id);
 
-  const activeCount = users.filter((u) => u.status === '활성').length;
-  const inactiveCount = users.filter((u) => u.status === '비활성').length;
-  const newThisMonth = users.filter((u) => u.createdAt >= '2026-03-01').length;
+  const activeCount = customers.filter((u) => u.status === '활성').length;
+  const inactiveCount = customers.filter((u) => u.status === '비활성').length;
+  const newThisMonth = customers.filter((u) => u.createdAt >= '2026-03-01').length;
 
   // ─── Tab 2: Filtered orgs ──────────────────────────────────────────────
 
   const filteredOrgs = useMemo(() => {
     const q = orgSearch.toLowerCase();
-    return organizations.filter((o) => !q || o.name.toLowerCase().includes(q) || o.admin.toLowerCase().includes(q));
-  }, [orgSearch, organizations]);
+    return customerOrgs.filter((o) => !q || o.name.toLowerCase().includes(q) || o.admin.toLowerCase().includes(q));
+  }, [orgSearch, customerOrgs]);
 
-  const uniCount = organizations.filter((o) => o.type === '대학').length;
-  const corpCount = organizations.filter((o) => o.type === '기업' || o.type === '연구소').length;
+  const uniCount = customerOrgs.filter((o) => o.type === '대학').length;
+  const labCount = customerOrgs.filter((o) => o.type === '연구소').length;
 
-  // ─── Tab 3: Filtered logs ──────────────────────────────────────────────
+  // ─── Tab 3: Filtered logs (customer actions only) ──────────────────────
 
   const filteredLogs = useMemo(() => {
     return mockActivityLogs.filter((log) => {
+      // Only show logs from customer users
+      if (!customerUserIds.has(log.userId)) return false;
       const matchAction = logActionFilter === '전체' || log.action === logActionFilter;
       const q = logSearch.toLowerCase();
       const matchSearch = !q || log.userName.toLowerCase().includes(q) || log.details.toLowerCase().includes(q);
@@ -166,60 +173,60 @@ export default function UsersPage() {
       const matchDateTo = !logDateTo || log.timestamp <= logDateTo + ' 23:59:59';
       return matchAction && matchSearch && matchDateFrom && matchDateTo;
     });
-  }, [logActionFilter, logSearch, logDateFrom, logDateTo]);
+  }, [logActionFilter, logSearch, logDateFrom, logDateTo, customerUserIds]);
 
   const visibleLogs = filteredLogs.slice(0, logVisibleCount);
 
   // ─── Modal helpers ─────────────────────────────────────────────────────
 
   function handleViewUser(user: User) {
-    openModal('userDetail', user);
+    openModal('customerDetail', user);
   }
 
   function handleEditUser(user: User) {
     setEditForm({ ...user });
-    openModal('userEdit', user);
+    openModal('customerEdit', user);
   }
 
   function handleViewOrg(org: Organization) {
-    openModal('orgDetail', org);
+    openModal('customerOrgDetail', org);
   }
 
   function handleAddOrg() {
     setOrgForm({ type: '대학', status: '활성' });
-    openModal('orgAdd', null);
+    openModal('customerOrgAdd', null);
   }
 
   function handleEditOrg(org: Organization) {
     setOrgForm({ ...org });
-    openModal('orgEdit', org);
+    openModal('customerOrgEdit', org);
   }
 
   // ─── CRUD Actions ─────────────────────────────────────────────────────
 
   function handleSaveUser() {
     if (!editForm.id) return;
-    setUsers((prev) => prev.map((u) => u.id === editForm.id ? { ...u, ...editForm } as User : u));
+    setAllUsers((prev) => prev.map((u) => u.id === editForm.id ? { ...u, ...editForm } as User : u));
     showToast(`${editForm.name} 정보가 저장되었습니다.`);
     closeModal();
   }
 
   function handleToggleUserStatus(user: User) {
     const newStatus = user.status === '활성' ? '비활성' : '활성';
-    setUsers((prev) => prev.map((u) => u.id === user.id ? { ...u, status: newStatus } : u));
+    setAllUsers((prev) => prev.map((u) => u.id === user.id ? { ...u, status: newStatus } : u));
     showToast(`${user.name}을(를) ${newStatus} 상태로 변경했습니다.`);
     closeModal();
   }
 
   function handleDeleteUser(userId: string) {
-    const user = users.find((u) => u.id === userId);
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
+    const user = allUsers.find((u) => u.id === userId);
+    setAllUsers((prev) => prev.filter((u) => u.id !== userId));
     showToast(`${user?.name || '사용자'}가 삭제되었습니다.`);
     setOpenDropdownId(null);
   }
 
   function handleRemoveFromOrg(user: User, orgId: string) {
-    setUsers((prev) => prev.map((u) => {
+    setAllUsers((prev) => prev.map((u) => {
       if (u.id !== user.id) return u;
       const newOrgIds = (u.orgIds ?? [u.orgId]).filter((oid) => oid !== orgId);
       if (newOrgIds.length === 0) return { ...u, orgIds: newOrgIds, orgId: '', org: '미소속' };
@@ -231,7 +238,7 @@ export default function UsersPage() {
   }
 
   function handleSaveOrg() {
-    if (activeModal === 'orgAdd') {
+    if (activeModal === 'customerOrgAdd') {
       const newOrg: Organization = {
         id: `ORG-${String(organizations.length + 1).padStart(3, '0')}`,
         name: orgForm.name || '새 기관',
@@ -261,12 +268,12 @@ export default function UsersPage() {
     const org = organizations.find((o) => o.id === orgId);
     setAddUserForm({ role: '연구원', status: '활성', orgId, orgIds: [orgId], org: org?.name || '' });
     closeModal();
-    openModal('addUserToOrg', org);
+    openModal('customerAddUserToOrg', org);
   }
 
   function handleSaveNewUser() {
     const newUser: User = {
-      id: `USR-${String(users.length + 1).padStart(3, '0')}`,
+      id: `USR-${String(allUsers.length + 1).padStart(3, '0')}`,
       name: addUserForm.name || '',
       email: addUserForm.email || '',
       org: addUserForm.org || '',
@@ -284,7 +291,7 @@ export default function UsersPage() {
       showToast('이름과 이메일은 필수입니다.');
       return;
     }
-    setUsers((prev) => [...prev, newUser]);
+    setAllUsers((prev) => [...prev, newUser]);
     showToast(`${newUser.name}이(가) ${newUser.org}에 추가되었습니다.`);
     closeModal();
   }
@@ -296,22 +303,22 @@ export default function UsersPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text)]">사용자 관리</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">사용자, 기관, 활동 로그를 관리합니다</p>
+          <h1 className="text-2xl font-bold text-[var(--text)]">고객 관리</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">연구원, 조직장 사용자를 관리합니다</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <AdminTabs tabs={tabs} activeTab={usersTab} onTabChange={(t) => { setUsersTab(t); clearUserSelection(); }} />
+      <AdminTabs tabs={tabs} activeTab={activeTab} onTabChange={(t) => { setActiveTab(t); clearUserSelection(); }} />
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          Tab 1: 사용자 목록
+          Tab 1: 고객 목록
           ═══════════════════════════════════════════════════════════════════ */}
-      {usersTab === '사용자 목록' && (
+      {activeTab === '고객 목록' && (
         <div className="space-y-5">
           {/* Stats */}
           <div className="grid grid-cols-4 gap-4">
-            <StatCard icon={<Users size={20} />} label="전체 사용자" value={String(users.length)} change="+12%" up />
+            <StatCard icon={<Users size={20} />} label="전체 고객" value={String(customers.length)} change="+12%" up />
             <StatCard icon={<UserCheck size={20} />} label="활성" value={String(activeCount)} change="+8%" up />
             <StatCard icon={<UserX size={20} />} label="비활성" value={String(inactiveCount)} change="-3%" up={false} />
             <StatCard icon={<UserPlus size={20} />} label="이번 달 신규" value={String(newThisMonth)} change="+2명" up />
@@ -335,7 +342,7 @@ export default function UsersPage() {
               {/* Role pills */}
               <div className="flex items-center gap-1">
                 <Filter size={16} className="text-[var(--text-secondary)] mr-1" />
-                {roles.map((role) => (
+                {customerRoles.map((role) => (
                   <button
                     key={role}
                     onClick={() => { setSelectedRole(role); setCurrentPage(1); }}
@@ -391,8 +398,8 @@ export default function UsersPage() {
                     <th className="text-left px-5 py-3 w-10">
                       <input
                         type="checkbox"
-                        checked={pagedUserIds.length > 0 && pagedUserIds.every((id) => selectedUserIds.includes(id))}
-                        onChange={() => selectAllUsers(pagedUserIds)}
+                        checked={pagedCustomerIds.length > 0 && pagedCustomerIds.every((id) => selectedUserIds.includes(id))}
+                        onChange={() => selectAllUsers(pagedCustomerIds)}
                         className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                       />
                     </th>
@@ -407,7 +414,7 @@ export default function UsersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {pagedUsers.map((user) => (
+                  {pagedCustomers.map((user) => (
                     <tr key={user.id} className="border-b border-[var(--border)] hover:bg-[var(--bg)] transition-colors">
                       <td className="px-5 py-3.5">
                         <input
@@ -485,7 +492,7 @@ export default function UsersPage() {
                       </td>
                     </tr>
                   ))}
-                  {pagedUsers.length === 0 && (
+                  {pagedCustomers.length === 0 && (
                     <tr>
                       <td colSpan={9} className="px-5 py-12 text-center text-[var(--text-secondary)]">
                         검색 결과가 없습니다.
@@ -509,13 +516,13 @@ export default function UsersPage() {
       {/* ═══════════════════════════════════════════════════════════════════════
           Tab 2: 기관 관리
           ═══════════════════════════════════════════════════════════════════ */}
-      {usersTab === '기관 관리' && (
+      {activeTab === '기관 관리' && (
         <div className="space-y-5">
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4">
-            <StatCard icon={<Building2 size={20} />} label="전체 기관" value={String(organizations.length)} change="+2" up />
+            <StatCard icon={<Building2 size={20} />} label="전체 기관" value={String(customerOrgs.length)} change="+2" up />
             <StatCard icon={<GraduationCap size={20} />} label="대학" value={String(uniCount)} change="+1" up />
-            <StatCard icon={<Building size={20} />} label="기업/연구소" value={String(corpCount)} change="+1" up />
+            <StatCard icon={<Building size={20} />} label="연구소" value={String(labCount)} change="+1" up />
           </div>
 
           {/* Filter + Add */}
@@ -569,10 +576,10 @@ export default function UsersPage() {
                             {org.name}
                           </span>
                           {(() => {
-                            const members = users.filter((u) => (u.orgIds ?? [u.orgId]).includes(org.id));
+                            const members = allUsers.filter((u) => (u.orgIds ?? [u.orgId]).includes(org.id));
                             const emailDomain = members.length > 0 ? members[0].email.split('@')[1] : '';
                             const hasMismatch = emailDomain && members.some((u) => u.email.split('@')[1] !== emailDomain);
-                            const hasDuplicate = members.some((m) => users.some((u) => u.id !== m.id && u.name === m.name && u.orgId !== org.id));
+                            const hasDuplicate = members.some((m) => allUsers.some((u) => u.id !== m.id && u.name === m.name && u.orgId !== org.id));
                             return (hasMismatch || hasDuplicate) ? (
                               <span className="ml-1.5 inline-flex items-center" title={hasMismatch ? '이메일 도메인 불일치 사용자 있음' : '동명이인 의심 사용자 있음'}>
                                 <AlertTriangle size={13} className="text-amber-500" />
@@ -635,7 +642,7 @@ export default function UsersPage() {
       {/* ═══════════════════════════════════════════════════════════════════════
           Tab 3: 활동 로그
           ═══════════════════════════════════════════════════════════════════ */}
-      {usersTab === '활동 로그' && (
+      {activeTab === '활동 로그' && (
         <div className="space-y-5">
           {/* Filters */}
           <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
@@ -665,7 +672,7 @@ export default function UsersPage() {
                   type="text"
                   value={logSearch}
                   onChange={(e) => { setLogSearch(e.target.value); setLogVisibleCount(10); }}
-                  placeholder="사용자 검색..."
+                  placeholder="고객 검색..."
                   className="w-full h-[var(--btn-height)] pl-9 pr-4 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
               </div>
@@ -757,9 +764,9 @@ export default function UsersPage() {
           Modals
           ═══════════════════════════════════════════════════════════════════ */}
 
-      {/* User Detail Modal */}
-      <Modal isOpen={activeModal === 'userDetail'} onClose={closeModal} title="사용자 상세" size="lg">
-        {activeModal === 'userDetail' && modalData && (() => {
+      {/* Customer Detail Modal */}
+      <Modal isOpen={activeModal === 'customerDetail'} onClose={closeModal} title="고객 상세" size="lg">
+        {activeModal === 'customerDetail' && modalData && (() => {
           const user = modalData as User;
           const userLogs = mockActivityLogs.filter((l) => l.userId === user.id).slice(0, 5);
           return (
@@ -806,10 +813,9 @@ export default function UsersPage() {
                             <button
                               onClick={() => {
                                 handleRemoveFromOrg(user, oid);
-                                // 모달을 다시 열어서 업데이트된 유저를 반영
                                 setTimeout(() => {
-                                  const updated = users.find((u) => u.id === user.id);
-                                  if (updated && (updated.orgIds ?? []).length > 0) openModal('userDetail', updated);
+                                  const updated = allUsers.find((u) => u.id === user.id);
+                                  if (updated && (updated.orgIds ?? []).length > 0) openModal('customerDetail', updated);
                                 }, 100);
                               }}
                               className="w-5 h-5 inline-flex items-center justify-center rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
@@ -890,8 +896,8 @@ export default function UsersPage() {
         })()}
       </Modal>
 
-      {/* User Edit Modal */}
-      <Modal isOpen={activeModal === 'userEdit'} onClose={closeModal} title="사용자 수정" size="lg">
+      {/* Customer Edit Modal */}
+      <Modal isOpen={activeModal === 'customerEdit'} onClose={closeModal} title="고객 수정" size="lg">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -931,7 +937,7 @@ export default function UsersPage() {
                 }}
                 className="w-full h-[var(--btn-height)] px-3 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
-                {organizations.map((o) => (
+                {customerOrgs.map((o) => (
                   <option key={o.id} value={o.id}>{o.name}</option>
                 ))}
               </select>
@@ -986,10 +992,10 @@ export default function UsersPage() {
       </Modal>
 
       {/* Org Detail Modal */}
-      <Modal isOpen={activeModal === 'orgDetail'} onClose={closeModal} title="기관 상세" size="xl">
-        {activeModal === 'orgDetail' && modalData && (() => {
+      <Modal isOpen={activeModal === 'customerOrgDetail'} onClose={closeModal} title="기관 상세" size="xl">
+        {activeModal === 'customerOrgDetail' && modalData && (() => {
           const org = modalData as Organization;
-          const orgMembers = users.filter((u) => (u.orgIds ?? [u.orgId]).includes(org.id));
+          const orgMembers = allUsers.filter((u) => (u.orgIds ?? [u.orgId]).includes(org.id) && (u.role === '연구원' || u.role === '조직장'));
           const pct = budgetPercent(org.usedBudget, org.budget);
 
           // 다중 소속: 이 기관 외에 다른 기관에도 속한 사용자
@@ -1006,7 +1012,7 @@ export default function UsersPage() {
 
           // 중복 검출: 다른 기관에도 등록된 이름 (동명이인 or 중복 등록)
           const duplicateNameUsers = orgMembers.filter((member) => {
-            return users.some((u) => u.id !== member.id && u.name === member.name && u.orgId !== org.id);
+            return allUsers.some((u) => u.id !== member.id && u.name === member.name && u.orgId !== org.id);
           });
 
           return (
@@ -1104,7 +1110,7 @@ export default function UsersPage() {
                         <span className="font-medium text-blue-800">동명이인 / 중복 등록 의심</span>
                         <p className="text-blue-700 mt-0.5">
                           {duplicateNameUsers.map((u) => {
-                            const otherOrgs = users.filter((o) => o.name === u.name && o.id !== u.id).map((o) => o.org);
+                            const otherOrgs = allUsers.filter((o) => o.name === u.name && o.id !== u.id).map((o) => o.org);
                             return `${u.name} → 다른 기관(${otherOrgs.join(', ')})에도 동일 이름 존재`;
                           }).join('; ')}
                         </p>
@@ -1117,7 +1123,7 @@ export default function UsersPage() {
               {/* Members Table - Full featured */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-semibold text-[var(--text)]">소속 회원 ({orgMembers.length}명)</h4>
+                  <h4 className="text-sm font-semibold text-[var(--text)]">소속 고객 ({orgMembers.length}명)</h4>
                   <button
                     onClick={() => {
                       closeModal();
@@ -1125,11 +1131,11 @@ export default function UsersPage() {
                       setSelectedRole('전체');
                       setStatusFilter('전체');
                       setCurrentPage(1);
-                      setUsersTab('사용자 목록');
+                      setActiveTab('고객 목록');
                     }}
                     className="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1"
                   >
-                    <ExternalLink size={12} /> 사용자 목록에서 보기
+                    <ExternalLink size={12} /> 고객 목록에서 보기
                   </button>
                 </div>
                 {orgMembers.length > 0 ? (
@@ -1193,7 +1199,7 @@ export default function UsersPage() {
                                     <Edit size={14} />
                                   </button>
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); openModal('confirmRemoveFromOrg', m); }}
+                                    onClick={(e) => { e.stopPropagation(); openModal('customerConfirmRemove', m); }}
                                     className="w-7 h-7 inline-flex items-center justify-center rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                                     title="기관에서 제거"
                                   >
@@ -1210,7 +1216,7 @@ export default function UsersPage() {
                 ) : (
                   <div className="text-center py-8 text-[var(--text-secondary)] bg-[var(--bg)] rounded-lg">
                     <Users size={32} className="mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">소속 회원이 없습니다.</p>
+                    <p className="text-sm">소속 고객이 없습니다.</p>
                   </div>
                 )}
               </div>
@@ -1221,7 +1227,7 @@ export default function UsersPage() {
                   onClick={() => handleAddUserToOrg(org.id)}
                   className="h-[var(--btn-height)] px-4 bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5"
                 >
-                  <Plus size={14} /> 이 기관에 사용자 추가
+                  <Plus size={14} /> 이 기관에 고객 추가
                 </button>
                 <button
                   onClick={() => { closeModal(); handleEditOrg(org); }}
@@ -1236,15 +1242,15 @@ export default function UsersPage() {
       </Modal>
 
       {/* 기관에서 사용자 제거 확인 모달 */}
-      <Modal isOpen={activeModal === 'confirmRemoveFromOrg'} onClose={closeModal} title="사용자 제거 확인" size="sm">
-        {activeModal === 'confirmRemoveFromOrg' && modalData && (() => {
+      <Modal isOpen={activeModal === 'customerConfirmRemove'} onClose={closeModal} title="고객 제거 확인" size="sm">
+        {activeModal === 'customerConfirmRemove' && modalData && (() => {
           const user = modalData as User;
           return (
             <div className="space-y-4">
               <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <AlertTriangle size={20} className="text-red-500 mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
-                  <p className="font-medium text-red-800">정말 이 사용자를 기관에서 제거하시겠습니까?</p>
+                  <p className="font-medium text-red-800">정말 이 고객을 기관에서 제거하시겠습니까?</p>
                   <p className="text-red-700 mt-1">
                     <strong>{user.name}</strong> ({user.email})이(가) 소속 기관에서 제거됩니다.
                     계정 자체는 삭제되지 않으며, 기관 미소속 상태로 변경됩니다.
@@ -1265,7 +1271,7 @@ export default function UsersPage() {
       </Modal>
 
       {/* Org Add / Edit Modal */}
-      <Modal isOpen={activeModal === 'orgAdd' || activeModal === 'orgEdit'} onClose={closeModal} title={activeModal === 'orgAdd' ? '기관 추가' : '기관 수정'} size="lg">
+      <Modal isOpen={activeModal === 'customerOrgAdd' || activeModal === 'customerOrgEdit'} onClose={closeModal} title={activeModal === 'customerOrgAdd' ? '기관 추가' : '기관 수정'} size="lg">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
@@ -1285,7 +1291,6 @@ export default function UsersPage() {
                 className="w-full h-[var(--btn-height)] px-3 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="대학">대학</option>
-                <option value="기업">기업</option>
                 <option value="연구소">연구소</option>
               </select>
             </div>
@@ -1337,7 +1342,7 @@ export default function UsersPage() {
                 className="w-full h-[var(--btn-height)] px-3 text-sm bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="">관리자 선택...</option>
-                {users.filter((u) => ['조직장', '기업장', '시스템관리자'].includes(u.role)).map((u) => (
+                {allUsers.filter((u) => u.role === '조직장').map((u) => (
                   <option key={u.id} value={u.name}>{u.name} ({u.org})</option>
                 ))}
               </select>
@@ -1350,15 +1355,15 @@ export default function UsersPage() {
               취소
             </button>
             <button onClick={handleSaveOrg} className="h-[var(--btn-height)] px-4 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors">
-              {activeModal === 'orgAdd' ? '추가' : '저장'}
+              {activeModal === 'customerOrgAdd' ? '추가' : '저장'}
             </button>
           </div>
         </div>
       </Modal>
 
       {/* Add User to Org Modal */}
-      <Modal isOpen={activeModal === 'addUserToOrg'} onClose={closeModal} title={`사용자 추가 — ${(modalData as Organization)?.name || ''}`} size="lg">
-        {activeModal === 'addUserToOrg' && (
+      <Modal isOpen={activeModal === 'customerAddUserToOrg'} onClose={closeModal} title={`고객 추가 — ${(modalData as Organization)?.name || ''}`} size="lg">
+        {activeModal === 'customerAddUserToOrg' && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
