@@ -1,6 +1,7 @@
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Topbar } from '@/components/layout/Topbar';
 import { Footer } from '@/components/layout/Footer';
+import { KakaoChatButton } from '@/components/ui/KakaoChatButton';
 
 export default function MainLayout({
   children,
@@ -15,6 +16,7 @@ export default function MainLayout({
         <main className="flex-1 p-6 bg-[var(--bg)]">{children}</main>
         <Footer />
       </div>
+      <KakaoChatButton />
     </div>
   );
 }

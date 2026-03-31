@@ -3,6 +3,13 @@
 // Prisma 모델에서 자동 생성되지 않는 UI/API 전용 타입들
 // ================================================================
 
+/** 유해화학물질 배송 규정 */
+export interface ShippingRestriction {
+  type: string;
+  class: string;
+  note: string;
+}
+
 /** 시약 카드 표시 데이터 */
 export interface ReagentCardData {
   id: string;
@@ -18,6 +25,7 @@ export interface ReagentCardData {
   structureImg?: string;
   variants: VariantSummary[];
   ghsPictograms?: string[];
+  shippingRestriction?: ShippingRestriction | null;
   isInInventory?: boolean;
   isFavorite?: boolean;
 }

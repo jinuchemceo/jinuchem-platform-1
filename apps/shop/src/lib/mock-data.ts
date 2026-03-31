@@ -24,6 +24,7 @@ export const sampleReagents: ReagentCardData[] = [
       { id: 'v3', size: '2.5', unit: 'L', listPrice: 542400, stockQty: 3, sameDayShip: false, deliveryDate: '2026-03-24' },
     ],
     ghsPictograms: ['flame', 'exclamation'],
+    shippingRestriction: { type: '인화성', class: '4.1류', note: '항공운송 제한' },
   },
   {
     id: '2',
@@ -41,6 +42,7 @@ export const sampleReagents: ReagentCardData[] = [
       { id: 'v5', size: '2.5', unit: 'L', listPrice: 87800, stockQty: 12, sameDayShip: true, deliveryDate: '2026-03-21' },
     ],
     ghsPictograms: ['flame', 'exclamation'],
+    shippingRestriction: { type: '인화성', class: '4.1류', note: '항공운송 제한' },
   },
   {
     id: '3',
@@ -58,6 +60,7 @@ export const sampleReagents: ReagentCardData[] = [
       { id: 'v7', size: '4', unit: 'L', listPrice: 98500, salePrice: 88650, discountRate: 10, stockQty: 5, sameDayShip: false, deliveryDate: '2026-03-23' },
     ],
     ghsPictograms: ['flame', 'skull', 'health'],
+    shippingRestriction: { type: '인화성/독성', class: '3류', note: '항공운송 제한, 환기 차량 필요' },
   },
   {
     id: '4',
@@ -75,6 +78,7 @@ export const sampleReagents: ReagentCardData[] = [
       { id: 'v9', size: '1', unit: 'kg', listPrice: 89700, stockQty: 10, sameDayShip: true, deliveryDate: '2026-03-21' },
     ],
     ghsPictograms: ['corrosion', 'exclamation'],
+    shippingRestriction: { type: '부식성', class: '8류', note: '택배 불가, 화물차량 배송' },
   },
   {
     id: '5',
@@ -92,6 +96,7 @@ export const sampleReagents: ReagentCardData[] = [
       { id: 'v11', size: '2.5', unit: 'L', listPrice: 112500, stockQty: 6, sameDayShip: false, deliveryDate: '2026-03-24' },
     ],
     ghsPictograms: ['corrosion', 'exclamation'],
+    shippingRestriction: { type: '부식성', class: '8류', note: '택배 불가, 화물차량 배송' },
   },
   {
     id: '6',
@@ -109,6 +114,7 @@ export const sampleReagents: ReagentCardData[] = [
       { id: 'v13', size: '25', unit: 'g', listPrice: 503100, stockQty: 2, sameDayShip: false, deliveryDate: '2026-03-25' },
     ],
     ghsPictograms: ['exclamation'],
+    shippingRestriction: null,
   },
   {
     id: '7',
@@ -126,6 +132,7 @@ export const sampleReagents: ReagentCardData[] = [
       { id: 'v15', size: '4', unit: 'L', listPrice: 198000, stockQty: 3, sameDayShip: false, deliveryDate: '2026-03-24' },
     ],
     ghsPictograms: ['health', 'exclamation'],
+    shippingRestriction: null,
   },
   {
     id: '8',
@@ -142,6 +149,7 @@ export const sampleReagents: ReagentCardData[] = [
       { id: 'v16', size: '1', unit: 'L', listPrice: 65400, salePrice: 58860, discountRate: 10, stockQty: 22, sameDayShip: true, deliveryDate: '2026-03-21' },
     ],
     ghsPictograms: ['flame', 'health', 'exclamation'],
+    shippingRestriction: { type: '인화성', class: '4.1류', note: '드라이아이스 포장 필요' },
   },
 ];
 

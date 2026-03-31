@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, SlidersHorizontal, Grid3X3, List, ChevronDown, Truck, FlaskConical, ShoppingCart, Heart } from 'lucide-react';
+import { Search, SlidersHorizontal, Grid3X3, List, ChevronDown, Truck, FlaskConical, ShoppingCart, Heart, AlertTriangle } from 'lucide-react';
 import { CardStructureImage } from '@/components/products/CardStructureImage';
 import { StructureSearchModal } from '@/components/products/StructureSearchModal';
 import { sampleReagents, supplierList, gradeList } from '@/lib/mock-data';
@@ -352,6 +352,13 @@ function ReagentGridCard({ reagent, showToast }: { reagent: ReagentCardData; sho
           </div>
         )}
 
+        {reagent.shippingRestriction && (
+          <div className="flex items-center gap-1 mt-1.5 px-2 py-1 bg-orange-50 border border-orange-200 rounded-md">
+            <AlertTriangle size={12} className="text-orange-600 shrink-0" />
+            <span className="text-xs text-orange-700 font-medium">{reagent.shippingRestriction.type}</span>
+          </div>
+        )}
+
         {/* Variant Selector + Cart Button */}
         <div className="flex gap-2 mt-3" onClick={(e) => e.preventDefault()}>
           {reagent.variants.length > 1 && (
@@ -441,6 +448,12 @@ function ReagentListCard({ reagent, showToast }: { reagent: ReagentCardData; sho
           <div className="flex items-center justify-end gap-1">
             <Truck size={12} className="text-emerald-600" />
             <span className="text-xs text-emerald-600 font-medium">당일출고</span>
+          </div>
+        )}
+        {reagent.shippingRestriction && (
+          <div className="flex items-center justify-end gap-1 px-2 py-1 bg-orange-50 border border-orange-200 rounded-md w-fit ml-auto">
+            <AlertTriangle size={12} className="text-orange-600 shrink-0" />
+            <span className="text-xs text-orange-700 font-medium">{reagent.shippingRestriction.type}</span>
           </div>
         )}
         <div className="flex gap-2 justify-end">

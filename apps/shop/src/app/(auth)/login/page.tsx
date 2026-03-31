@@ -177,6 +177,13 @@ export default function LoginPage() {
         </Link>
       </div>
 
+      {/* Non-member Order Tracking */}
+      <div className="text-center mt-3">
+        <Link href="/order-tracking" className="text-sm text-gray-500 hover:text-blue-600 hover:underline transition-colors">
+          비회원 주문조회
+        </Link>
+      </div>
+
       {/* Platform Links */}
       <div className="flex justify-center gap-4 mt-4">
         <span className="text-xs text-gray-400">JINUCHEM 플랫폼:</span>

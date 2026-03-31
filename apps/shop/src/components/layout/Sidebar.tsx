@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronRight,
   Bell,
+  FileSearch,
 } from 'lucide-react';
 
 interface NavItem {
@@ -71,6 +72,7 @@ const labItems: NavItem[] = [
       { label: '고객센터 홈', href: '/cs' },
       { label: '자주 묻는 질문', href: '/faq' },
       { label: '1:1 문의하기', href: '/inquiry' },
+      { label: 'MSDS 검색', href: '/msds' },
     ],
   },
 ];

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Truck, ShoppingCart, FileText, Heart, AlertTriangle,
-  Download, ChevronRight, Shield, Clock, Package,
+  Download, ChevronRight, Shield, Clock, Package, Search, CheckCircle, XCircle,
 } from 'lucide-react';
 import { sampleReagents } from '@/lib/mock-data';
 import { formatCurrency } from '@jinuchem/shared';
@@ -32,6 +32,9 @@ export default function ReagentDetailPage() {
   );
   const [quantity, setQuantity] = useState(1);
   const [toast, setToast] = useState<string | null>(null);
+  const [coaLotNumber, setCoaLotNumber] = useState('');
+  const [coaSearched, setCoaSearched] = useState(false);
+  const [coaLoading, setCoaLoading] = useState(false);
   const addToCart = useCartStore((s) => s.addItem);
   const { isFavorite: checkFav, toggleFavorite } = useFavoriteStore();
   const isFavorite = reagent ? checkFav(reagent.id) : false;
@@ -39,6 +42,15 @@ export default function ReagentDetailPage() {
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
+  };
+
+  const handleCoaSearch = async () => {
+    if (!coaLotNumber.trim()) return;
+    setCoaLoading(true);
+    // Mock API delay
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    setCoaSearched(true);
+    setCoaLoading(false);
   };
 
   const handleAddToCart = () => {
@@ -116,6 +128,38 @@ export default function ReagentDetailPage() {
             </div>
           )}
 
+          {/* Shipping Restriction */}
+          {reagent.shippingRestriction && (
+            <div className="mt-4 bg-orange-50 rounded-xl border border-orange-200 p-4">
+              <h3 className="text-sm font-semibold text-orange-800 mb-3 flex items-center gap-2">
+                <AlertTriangle size={16} className="text-orange-600" />
+                배송 유의사항
+              </h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-3">
+                  <span className="text-orange-700 font-medium w-[72px] shrink-0">위험 유형</span>
+                  <span className="px-2 py-0.5 bg-orange-100 border border-orange-300 rounded text-orange-800 text-xs font-medium">
+                    {reagent.shippingRestriction.type}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-orange-700 font-medium w-[72px] shrink-0">위험물 등급</span>
+                  <span className="text-orange-800">{reagent.shippingRestriction.class}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-orange-700 font-medium w-[72px] shrink-0">배송 조건</span>
+                  <span className="text-orange-800">{reagent.shippingRestriction.note}</span>
+                </div>
+                <div className="mt-3 px-3 py-2 bg-orange-100 border border-orange-300 rounded-lg">
+                  <p className="text-xs text-orange-800 leading-relaxed">
+                    <AlertTriangle size={12} className="inline-block mr-1 -mt-0.5 text-orange-600" />
+                    본 제품은 유해화학물질로 분류되어 특수 배송 조건이 적용됩니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Documents */}
           <div className="mt-4 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4">
             <h3 className="text-sm font-semibold text-[var(--text)] mb-3 flex items-center gap-2">
@@ -133,6 +177,127 @@ export default function ReagentDetailPage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* COA Search */}
+          <div className="mt-4 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4">
+            <h3 className="text-sm font-semibold text-[var(--text)] mb-3 flex items-center gap-2">
+              <Search size={16} />
+              COA 조회
+            </h3>
+            <p className="text-xs text-[var(--text-secondary)] mb-3">
+              Lot 번호를 입력하여 해당 제품의 성적서(COA)를 조회할 수 있습니다.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={coaLotNumber}
+                onChange={(e) => { setCoaLotNumber(e.target.value); setCoaSearched(false); }}
+                placeholder="Lot 번호 입력 (예: MKCL1234)"
+                className="flex-1 h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <button
+                onClick={handleCoaSearch}
+                disabled={!coaLotNumber.trim() || coaLoading}
+                className="h-[38px] px-4 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+              >
+                <Search size={14} />
+                {coaLoading ? '조회 중...' : 'COA 조회'}
+              </button>
+            </div>
+
+            {/* COA Result */}
+            {coaSearched && coaLotNumber.trim() && (
+              <div className="mt-4 border border-[var(--border)] rounded-lg overflow-hidden">
+                {/* COA Header */}
+                <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 border-b border-[var(--border)]">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--text)]">Certificate of Analysis (COA)</p>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">성적서 조회 결과</p>
+                    </div>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-medium text-emerald-700">
+                      <CheckCircle size={12} />
+                      적합
+                    </span>
+                  </div>
+                </div>
+
+                {/* COA Info */}
+                <div className="px-4 py-3 border-b border-[var(--border)]">
+                  <div className="grid grid-cols-3 gap-3 text-sm">
+                    <div>
+                      <span className="text-[var(--text-secondary)] text-xs">제품명</span>
+                      <p className="font-medium text-[var(--text)] mt-0.5">{reagent.name}</p>
+                    </div>
+                    <div>
+                      <span className="text-[var(--text-secondary)] text-xs">CAS No.</span>
+                      <p className="font-medium text-[var(--text)] mt-0.5">{reagent.casNumber}</p>
+                    </div>
+                    <div>
+                      <span className="text-[var(--text-secondary)] text-xs">Lot 번호</span>
+                      <p className="font-medium text-[var(--text)] mt-0.5">{coaLotNumber}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Analysis Table */}
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-gray-800 border-b border-[var(--border)]">
+                      <th className="text-left px-4 py-2 font-medium text-[var(--text-secondary)]">분석 항목</th>
+                      <th className="text-center px-4 py-2 font-medium text-[var(--text-secondary)]">규격</th>
+                      <th className="text-center px-4 py-2 font-medium text-[var(--text-secondary)]">결과</th>
+                      <th className="text-center px-4 py-2 font-medium text-[var(--text-secondary)]">판정</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { item: '순도 (Purity)', spec: '99.0% 이상', result: '99.5%', pass: true },
+                      { item: '수분 (Water)', spec: '0.1% 이하', result: '0.03%', pass: true },
+                      { item: '잔류용매 (Residual Solvents)', spec: '0.05% 이하', result: '0.01%', pass: true },
+                      { item: '강열잔분 (Residue on Ignition)', spec: '0.01% 이하', result: '0.005%', pass: true },
+                      { item: '중금속 (Heavy Metals)', spec: '10 ppm 이하', result: '< 5 ppm', pass: true },
+                    ].map((row) => (
+                      <tr key={row.item} className="border-b border-[var(--border)] last:border-0">
+                        <td className="px-4 py-2.5 text-[var(--text)] font-medium">{row.item}</td>
+                        <td className="px-4 py-2.5 text-center text-[var(--text-secondary)]">{row.spec}</td>
+                        <td className="px-4 py-2.5 text-center text-[var(--text)] font-medium">{row.result}</td>
+                        <td className="px-4 py-2.5 text-center">
+                          {row.pass ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
+                              <CheckCircle size={14} />
+                              적합
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-red-600 font-medium">
+                              <XCircle size={14} />
+                              부적합
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* Download Button */}
+                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-t border-[var(--border)]">
+                  <button className="w-full h-[38px] bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                    <Download size={14} />
+                    COA 다운로드 (PDF)
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Placeholder when no search */}
+            {!coaSearched && !coaLotNumber.trim() && (
+              <div className="mt-3 text-center py-4 border border-dashed border-[var(--border)] rounded-lg">
+                <FileText size={24} className="mx-auto text-gray-300 mb-2" />
+                <p className="text-xs text-[var(--text-secondary)]">Lot 번호를 입력하면 COA를 조회할 수 있습니다.</p>
+              </div>
+            )}
           </div>
         </div>
 

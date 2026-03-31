@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Download, Building2, CreditCard, Search, CheckSquare, Printer } from 'lucide-react';
+import { FileText, Download, Building2, CreditCard, Search, CheckSquare, Printer, Receipt, Calendar, Send, Eye } from 'lucide-react';
 import { formatCurrency } from '@jinuchem/shared';
 
 interface OrderDoc {
@@ -39,11 +39,44 @@ const DOC_TITLES: Record<DocType, string> = {
   delivery: '납 품 확 인 서',
 };
 
+interface TaxInvoice {
+  id: string;
+  issuedAt: string;
+  supplyAmount: number;
+  taxAmount: number;
+  total: number;
+  status: '발행완료' | '발행대기';
+  buyerName: string;
+  buyerBizNo: string;
+}
+
+const sampleTaxInvoices: TaxInvoice[] = [
+  { id: 'TI-20260325-001', issuedAt: '2026-03-25', supplyAmount: 544500, taxAmount: 54450, total: 598950, status: '발행완료', buyerName: '경상국립대학교 산학협력단', buyerBizNo: '609-82-05765' },
+  { id: 'TI-20260320-002', issuedAt: '2026-03-20', supplyAmount: 87800, taxAmount: 8780, total: 96580, status: '발행완료', buyerName: '경상국립대학교 산학협력단', buyerBizNo: '609-82-05765' },
+  { id: 'TI-20260318-003', issuedAt: '2026-03-18', supplyAmount: 226200, taxAmount: 22620, total: 248820, status: '발행완료', buyerName: '서울대학교 화학생물공학부', buyerBizNo: '119-82-00034' },
+  { id: 'TI-20260331-004', issuedAt: '2026-03-31', supplyAmount: 175890, taxAmount: 17589, total: 193479, status: '발행대기', buyerName: '한국과학기술원 화학과', buyerBizNo: '314-82-00168' },
+];
+
 export default function DocumentsPage() {
   const [period, setPeriod] = useState('1m');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [previewDoc, setPreviewDoc] = useState<{ type: DocType; orders: OrderDoc[] } | null>(null);
+  const [activeTab, setActiveTab] = useState<'voucher' | 'taxinvoice'>('voucher');
+  const [taxForm, setTaxForm] = useState({
+    bizNo: '',
+    companyName: '',
+    ceoName: '',
+    bizType: '',
+    bizItem: '',
+    email: '',
+    issueDate: new Date().toISOString().slice(0, 10),
+  });
+
+  const selectedSupplyAmount = sampleOrderDocs
+    .filter((o) => selectedIds.includes(o.id))
+    .reduce((sum, o) => sum + o.totalAmount, 0);
+  const selectedTaxAmount = Math.round(selectedSupplyAmount * 0.1);
 
   const filtered = sampleOrderDocs.filter((o) => {
     if (searchQuery) {
@@ -192,6 +225,31 @@ export default function DocumentsPage() {
         <h1 className="text-2xl font-bold text-[var(--text)]">증빙서류</h1>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 border-b border-[var(--border)]">
+        <button
+          onClick={() => setActiveTab('voucher')}
+          className={`h-[38px] px-5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'voucher'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text)]'
+          }`}
+        >
+          <span className="flex items-center gap-1.5"><FileText size={14} /> 증빙서류 발급</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('taxinvoice')}
+          className={`h-[38px] px-5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'taxinvoice'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text)]'
+          }`}
+        >
+          <span className="flex items-center gap-1.5"><Receipt size={14} /> 전자세금계산서 발행</span>
+        </button>
+      </div>
+
+      {activeTab === 'voucher' && (<>
       {/* Period Filters */}
       <div className="flex items-center gap-3 mb-6">
         {['1w', '1m', '3m', '6m'].map((p) => (
@@ -283,6 +341,218 @@ export default function DocumentsPage() {
           </div>
         </div>
       </div>
+
+      </>)}
+
+      {activeTab === 'taxinvoice' && (
+        <div className="space-y-6">
+          {/* Tax Invoice Form */}
+          <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-6">
+            <div className="flex items-center gap-2 mb-5">
+              <Receipt size={18} className="text-blue-600" />
+              <h2 className="text-base font-semibold text-[var(--text)]">전자세금계산서 발행 요청</h2>
+            </div>
+
+            {/* Order selection for tax invoice */}
+            <div className="mb-5">
+              <p className="text-sm font-medium text-[var(--text)] mb-2">주문 선택</p>
+              <div className="border border-[var(--border)] rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-[var(--border)]">
+                      <th className="w-[40px] px-4 py-2.5">
+                        <input type="checkbox" checked={selectedIds.length === sampleOrderDocs.length && sampleOrderDocs.length > 0} onChange={toggleAll} className="accent-blue-600" />
+                      </th>
+                      <th className="text-left px-4 py-2.5 font-medium text-[var(--text-secondary)] text-xs">주문번호</th>
+                      <th className="text-left px-4 py-2.5 font-medium text-[var(--text-secondary)] text-xs">제품</th>
+                      <th className="text-right px-4 py-2.5 font-medium text-[var(--text-secondary)] text-xs">금액</th>
+                      <th className="text-center px-4 py-2.5 font-medium text-[var(--text-secondary)] text-xs">주문일</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sampleOrderDocs.map((order) => (
+                      <tr key={order.id} className={`border-b border-[var(--border)] last:border-0 hover:bg-gray-50 cursor-pointer ${selectedIds.includes(order.id) ? 'bg-blue-50' : ''}`} onClick={() => toggleSelect(order.id)}>
+                        <td className="px-4 py-2.5"><input type="checkbox" checked={selectedIds.includes(order.id)} onChange={() => toggleSelect(order.id)} className="accent-blue-600" onClick={(e) => e.stopPropagation()} /></td>
+                        <td className="px-4 py-2.5 font-mono text-xs text-[var(--text)]">{order.orderNumber}</td>
+                        <td className="px-4 py-2.5 text-[var(--text)] text-xs">{order.products}</td>
+                        <td className="px-4 py-2.5 text-right font-medium text-[var(--text)] text-xs">{formatCurrency(order.totalAmount)}</td>
+                        <td className="px-4 py-2.5 text-center text-[var(--text-secondary)] text-xs">{order.orderedAt}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              {/* Left: Buyer info */}
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-[var(--text)] mb-1">공급받는자 정보</p>
+                <div>
+                  <label className="text-xs text-[var(--text-secondary)] mb-1 block">사업자등록번호</label>
+                  <input
+                    type="text"
+                    placeholder="000-00-00000"
+                    value={taxForm.bizNo}
+                    onChange={(e) => setTaxForm((f) => ({ ...f, bizNo: e.target.value }))}
+                    className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-[var(--text-secondary)] mb-1 block">상호</label>
+                    <input
+                      type="text"
+                      placeholder="상호명"
+                      value={taxForm.companyName}
+                      onChange={(e) => setTaxForm((f) => ({ ...f, companyName: e.target.value }))}
+                      className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-[var(--text-secondary)] mb-1 block">대표자명</label>
+                    <input
+                      type="text"
+                      placeholder="대표자명"
+                      value={taxForm.ceoName}
+                      onChange={(e) => setTaxForm((f) => ({ ...f, ceoName: e.target.value }))}
+                      className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-[var(--text-secondary)] mb-1 block">업태</label>
+                    <input
+                      type="text"
+                      placeholder="업태"
+                      value={taxForm.bizType}
+                      onChange={(e) => setTaxForm((f) => ({ ...f, bizType: e.target.value }))}
+                      className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-[var(--text-secondary)] mb-1 block">종목</label>
+                    <input
+                      type="text"
+                      placeholder="종목"
+                      value={taxForm.bizItem}
+                      onChange={(e) => setTaxForm((f) => ({ ...f, bizItem: e.target.value }))}
+                      className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-[var(--text-secondary)] mb-1 block">이메일</label>
+                  <input
+                    type="email"
+                    placeholder="tax@example.com"
+                    value={taxForm.email}
+                    onChange={(e) => setTaxForm((f) => ({ ...f, email: e.target.value }))}
+                    className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
+                  />
+                </div>
+              </div>
+
+              {/* Right: Amount & Date */}
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-[var(--text)] mb-1">발행 정보</p>
+                <div>
+                  <label className="text-xs text-[var(--text-secondary)] mb-1 block">공급가액</label>
+                  <div className="h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-gray-50 text-[var(--text)] flex items-center font-medium">
+                    {selectedIds.length > 0 ? formatCurrency(selectedSupplyAmount) : '-'}
+                  </div>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1">선택한 주문에서 자동 계산됩니다</p>
+                </div>
+                <div>
+                  <label className="text-xs text-[var(--text-secondary)] mb-1 block">세액 (10%)</label>
+                  <div className="h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-gray-50 text-[var(--text)] flex items-center font-medium">
+                    {selectedIds.length > 0 ? formatCurrency(selectedTaxAmount) : '-'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-[var(--text-secondary)] mb-1 block">합계</label>
+                  <div className="h-[38px] px-3 border border-blue-200 rounded-lg text-sm bg-blue-50 text-blue-700 flex items-center font-bold">
+                    {selectedIds.length > 0 ? formatCurrency(selectedSupplyAmount + selectedTaxAmount) : '-'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-[var(--text-secondary)] mb-1 block">작성일자</label>
+                  <div className="flex items-center gap-2">
+                    <Calendar size={14} className="text-[var(--text-secondary)]" />
+                    <input
+                      type="date"
+                      value={taxForm.issueDate}
+                      onChange={(e) => setTaxForm((f) => ({ ...f, issueDate: e.target.value }))}
+                      className="flex-1 h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm bg-[var(--bg-card)] text-[var(--text)]"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (selectedIds.length === 0) { alert('주문을 선택해주세요'); return; }
+                    if (!taxForm.bizNo || !taxForm.companyName) { alert('사업자등록번호와 상호를 입력해주세요'); return; }
+                    alert('전자세금계산서 발행이 요청되었습니다.');
+                  }}
+                  className="w-full h-[38px] bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 flex items-center justify-center gap-1.5 mt-2"
+                >
+                  <Send size={14} /> 발행 요청
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Tax Invoice History */}
+          <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-[var(--border)]">
+              <FileText size={16} className="text-blue-600" />
+              <h2 className="text-base font-semibold text-[var(--text)]">발행 내역</h2>
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-[var(--border)]">
+                  <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">발행번호</th>
+                  <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">발행일</th>
+                  <th className="text-left px-4 py-3 font-medium text-[var(--text-secondary)]">공급받는자</th>
+                  <th className="text-right px-4 py-3 font-medium text-[var(--text-secondary)]">공급가액</th>
+                  <th className="text-right px-4 py-3 font-medium text-[var(--text-secondary)]">세액</th>
+                  <th className="text-right px-4 py-3 font-medium text-[var(--text-secondary)]">합계</th>
+                  <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">상태</th>
+                  <th className="text-center px-4 py-3 font-medium text-[var(--text-secondary)]">다운로드</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sampleTaxInvoices.map((inv) => (
+                  <tr key={inv.id} className="border-b border-[var(--border)] last:border-0 hover:bg-gray-50">
+                    <td className="px-5 py-3 font-mono text-xs text-[var(--text)]">{inv.id}</td>
+                    <td className="px-4 py-3 text-center text-[var(--text-secondary)]">{inv.issuedAt}</td>
+                    <td className="px-4 py-3 text-[var(--text)]">{inv.buyerName}</td>
+                    <td className="px-4 py-3 text-right text-[var(--text)]">{formatCurrency(inv.supplyAmount)}</td>
+                    <td className="px-4 py-3 text-right text-[var(--text)]">{formatCurrency(inv.taxAmount)}</td>
+                    <td className="px-4 py-3 text-right font-medium text-[var(--text)]">{formatCurrency(inv.total)}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                        inv.status === '발행완료' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                      }`}>
+                        {inv.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {inv.status === '발행완료' ? (
+                        <button className="h-[38px] px-3 border border-[var(--border)] text-[var(--text-secondary)] text-xs rounded-lg hover:border-blue-400 hover:text-blue-600 inline-flex items-center gap-1">
+                          <Download size={12} /> PDF
+                        </button>
+                      ) : (
+                        <span className="text-xs text-[var(--text-secondary)]">-</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Preview Modal */}
       {previewDoc && (
