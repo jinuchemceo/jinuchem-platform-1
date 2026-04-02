@@ -2,48 +2,82 @@ import Link from 'next/link';
 
 export function Footer() {
   return (
-    <footer className="bg-slate-800 text-slate-400 py-10 px-12">
-      <div className="flex justify-between items-start gap-10">
-        {/* Company Info */}
-        <div className="flex-1">
-          <div className="text-2xl font-bold text-white mb-4 tracking-tight">
+    <footer
+      className="px-8 py-8"
+      style={{
+        background: 'var(--bg-secondary)',
+        borderTop: '0.5px solid var(--border)',
+      }}
+    >
+      <div className="flex flex-wrap justify-between items-start gap-8 max-w-5xl">
+        {/* Brand + Info */}
+        <div className="flex-1 min-w-[260px]">
+          <p
+            className="text-[17px] font-bold tracking-tight mb-3"
+            style={{ color: 'var(--text)' }}
+          >
             Jinuchem
-          </div>
-          <div className="flex gap-3 mb-4 text-sm">
-            <Link href="#" className="text-slate-200 font-semibold hover:text-white">
+          </p>
+
+          {/* Policy links */}
+          <div className="flex gap-4 mb-4">
+            <Link
+              href="#"
+              className="text-[13px] font-semibold transition-opacity hover:opacity-70"
+              style={{ color: 'var(--text)' }}
+            >
               개인정보처리방침
             </Link>
-            <span className="text-slate-600">|</span>
-            <Link href="#" className="text-slate-200 font-semibold hover:text-white">
+            <Link
+              href="#"
+              className="text-[13px] transition-opacity hover:opacity-70"
+              style={{ color: 'var(--text-secondary)' }}
+            >
               서비스 이용약관
             </Link>
           </div>
-          <div className="text-sm leading-7">
-            <p>상호명 : (주)지누켐</p>
-            <p>사업자번호 : 470-81-02870</p>
+
+          {/* Company info */}
+          <div
+            className="text-[12px] leading-[1.9]"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            <p>상호명 : (주)지누켐 &nbsp;|&nbsp; 사업자번호 : 470-81-02870</p>
             <p>대표자명 : 김병선</p>
             <p>주소 : 경상남도 진주시 진주대로501, 창업보육센터 C동 214호</p>
-            <p>연락처 : 010-5651-1053</p>
-            <p>e-mail : jinuchem.reagent@gmail.com</p>
+            <p>연락처 : 010-5651-1053 &nbsp;|&nbsp; jinuchem.reagent@gmail.com</p>
           </div>
-          <div className="text-slate-500 text-xs mt-2">
-            Copyright &copy; JINUCHEM All rights reserved.
-          </div>
+
+          <p
+            className="text-[11px] mt-3"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
+            Copyright &copy; {new Date().getFullYear()} JINUCHEM. All rights reserved.
+          </p>
         </div>
 
         {/* Quick Links */}
-        <div className="flex flex-col gap-3 shrink-0">
+        <div className="flex flex-col gap-2 shrink-0">
           <Link
             href="#"
-            className="inline-flex items-center gap-2 px-6 py-3 border border-slate-600 rounded-lg text-slate-200 text-sm font-medium hover:border-white hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-medium transition-opacity hover:opacity-80"
+            style={{
+              background: 'var(--primary-light)',
+              color: 'var(--primary)',
+            }}
           >
             지누 E-Note 바로가기
           </Link>
           <Link
             href="#"
-            className="inline-flex items-center gap-2 px-6 py-3 border border-slate-600 rounded-lg text-slate-200 text-sm font-medium hover:border-white hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] transition-opacity hover:opacity-80"
+            style={{
+              background: 'var(--bg-card)',
+              color: 'var(--text-secondary)',
+              boxShadow: 'var(--shadow-sm)',
+            }}
           >
-            지누 E-Note 매뉴얼 보기
+            지누 E-Note 매뉴얼
           </Link>
         </div>
       </div>

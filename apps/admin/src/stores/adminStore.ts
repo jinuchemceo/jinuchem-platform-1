@@ -41,7 +41,7 @@ export const useAdminStore = create<AdminState>((set) => ({
   aiMonitorTab: '개요',
   apiManagementTab: 'API Key',
   dataPipelineTab: '개요',
-  settingsTab: '공지사항',
+  settingsTab: '일반 설정',
 
   // Set tab actions
   setUsersTab: (tab) => set({ usersTab: tab }),
