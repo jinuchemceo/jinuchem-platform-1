@@ -8,14 +8,19 @@ import {
   FileText,
   ClipboardList,
   Package,
-  List,
-  DollarSign,
-  Warehouse,
   Settings,
   User,
   LogOut,
   ChevronDown,
   ChevronRight,
+  RotateCcw,
+  DollarSign,
+  Users,
+  MessageSquare,
+  Star,
+  BarChart3,
+  Bell,
+  ExternalLink,
 } from 'lucide-react';
 
 interface NavItem {
@@ -27,17 +32,46 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: '대시보드', href: '/dashboard', icon: <LayoutDashboard size={18} /> },
-  { label: '견적 관리', href: '/quotes', icon: <FileText size={18} /> },
-  { label: '주문 관리', href: '/orders', icon: <ClipboardList size={18} /> },
   {
-    label: '제품 관리',
-    icon: <Package size={18} />,
+    label: '주문 관리',
+    icon: <ClipboardList size={18} />,
     children: [
-      { label: '제품 목록', href: '/products?tab=list' },
-      { label: '가격 관리', href: '/products?tab=price' },
-      { label: '재고 관리', href: '/products?tab=inventory' },
+      { label: '주문 목록', href: '/orders' },
+      { label: '반품/취소', href: '/returns' },
     ],
   },
+  { label: '견적 관리', href: '/quotes', icon: <FileText size={18} /> },
+  {
+    label: '상품 관리',
+    icon: <Package size={18} />,
+    children: [
+      { label: '상품 목록', href: '/products?tab=list' },
+      { label: '상품 등록', href: '/products/new' },
+      { label: '재고 관리', href: '/products?tab=inventory' },
+      { label: '가격/프로모션', href: '/products?tab=price' },
+    ],
+  },
+  { label: '정산 관리', href: '/settlement', icon: <DollarSign size={18} /> },
+  {
+    label: '고객 관리',
+    icon: <Users size={18} />,
+    children: [
+      { label: '문의 관리', href: '/customers?tab=inquiry' },
+      { label: '리뷰 관리', href: '/customers?tab=review' },
+      { label: '1:1 채팅', href: '/customers?tab=chat' },
+    ],
+  },
+  {
+    label: '통계/분석',
+    icon: <BarChart3 size={18} />,
+    children: [
+      { label: '매출 분석', href: '/analytics?tab=sales' },
+      { label: '주문 분석', href: '/analytics?tab=orders' },
+      { label: '상품 분석', href: '/analytics?tab=products' },
+      { label: '고객 분석', href: '/analytics?tab=customers' },
+    ],
+  },
+  { label: '알림 센터', href: '/notifications', icon: <Bell size={18} /> },
   { label: '설정', href: '/settings', icon: <Settings size={18} /> },
 ];
 
