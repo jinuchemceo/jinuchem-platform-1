@@ -5,70 +5,114 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  FlaskConical,
-  List,
-  FilePlus,
-  BookOpen,
-  FileText,
-  Package,
+  ShoppingBag,
+  Zap,
   ClipboardList,
-  ExternalLink,
+  FileText,
+  FlaskConical,
+  Heart,
+  Package,
+  Users,
+  MessageSquare,
+  HelpCircle,
   User,
   LogOut,
   ChevronDown,
   ChevronRight,
+  CheckSquare,
+  DollarSign,
+  FolderKanban,
+  Settings,
+  BarChart3,
+  ShoppingCart as CartIcon,
+  ExternalLink,
 } from 'lucide-react';
+
+interface NavChild {
+  label: string;
+  href: string;
+}
 
 interface NavItem {
   label: string;
   href?: string;
   icon: React.ReactNode;
-  external?: boolean;
-  children?: { label: string; href: string }[];
+  children?: NavChild[];
+  dividerAfter?: boolean;
 }
 
 const navItems: NavItem[] = [
   {
-    label: '대시보드',
-    href: '/dashboard',
-    icon: <LayoutDashboard size={18} />,
+    label: '제품 주문',
+    icon: <ShoppingBag size={18} />,
+    children: [
+      { label: '시약 주문', href: '/order' },
+      { label: '소모품 주문', href: '/supplies' },
+    ],
   },
   {
-    label: '실험 관리',
+    label: '빠른 주문',
+    href: '/quickorder',
+    icon: <Zap size={18} />,
+  },
+  {
+    label: '주문 관리',
+    icon: <ClipboardList size={18} />,
+    children: [
+      { label: '통합 주문 내역', href: '/orders' },
+      { label: '내 주문 내역', href: '/my-orders' },
+      { label: '구매 승인', href: '/approvals' },
+      { label: '견적 관리', href: '/quotes' },
+      { label: '취소/반품', href: '/cancel' },
+      { label: '증빙서류', href: '/documents' },
+    ],
+    dividerAfter: true,
+  },
+  {
+    label: '내 연구실',
     icon: <FlaskConical size={18} />,
     children: [
-      { label: '실험 목록', href: '/experiments' },
-      { label: '새 실험', href: '/experiments?new=true' },
+      { label: '즐겨찾기', href: '/favorites' },
+      { label: '내 시약장', href: '/inventory' },
+      { label: '공유 장바구니', href: '/shared-cart' },
     ],
+    dividerAfter: true,
   },
   {
-    label: '프로토콜',
-    icon: <BookOpen size={18} />,
+    label: '연구실 관리',
+    icon: <Users size={18} />,
     children: [
-      { label: '프로토콜 목록', href: '/protocols' },
-      { label: '템플릿', href: '/protocols?tab=templates' },
+      { label: '연구실 설정', href: '/settings' },
+      { label: '연구실원 관리', href: '/members' },
+      { label: '프로젝트 관리', href: '/projects' },
+      { label: '예산 관리', href: '/budget' },
     ],
   },
   {
-    label: '시약장',
-    href: '/lab-inventory',
-    icon: <Package size={18} />,
+    label: '보고서/분석',
+    href: '/reports',
+    icon: <BarChart3 size={18} />,
+    dividerAfter: true,
   },
   {
-    label: '사용 기록',
-    href: '/usage',
-    icon: <ClipboardList size={18} />,
+    label: '대화',
+    href: '/chat',
+    icon: <MessageSquare size={18} />,
+  },
+  {
+    label: '고객센터',
+    icon: <HelpCircle size={18} />,
+    children: [
+      { label: '고객센터 홈', href: '/cs' },
+      { label: '자주 묻는 질문', href: '/faq' },
+      { label: '1:1 문의하기', href: '/inquiry' },
+    ],
   },
 ];
 
-const SHOP_URL = 'http://localhost:3000';
-
 export function Sidebar() {
   const pathname = usePathname();
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    '실험 관리': true,
-    '프로토콜': false,
-  });
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   const toggleGroup = (label: string) => {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
@@ -88,105 +132,94 @@ export function Sidebar() {
         <div key={item.label}>
           <button
             onClick={() => toggleGroup(item.label)}
-            className={`flex items-center w-full gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors ${
-              isActive
-                ? 'text-teal-600 font-semibold'
-                : 'text-[var(--sidebar-text)] hover:bg-gray-100'
-            }`}
+            className="flex items-center w-full gap-2.5 px-5 py-2 text-[13.5px] transition-colors hover:bg-gray-50"
+            style={{
+              color: isActive ? 'var(--primary)' : '#334155',
+              fontWeight: isActive ? 600 : 500,
+            }}
           >
-            {item.icon}
+            <span style={{ color: isActive ? 'var(--primary)' : '#94a3b8' }}>{item.icon}</span>
             <span className="flex-1 text-left">{item.label}</span>
-            {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            {isOpen ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
           </button>
           {isOpen && (
-            <div className="ml-9 mt-0.5 space-y-0.5">
+            <div className="mt-0.5">
               {item.children.map((child) => (
                 <Link
                   key={child.href}
                   href={child.href}
-                  className={`block px-3 py-2 text-sm rounded-lg transition-colors ${
-                    isActivePath(child.href)
-                      ? 'bg-teal-50 text-teal-600 font-semibold'
-                      : 'text-[var(--sidebar-text)] hover:bg-gray-100'
-                  }`}
+                  className="block pl-12 pr-5 py-2 text-[13px] transition-colors hover:bg-gray-50"
+                  style={{
+                    color: isActivePath(child.href) ? 'var(--primary)' : '#64748b',
+                    fontWeight: isActivePath(child.href) ? 600 : 400,
+                    background: isActivePath(child.href) ? '#eff6ff' : 'transparent',
+                  }}
                 >
                   {child.label}
                 </Link>
               ))}
             </div>
           )}
+          {item.dividerAfter && <div className="border-t border-gray-200 mx-5 my-2" />}
         </div>
       );
     }
 
     return (
-      <Link
-        key={item.href}
-        href={item.href!}
-        className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors ${
-          isActivePath(item.href!)
-            ? 'bg-teal-50 text-teal-600 font-semibold'
-            : 'text-[var(--sidebar-text)] hover:bg-gray-100'
-        }`}
-      >
-        {item.icon}
-        <span>{item.label}</span>
-      </Link>
+      <div key={item.href}>
+        <Link
+          href={item.href!}
+          className="flex items-center gap-2.5 px-5 py-2 text-[13.5px] transition-colors hover:bg-gray-50"
+          style={{
+            color: isActivePath(item.href!) ? 'var(--primary)' : '#475569',
+            fontWeight: isActivePath(item.href!) ? 600 : 500,
+            background: isActivePath(item.href!) ? '#eff6ff' : 'transparent',
+          }}
+        >
+          <span style={{ color: isActivePath(item.href!) ? 'var(--primary)' : '#94a3b8' }}>{item.icon}</span>
+          <span>{item.label}</span>
+        </Link>
+        {item.dividerAfter && <div className="border-t border-gray-200 mx-5 my-2" />}
+      </div>
     );
   };
 
   return (
     <aside
-      className="fixed top-0 left-0 h-screen bg-[var(--sidebar-bg)] border-r border-[var(--border)] flex flex-col z-40"
+      className="fixed top-0 left-0 h-screen bg-white border-r border-gray-200 flex flex-col z-40"
       style={{ width: 'var(--sidebar-width)' }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 h-14 border-b border-[var(--border)]">
-        <Link href="/dashboard" className="flex items-center gap-2 text-lg font-bold text-[var(--text)]">
-          <span className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center text-white text-sm font-bold">
-            E
+      <div className="flex items-center gap-3 px-5 h-14 border-b border-gray-200">
+        <Link href="/dashboard" className="flex items-center gap-1.5 text-lg font-bold text-gray-900 hover:no-underline">
+          <span className="text-xl font-extrabold tracking-tight">JINU</span>
+          <span className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+              <rect x="4" y="2" width="16" height="5" rx="1"/>
+              <rect x="4" y="9" width="16" height="5" rx="1"/>
+              <rect x="4" y="16" width="16" height="5" rx="1"/>
+            </svg>
           </span>
-          <span>
-            JINU <span className="text-teal-600">E-Note</span>
-          </span>
+          <span className="text-xl font-normal text-gray-500 tracking-tight">PI</span>
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto py-3">
         {navItems.map(renderNavItem)}
-
-        {/* Divider */}
-        <div className="border-t border-[var(--border)] my-3" />
-
-        {/* JINU Shop 바로가기 */}
-        <a
-          href={SHOP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg text-[var(--sidebar-text)] hover:bg-gray-100 transition-colors"
-        >
-          <ExternalLink size={18} />
-          <span className="flex-1">JINU Shop 바로가기</span>
-          <ExternalLink size={12} className="text-[var(--text-secondary)]" />
-        </a>
       </nav>
 
       {/* Bottom */}
-      <div className="border-t border-[var(--border)] px-3 py-3 space-y-1">
+      <div className="border-t border-gray-200 py-2">
         <Link
           href="/mypage"
-          className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors ${
-            pathname === '/mypage'
-              ? 'bg-teal-50 text-teal-600 font-semibold'
-              : 'text-[var(--sidebar-text)] hover:bg-gray-100'
-          }`}
+          className="flex items-center gap-2.5 px-5 py-2 text-[13px] text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"
         >
-          <User size={18} />
+          <User size={16} />
           <span>마이페이지</span>
         </Link>
-        <button className="flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg text-[var(--sidebar-text)] hover:bg-gray-100 w-full">
-          <LogOut size={18} />
+        <button className="flex items-center gap-2.5 px-5 py-2 text-[13px] text-gray-500 hover:bg-gray-50 hover:text-gray-900 w-full transition-colors">
+          <LogOut size={16} />
           <span>로그아웃</span>
         </button>
       </div>
