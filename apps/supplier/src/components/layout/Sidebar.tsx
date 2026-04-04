@@ -35,28 +35,28 @@ const navGroups: NavGroup[] = [
   {
     title: '관리',
     items: [
-      { label: '대시보드', href: '/dashboard', icon: <LayoutDashboard size={22} strokeWidth={1.5} /> },
-      { label: '주문 관리', href: '/orders', icon: <ClipboardList size={22} strokeWidth={1.5} /> },
-      { label: '반품/취소', href: '/returns', icon: <RotateCcw size={22} strokeWidth={1.5} /> },
-      { label: '견적 관리', href: '/quotes', icon: <FileText size={22} strokeWidth={1.5} /> },
+      { label: '대시보드', href: '/dashboard', icon: <LayoutDashboard size={16} /> },
+      { label: '주문 관리', href: '/orders', icon: <ClipboardList size={16} /> },
+      { label: '반품/취소', href: '/returns', icon: <RotateCcw size={16} /> },
+      { label: '견적 관리', href: '/quotes', icon: <FileText size={16} /> },
     ],
   },
   {
     title: '상품',
     items: [
-      { label: '상품 목록', href: '/products', icon: <Package size={22} strokeWidth={1.5} /> },
-      { label: '상품 등록', href: '/products/new', icon: <PlusCircle size={22} strokeWidth={1.5} /> },
-      { label: '재고 관리', href: '/products?tab=inventory', icon: <Warehouse size={22} strokeWidth={1.5} /> },
-      { label: '가격/프로모션', href: '/products?tab=price', icon: <Tag size={22} strokeWidth={1.5} /> },
+      { label: '상품 목록', href: '/products', icon: <Package size={16} /> },
+      { label: '상품 등록', href: '/products/new', icon: <PlusCircle size={16} /> },
+      { label: '재고 관리', href: '/products?tab=inventory', icon: <Warehouse size={16} /> },
+      { label: '가격/프로모션', href: '/products?tab=price', icon: <Tag size={16} /> },
     ],
   },
   {
     title: '운영',
     items: [
-      { label: '정산 관리', href: '/settlement', icon: <DollarSign size={22} strokeWidth={1.5} /> },
-      { label: '고객 관리', href: '/customers', icon: <Users size={22} strokeWidth={1.5} /> },
-      { label: '통계/분석', href: '/analytics', icon: <BarChart3 size={22} strokeWidth={1.5} /> },
-      { label: '알림 센터', href: '/notifications', icon: <Bell size={22} strokeWidth={1.5} /> },
+      { label: '정산 관리', href: '/settlement', icon: <DollarSign size={16} /> },
+      { label: '고객 관리', href: '/customers', icon: <Users size={16} /> },
+      { label: '통계/분석', href: '/analytics', icon: <BarChart3 size={16} /> },
+      { label: '알림 센터', href: '/notifications', icon: <Bell size={16} /> },
     ],
   },
 ];
@@ -69,95 +69,111 @@ export function Sidebar() {
     return pathname === basePath || pathname.startsWith(basePath + '/');
   };
 
+  const renderItem = (item: NavItem) => {
+    const active = isActive(item.href);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className="flex items-center gap-2.5 px-5 transition-colors"
+        style={{
+          height: 38,
+          color: active ? 'var(--primary)' : 'var(--sidebar-text)',
+          fontWeight: active ? 600 : 400,
+          fontSize: 13.5,
+          textDecoration: 'none',
+          background: active ? 'var(--primary-light)' : 'transparent',
+        }}
+        onMouseEnter={(e) => {
+          if (!active) (e.currentTarget as HTMLElement).style.background = 'var(--bg-secondary)';
+        }}
+        onMouseLeave={(e) => {
+          if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent';
+        }}
+      >
+        <span style={{ color: active ? 'var(--primary)' : '#94a3b8', display: 'flex' }}>
+          {item.icon}
+        </span>
+        {item.label}
+      </Link>
+    );
+  };
+
   return (
     <aside
-      className="fixed top-0 left-0 h-screen flex flex-col z-40 overflow-y-auto"
+      className="fixed top-0 left-0 h-screen flex flex-col z-40"
       style={{
         width: 'var(--sidebar-width)',
-        background: 'var(--bg-card)',
-        borderRight: '0.5px solid var(--border)',
+        background: 'var(--sidebar-bg)',
+        borderRight: '1px solid var(--border)',
       }}
     >
       {/* Logo */}
       <div
-        className="flex items-center gap-2.5 px-5 shrink-0"
-        style={{ height: 'var(--topbar-height)', borderBottom: '0.5px solid var(--border)' }}
+        className="flex items-center px-4 shrink-0"
+        style={{ height: 'var(--topbar-height)', borderBottom: '1px solid var(--border)' }}
       >
-        <Link href="/dashboard" className="flex items-center gap-2.5 font-bold" style={{ color: 'var(--text)', textDecoration: 'none', fontSize: 17 }}>
-          <span className="w-8 h-8 bg-gradient-to-br from-blue-500 to-violet-600 rounded-lg flex items-center justify-center text-white text-sm font-bold">
-            S
+        <Link href="/dashboard" className="flex items-center gap-1" style={{ textDecoration: 'none' }}>
+          <span className="text-[20px] font-extrabold tracking-tight" style={{ color: 'var(--text)', letterSpacing: '-0.5px' }}>
+            Supplier
           </span>
-          Supplier
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-3 overflow-y-auto">
-        {navGroups.map((group) => (
-          <div key={group.title} className="mb-1">
-            <div className="px-5 py-1.5 text-[11px] font-semibold tracking-wider uppercase" style={{ color: 'var(--text-tertiary)' }}>
+      <nav className="flex-1 overflow-y-auto py-3">
+        {navGroups.map((group, gi) => (
+          <div key={group.title}>
+            {/* Section divider */}
+            {gi > 0 && (
+              <div style={{ height: 1, background: 'var(--border)', margin: '8px 20px' }} />
+            )}
+            {/* Section header */}
+            <div
+              className="px-5 py-1.5 text-[11px] font-semibold tracking-wider uppercase"
+              style={{ color: 'var(--text-tertiary)' }}
+            >
               {group.title}
             </div>
-            {group.items.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-3.5 mx-2 px-3.5 py-2.5 rounded-xl transition-all"
-                  style={{
-                    color: active ? 'var(--text)' : 'var(--text-secondary)',
-                    fontWeight: active ? 600 : 400,
-                    fontSize: 14,
-                    textDecoration: 'none',
-                    background: active ? 'var(--primary-light)' : 'transparent',
-                  }}
-                >
-                  <span className="flex items-center justify-center w-6" style={{ color: active ? 'var(--primary)' : 'var(--text-secondary)' }}>
-                    {item.icon}
-                  </span>
-                  {item.label}
-                </Link>
-              );
-            })}
+            {/* Items */}
+            <div className="space-y-0.5">
+              {group.items.map(renderItem)}
+            </div>
           </div>
         ))}
       </nav>
 
       {/* Bottom */}
-      <div className="shrink-0 py-2" style={{ borderTop: '0.5px solid var(--border)' }}>
+      <div style={{ borderTop: '1px solid var(--border)', padding: '8px 0' }}>
         {[
-          { label: '마이페이지', href: '/mypage', icon: <User size={22} strokeWidth={1.5} /> },
-          { label: '회사 관리', href: '/settings', icon: <Settings size={22} strokeWidth={1.5} /> },
+          { label: '마이페이지', href: '/mypage', icon: <User size={16} /> },
+          { label: '회사 관리', href: '/settings', icon: <Settings size={16} /> },
         ].map((item) => {
           const active = isActive(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3.5 mx-2 px-3.5 py-2.5 rounded-xl transition-all"
+              className="flex items-center gap-2.5 px-5 transition-colors"
               style={{
-                color: active ? 'var(--text)' : 'var(--text-secondary)',
+                height: 38,
+                color: active ? 'var(--primary)' : '#64748b',
                 fontWeight: active ? 600 : 400,
-                fontSize: 14,
+                fontSize: 13.5,
                 textDecoration: 'none',
                 background: active ? 'var(--primary-light)' : 'transparent',
               }}
             >
-              <span className="flex items-center justify-center w-6" style={{ color: active ? 'var(--primary)' : 'var(--text-secondary)' }}>
-                {item.icon}
-              </span>
+              <span style={{ color: '#94a3b8', display: 'flex' }}>{item.icon}</span>
               {item.label}
             </Link>
           );
         })}
         <button
-          className="flex items-center gap-3.5 mx-2 px-3.5 py-2.5 rounded-xl w-[calc(100%-16px)] transition-all"
-          style={{ color: 'var(--danger)', fontSize: 14, border: 'none', background: 'transparent', cursor: 'pointer' }}
+          className="flex items-center gap-2.5 px-5 w-full transition-colors"
+          style={{ height: 38, color: 'var(--danger)', fontSize: 13.5, border: 'none', background: 'transparent', cursor: 'pointer' }}
         >
-          <span className="flex items-center justify-center w-6">
-            <LogOut size={22} strokeWidth={1.5} />
-          </span>
+          <LogOut size={16} style={{ color: 'var(--danger)' }} />
           로그아웃
         </button>
       </div>
