@@ -42,12 +42,12 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    title: '상품',
+    title: '제품',
     items: [
-      { label: '상품 목록', href: '/products', icon: <Package size={16} /> },
-      { label: '상품 등록', href: '/products/new', icon: <PlusCircle size={16} /> },
-      { label: '재고 관리', href: '/products?tab=inventory', icon: <Warehouse size={16} /> },
-      { label: '가격/프로모션', href: '/products?tab=price', icon: <Tag size={16} /> },
+      { label: '제품 목록', href: '/products', icon: <Package size={16} /> },
+      { label: '제품 등록', href: '/products/new', icon: <PlusCircle size={16} /> },
+      { label: '재고 관리', href: '/inventory', icon: <Warehouse size={16} /> },
+      { label: '가격/프로모션', href: '/pricing', icon: <Tag size={16} /> },
     ],
   },
   {
@@ -75,9 +75,9 @@ export function Sidebar() {
       <Link
         key={item.href}
         href={item.href}
-        className="flex items-center gap-2.5 px-5 transition-colors"
+        className="flex items-center gap-2.5 mx-3 px-3 rounded-lg transition-colors"
         style={{
-          height: 38,
+          height: 36,
           color: active ? 'var(--primary)' : 'var(--sidebar-text)',
           fontWeight: active ? 600 : 400,
           fontSize: 13.5,
@@ -136,7 +136,7 @@ export function Sidebar() {
               {group.title}
             </div>
             {/* Items */}
-            <div className="space-y-0.5">
+            <div className="space-y-1 py-1">
               {group.items.map(renderItem)}
             </div>
           </div>
@@ -154,9 +154,9 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-2.5 px-5 transition-colors"
+              className="flex items-center gap-2.5 mx-3 px-3 rounded-lg transition-colors"
               style={{
-                height: 38,
+                height: 36,
                 color: active ? 'var(--primary)' : '#64748b',
                 fontWeight: active ? 600 : 400,
                 fontSize: 13.5,
@@ -170,8 +170,8 @@ export function Sidebar() {
           );
         })}
         <button
-          className="flex items-center gap-2.5 px-5 w-full transition-colors"
-          style={{ height: 38, color: 'var(--danger)', fontSize: 13.5, border: 'none', background: 'transparent', cursor: 'pointer' }}
+          className="flex items-center gap-2.5 mx-3 px-3 rounded-lg w-[calc(100%-24px)] transition-colors"
+          style={{ height: 36, color: 'var(--danger)', fontSize: 13.5, border: 'none', background: 'transparent', cursor: 'pointer' }}
         >
           <LogOut size={16} style={{ color: 'var(--danger)' }} />
           로그아웃

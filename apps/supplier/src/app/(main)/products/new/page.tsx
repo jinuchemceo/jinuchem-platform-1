@@ -33,6 +33,8 @@ export default function ProductNewPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [productType, setProductType] = useState<'reagent' | 'supply'>('reagent');
+  const [category, setCategory] = useState('');
+  const [customCategory, setCustomCategory] = useState(false);
   const [variants, setVariants] = useState<VariantRow[]>([
     { id: 1, size: '500', unit: 'mL', listPrice: '', salePrice: '', stock: '', sameDay: true, deliveryDays: '1' },
   ]);
@@ -96,9 +98,40 @@ export default function ProductNewPage() {
               </div>
               <div>
                 <label className="text-sm font-semibold text-[var(--text-secondary)] block mb-1.5">카테고리</label>
-                <select className="w-full h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:border-purple-500">
-                  <option>유기화합물</option><option>무기화합물</option><option>용매</option><option>생화학시약</option><option>분석용시약</option><option>고분자</option>
-                </select>
+                {customCategory ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={category}
+                      onChange={e => setCategory(e.target.value)}
+                      className="flex-1 h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:border-purple-500"
+                      placeholder="카테고리 직접 입력"
+                    />
+                    <button onClick={() => setCustomCategory(false)} className="px-3 h-[38px] border border-[var(--border)] rounded-lg text-xs font-semibold hover:bg-gray-50">목록</button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <select
+                      value={category}
+                      onChange={e => setCategory(e.target.value)}
+                      className="flex-1 h-[38px] px-3 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:border-purple-500"
+                    >
+                      <option value="">선택하세요</option>
+                      {productType === 'reagent' ? (
+                        <>
+                          <option>유기화합물</option><option>무기화합물</option><option>용매</option>
+                          <option>생화학시약</option><option>분석용시약</option><option>고분자</option>
+                        </>
+                      ) : (
+                        <>
+                          <option>피펫 & 팁</option><option>필터 & 멤브레인</option><option>튜브 & 바이알</option>
+                          <option>장갑 & 보호구</option><option>세척 & 멸균</option><option>기타 소모품</option>
+                        </>
+                      )}
+                    </select>
+                    <button onClick={() => { setCustomCategory(true); setCategory(''); }} className="px-3 h-[38px] border border-[var(--border)] rounded-lg text-xs font-semibold hover:bg-gray-50">직접 입력</button>
+                  </div>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <label className="text-sm font-semibold text-[var(--text-secondary)] block mb-1.5">제품명 (한글)</label>

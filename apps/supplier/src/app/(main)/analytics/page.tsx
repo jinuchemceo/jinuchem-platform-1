@@ -55,10 +55,10 @@ export default function AnalyticsPage() {
   const [activeTab, setActiveTab] = useState<'sales' | 'orders' | 'products' | 'customers'>('sales');
 
   const tabs = [
-    { label: '매출 분석', value: 'sales' as const, icon: <TrendingUp size={16} /> },
-    { label: '주문 분석', value: 'orders' as const, icon: <BarChart3 size={16} /> },
-    { label: '상품 분석', value: 'products' as const, icon: <ShoppingCart size={16} /> },
-    { label: '고객 분석', value: 'customers' as const, icon: <Users size={16} /> },
+    { label: '매출 분석', value: 'sales' as const },
+    { label: '주문 분석', value: 'orders' as const },
+    { label: '상품 분석', value: 'products' as const },
+    { label: '고객 분석', value: 'customers' as const },
   ];
 
   return (
@@ -76,7 +76,7 @@ export default function AnalyticsPage() {
                 : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border-[var(--border)] hover:bg-gray-50'
             }`}
           >
-            {tab.icon} {tab.label}
+            {tab.label}
           </button>
         ))}
       </div>

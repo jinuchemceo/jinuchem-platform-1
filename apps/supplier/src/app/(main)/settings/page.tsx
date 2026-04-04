@@ -38,7 +38,7 @@ export default function SettingsPage() {
               color: activeTab === tab.value ? 'var(--primary)' : 'var(--text-secondary)',
             }}
           >
-            {tab.icon} {tab.label}
+            {tab.label}
           </button>
         ))}
       </div>

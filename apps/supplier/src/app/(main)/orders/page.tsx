@@ -135,12 +135,12 @@ const sampleOrders: Order[] = [
   },
 ];
 
-const statusTabs: { label: string; value: OrderStatus | 'all'; icon: React.ReactNode }[] = [
-  { label: '전체', value: 'all', icon: <ClipboardList size={16} /> },
-  { label: '신규주문', value: '신규주문', icon: <Clock size={16} /> },
-  { label: '준비중', value: '준비중', icon: <Package size={16} /> },
-  { label: '출고완료', value: '출고완료', icon: <Truck size={16} /> },
-  { label: '배송완료', value: '배송완료', icon: <CheckCircle2 size={16} /> },
+const statusTabs: { label: string; value: OrderStatus | 'all' }[] = [
+  { label: '전체', value: 'all' },
+  { label: '신규주문', value: '신규주문' },
+  { label: '준비중', value: '준비중' },
+  { label: '출고완료', value: '출고완료' },
+  { label: '배송완료', value: '배송완료' },
 ];
 
 const statusStyles: Record<OrderStatus, string> = {
@@ -217,7 +217,6 @@ export default function OrdersPage() {
                   : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text)]'
               }`}
             >
-              {tab.icon}
               {tab.label}
               <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
                 activeTab === tab.value ? 'bg-blue-100 text-purple-700' : 'bg-gray-100 text-gray-600'
