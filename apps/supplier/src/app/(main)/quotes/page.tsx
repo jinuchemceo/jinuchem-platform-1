@@ -160,7 +160,7 @@ export default function QuotesPage() {
               {tab.icon}
               {tab.label}
               <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
-                activeTab === tab.status ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+                activeTab === tab.status ? 'bg-blue-100 text-purple-700' : 'bg-gray-100 text-gray-600'
               }`}>
                 {count}
               </span>

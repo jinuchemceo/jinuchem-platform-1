@@ -10,6 +10,7 @@ import {
   Edit,
   Trash2,
   Eye,
+  EyeOff,
   ChevronUp,
   ChevronDown,
   Pin,
@@ -24,6 +25,23 @@ import {
   List,
   Send,
   FileText,
+  GripVertical,
+  Star,
+  Layout,
+  Layers,
+  MonitorSmartphone,
+  Maximize,
+  Minimize,
+  ToggleLeft,
+  ToggleRight,
+  Hash,
+  Atom,
+  FlaskConical,
+  Dna,
+  TestTube,
+  Beaker,
+  Scale,
+  Shield,
 } from 'lucide-react';
 import { AdminTabs } from '@/components/shared/AdminTabs';
 import { Modal } from '@/components/shared/Modal';
@@ -48,6 +66,9 @@ const TABS = [
   { id: 'faqs', label: 'FAQ 관리' },
   { id: 'inquiries', label: '1:1 문의 관리' },
   { id: 'banners', label: '배너 관리' },
+  { id: 'main-sections', label: 'Shop 메인 관리' },
+  { id: 'category-display', label: '카테고리 노출' },
+  { id: 'popups', label: '팝업 관리' },
 ];
 
 const NOTICE_CATEGORY_COLORS: Record<string, string> = {
@@ -154,6 +175,102 @@ const initialBanners: Banner[] = [
 ];
 
 // =============================================================================
+// Mock: Main Sections
+// =============================================================================
+
+interface MainSection {
+  id: string;
+  name: string;
+  type: '자동' | '수동' | '개인화';
+  source: string;
+  itemCount: number;
+  position: number;
+  visible: boolean;
+  updatedAt: string;
+}
+
+const initialMainSections: MainSection[] = [
+  { id: 'S-001', name: '추천 제품', type: '자동', source: 'AI 추천 엔진', itemCount: 12, position: 1, visible: true, updatedAt: '2026-04-02' },
+  { id: 'S-002', name: '인기 제품', type: '자동', source: '주문 데이터 (30일)', itemCount: 20, position: 2, visible: true, updatedAt: '2026-04-01' },
+  { id: 'S-003', name: '신제품', type: '자동', source: '등록일 기준 (7일)', itemCount: 8, position: 3, visible: true, updatedAt: '2026-04-02' },
+  { id: 'S-004', name: '특가 상품', type: '수동', source: '관리자 선택', itemCount: 6, position: 4, visible: true, updatedAt: '2026-03-30' },
+  { id: 'S-005', name: '자주 구매 제품', type: '개인화', source: '구매 이력 기반', itemCount: 10, position: 5, visible: true, updatedAt: '2026-04-01' },
+  { id: 'S-006', name: '시즌 프로모션', type: '수동', source: '관리자 선택', itemCount: 4, position: 6, visible: false, updatedAt: '2026-03-15' },
+];
+
+const SECTION_TYPE_COLORS: Record<string, string> = {
+  자동: 'blue',
+  수동: 'amber',
+  개인화: 'purple',
+};
+
+// =============================================================================
+// Mock: Category Display
+// =============================================================================
+
+interface CategoryDisplay {
+  id: string;
+  name: string;
+  displayOrder: number;
+  visible: boolean;
+  featured: boolean;
+  itemCount: number;
+  icon: string;
+}
+
+const initialCategoryDisplay: CategoryDisplay[] = [
+  { id: 'CD-001', name: '유기화합물', displayOrder: 1, visible: true, featured: true, itemCount: 2340, icon: 'Flask' },
+  { id: 'CD-002', name: '무기화합물', displayOrder: 2, visible: true, featured: true, itemCount: 1890, icon: 'Atom' },
+  { id: 'CD-003', name: '생화학시약', displayOrder: 3, visible: true, featured: true, itemCount: 1560, icon: 'Dna' },
+  { id: 'CD-004', name: '분석용시약', displayOrder: 4, visible: true, featured: false, itemCount: 980, icon: 'TestTube' },
+  { id: 'CD-005', name: '실험소모품', displayOrder: 5, visible: true, featured: false, itemCount: 3200, icon: 'Beaker' },
+  { id: 'CD-006', name: '표준물질', displayOrder: 6, visible: true, featured: false, itemCount: 450, icon: 'Scale' },
+  { id: 'CD-007', name: '안전장비', displayOrder: 7, visible: false, featured: false, itemCount: 120, icon: 'Shield' },
+];
+
+// =============================================================================
+// Mock: Popups
+// =============================================================================
+
+interface Popup {
+  id: string;
+  title: string;
+  type: '이벤트' | '공지' | '기타';
+  startDate: string;
+  endDate: string;
+  showOnce: boolean;
+  status: '활성' | '예약' | '종료';
+  views: number;
+  closedCount: number;
+  position: 'center' | 'bottom-right' | 'top-bar';
+}
+
+const initialPopups: Popup[] = [
+  { id: 'PU-001', title: '봄맞이 시약 할인전', type: '이벤트', startDate: '2026-04-01', endDate: '2026-04-30', showOnce: false, status: '활성', views: 3240, closedCount: 1890, position: 'center' },
+  { id: 'PU-002', title: '시스템 점검 안내', type: '공지', startDate: '2026-04-05', endDate: '2026-04-05', showOnce: true, status: '예약', views: 0, closedCount: 0, position: 'center' },
+  { id: 'PU-003', title: '신규 가입 혜택 안내', type: '이벤트', startDate: '2026-03-01', endDate: '2026-03-31', showOnce: true, status: '종료', views: 5680, closedCount: 4230, position: 'bottom-right' },
+  { id: 'PU-004', title: '설문조사 참여 요청', type: '기타', startDate: '2026-04-10', endDate: '2026-04-20', showOnce: true, status: '예약', views: 0, closedCount: 0, position: 'bottom-right' },
+];
+
+const POPUP_TYPE_COLORS: Record<string, string> = {
+  이벤트: 'blue',
+  공지: 'amber',
+  기타: 'gray',
+};
+
+const POPUP_STATUS_COLORS: Record<string, string> = {
+  활성: 'emerald',
+  예약: 'blue',
+  종료: 'gray',
+};
+
+const POPUP_POSITION_LABELS: Record<string, string> = {
+  center: '중앙',
+  'bottom-right': '우하단',
+  'top-bar': '상단 바',
+};
+
+// =============================================================================
 // Page Component
 // =============================================================================
 
@@ -166,7 +283,7 @@ export default function BoardPage() {
       <div>
         <h1 className="text-2xl font-bold text-[var(--text)]">게시판 관리</h1>
         <p className="text-sm text-[var(--text-secondary)] mt-1">
-          JINU Shop 프론트엔드 콘텐츠 관리 -- 공지사항, FAQ, 1:1 문의, 배너
+          JINU Shop 프론트엔드 콘텐츠 관리 -- 공지사항, FAQ, 1:1 문의, 배너, 메인 섹션, 카테고리, 팝업
         </p>
       </div>
 
@@ -178,6 +295,9 @@ export default function BoardPage() {
       {activeTab === 'faqs' && <FaqManagement />}
       {activeTab === 'inquiries' && <InquiryManagement />}
       {activeTab === 'banners' && <BannerManagement />}
+      {activeTab === 'main-sections' && <MainSectionManagement />}
+      {activeTab === 'category-display' && <CategoryDisplayManagement />}
+      {activeTab === 'popups' && <PopupManagement />}
     </div>
   );
 }
@@ -1393,6 +1513,591 @@ function BannerManagement() {
             <div className="flex justify-center gap-2">
               <button onClick={() => setActiveModal(null)} className="h-[var(--btn-height)] px-4 border border-[var(--border)] rounded-lg text-sm text-[var(--text)] hover:bg-gray-50 transition-colors">취소</button>
               <button onClick={handleDelete} className="h-[var(--btn-height)] px-6 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors">삭제</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[60] bg-gray-900 text-white px-5 py-3 rounded-lg text-sm shadow-lg">{toast}</div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// Tab 5: Shop 메인 관리
+// =============================================================================
+
+function MainSectionManagement() {
+  const [sections, setSections] = useState<MainSection[]>(initialMainSections);
+  const [toast, setToast] = useState('');
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2500);
+  };
+
+  const sortedSections = useMemo(() => {
+    return [...sections].sort((a, b) => a.position - b.position);
+  }, [sections]);
+
+  const visibleSections = sortedSections.filter((s) => s.visible);
+
+  const toggleVisibility = (id: string) => {
+    setSections((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, visible: !s.visible } : s))
+    );
+    showToast('노출 상태가 변경되었습니다.');
+  };
+
+  const moveSection = (id: string, direction: 'up' | 'down') => {
+    setSections((prev) => {
+      const sorted = [...prev].sort((a, b) => a.position - b.position);
+      const idx = sorted.findIndex((s) => s.id === id);
+      if (direction === 'up' && idx <= 0) return prev;
+      if (direction === 'down' && idx >= sorted.length - 1) return prev;
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      const arr = [...sorted];
+      [arr[idx], arr[swapIdx]] = [arr[swapIdx], arr[idx]];
+      return arr.map((s, i) => ({ ...s, position: i + 1 }));
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Description */}
+      <p className="text-sm text-[var(--text-secondary)]">
+        Shop 메인 페이지에 표시되는 섹션을 관리합니다.
+      </p>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatCard icon={<Layout size={20} />} label="전체 섹션" value={String(sections.length)} change={`${sections.length}개`} up={true} />
+        <StatCard icon={<Eye size={20} />} label="노출중" value={String(visibleSections.length)} change={`${visibleSections.length}개`} up={true} />
+        <StatCard icon={<Layers size={20} />} label="비노출" value={String(sections.length - visibleSections.length)} change={`${sections.length - visibleSections.length}개`} up={false} />
+      </div>
+
+      {/* Add Button */}
+      <div className="flex justify-end">
+        <button onClick={() => showToast('섹션 추가 기능은 준비 중입니다.')} className="h-[var(--btn-height)] px-4 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 transition-colors flex items-center gap-2">
+          <Plus size={16} />
+          섹션 추가
+        </button>
+      </div>
+
+      {/* Section List */}
+      <div className="space-y-3">
+        {sortedSections.map((section) => (
+          <div
+            key={section.id}
+            className={`bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 flex items-center gap-4 transition-opacity ${
+              !section.visible ? 'opacity-50' : ''
+            }`}
+          >
+            {/* Drag Handle + Position */}
+            <div className="flex items-center gap-2 shrink-0">
+              <GripVertical size={18} className="text-[var(--text-secondary)] cursor-grab" />
+              <span className="w-7 h-7 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center text-xs font-bold">
+                {section.position}
+              </span>
+            </div>
+
+            {/* Section Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-sm font-semibold text-[var(--text)]">{section.name}</h3>
+                <StatusBadge status={section.type} colorMap={SECTION_TYPE_COLORS} />
+              </div>
+              <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
+                <span>{section.source}</span>
+                <span>{section.itemCount}개 항목</span>
+                <span>최종 수정: {section.updatedAt}</span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => moveSection(section.id, 'up')}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-[var(--text-secondary)]"
+                title="위로"
+              >
+                <ChevronUp size={16} />
+              </button>
+              <button
+                onClick={() => moveSection(section.id, 'down')}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-[var(--text-secondary)]"
+                title="아래로"
+              >
+                <ChevronDown size={16} />
+              </button>
+              <button
+                onClick={() => toggleVisibility(section.id)}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                  section.visible
+                    ? 'hover:bg-gray-100 text-[var(--text-secondary)]'
+                    : 'hover:bg-gray-100 text-gray-400'
+                }`}
+                title={section.visible ? '숨기기' : '보이기'}
+              >
+                {section.visible ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+              <button onClick={() => showToast(`"${section.name}" 섹션 수정 기능은 준비 중입니다.`)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-[var(--text-secondary)]" title="수정">
+                <Edit size={15} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Preview Section */}
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-5 mt-6">
+        <h3 className="text-sm font-semibold text-[var(--text)] mb-4 flex items-center gap-2">
+          <MonitorSmartphone size={16} />
+          메인 페이지 미리보기
+        </h3>
+        <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4 space-y-3">
+          {visibleSections.map((section) => (
+            <div key={section.id} className="flex items-center gap-3 px-3 py-2.5 bg-[var(--bg-card)] rounded-lg border border-dashed border-[var(--border)]">
+              <span className="w-6 h-6 bg-orange-100 text-orange-700 rounded flex items-center justify-center text-[10px] font-bold shrink-0">
+                {section.position}
+              </span>
+              <span className="text-sm text-[var(--text)] font-medium">{section.name}</span>
+              <StatusBadge status={section.type} colorMap={SECTION_TYPE_COLORS} />
+              <span className="text-xs text-[var(--text-secondary)] ml-auto">{section.itemCount}개 항목</span>
+            </div>
+          ))}
+          {visibleSections.length === 0 && (
+            <p className="text-sm text-[var(--text-secondary)] text-center py-6">노출 중인 섹션이 없습니다.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[60] bg-gray-900 text-white px-5 py-3 rounded-lg text-sm shadow-lg">{toast}</div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// Tab 6: 카테고리 노출
+// =============================================================================
+
+const CATEGORY_ICON_MAP: Record<string, React.ReactNode> = {
+  Flask: <FlaskConical size={16} />,
+  Atom: <Atom size={16} />,
+  Dna: <Dna size={16} />,
+  TestTube: <TestTube size={16} />,
+  Beaker: <Beaker size={16} />,
+  Scale: <Scale size={16} />,
+  Shield: <Shield size={16} />,
+};
+
+function CategoryDisplayManagement() {
+  const [categories, setCategories] = useState<CategoryDisplay[]>(initialCategoryDisplay);
+  const [sidebarMaxCount, setSidebarMaxCount] = useState(6);
+  const [hideEmpty, setHideEmpty] = useState(true);
+  const [showItemCount, setShowItemCount] = useState(true);
+  const [toast, setToast] = useState('');
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2500);
+  };
+
+  const sortedCategories = useMemo(() => {
+    return [...categories].sort((a, b) => a.displayOrder - b.displayOrder);
+  }, [categories]);
+
+  const visibleCount = categories.filter((c) => c.visible).length;
+  const featuredCount = categories.filter((c) => c.featured).length;
+  const totalItems = categories.reduce((sum, c) => sum + c.itemCount, 0);
+
+  const toggleVisibility = (id: string) => {
+    setCategories((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, visible: !c.visible } : c))
+    );
+    showToast('카테고리 노출 상태가 변경되었습니다.');
+  };
+
+  const toggleFeatured = (id: string) => {
+    setCategories((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, featured: !c.featured } : c))
+    );
+    showToast('추천 카테고리 설정이 변경되었습니다.');
+  };
+
+  const moveCategory = (id: string, direction: 'up' | 'down') => {
+    setCategories((prev) => {
+      const sorted = [...prev].sort((a, b) => a.displayOrder - b.displayOrder);
+      const idx = sorted.findIndex((c) => c.id === id);
+      if (direction === 'up' && idx <= 0) return prev;
+      if (direction === 'down' && idx >= sorted.length - 1) return prev;
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      const arr = [...sorted];
+      [arr[idx], arr[swapIdx]] = [arr[swapIdx], arr[idx]];
+      return arr.map((c, i) => ({ ...c, displayOrder: i + 1 }));
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Description */}
+      <p className="text-sm text-[var(--text-secondary)]">
+        Shop 사이드바 및 카탈로그의 카테고리 노출 순서와 설정을 관리합니다.
+      </p>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <StatCard icon={<Layers size={20} />} label="전체 카테고리" value={String(categories.length)} change={`${categories.length}개`} up={true} />
+        <StatCard icon={<Eye size={20} />} label="노출중" value={String(visibleCount)} change={`${visibleCount}개`} up={true} />
+        <StatCard icon={<Star size={20} />} label="추천 카테고리" value={String(featuredCount)} change={`${featuredCount}개`} up={true} />
+        <StatCard icon={<Hash size={20} />} label="전체 제품수" value={totalItems.toLocaleString()} change={`${totalItems.toLocaleString()}개`} up={true} />
+      </div>
+
+      {/* Category List */}
+      <div className="space-y-2">
+        {sortedCategories.map((category) => (
+          <div
+            key={category.id}
+            className={`bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 flex items-center gap-4 transition-opacity ${
+              !category.visible ? 'opacity-50' : ''
+            }`}
+          >
+            {/* Drag Handle + Order */}
+            <div className="flex items-center gap-2 shrink-0">
+              <GripVertical size={18} className="text-[var(--text-secondary)] cursor-grab" />
+              <span className="w-7 h-7 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center text-xs font-bold">
+                {category.displayOrder}
+              </span>
+            </div>
+
+            {/* Icon */}
+            <div className="w-9 h-9 bg-[var(--bg)] rounded-lg flex items-center justify-center text-[var(--text-secondary)] shrink-0">
+              {CATEGORY_ICON_MAP[category.icon] || <Layers size={16} />}
+            </div>
+
+            {/* Category Info */}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-[var(--text)]">{category.name}</h3>
+              <span className="text-xs text-[var(--text-secondary)]">{category.itemCount.toLocaleString()}개 제품</span>
+            </div>
+
+            {/* Featured Toggle */}
+            <button
+              onClick={() => toggleFeatured(category.id)}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                category.featured
+                  ? 'text-amber-500 hover:bg-amber-50'
+                  : 'text-gray-300 hover:bg-gray-100'
+              }`}
+              title={category.featured ? '추천 해제' : '추천 설정'}
+            >
+              <Star size={18} fill={category.featured ? 'currentColor' : 'none'} />
+            </button>
+
+            {/* Reorder */}
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => moveCategory(category.id, 'up')}
+                className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-[var(--text-secondary)]"
+                title="위로"
+              >
+                <ChevronUp size={14} />
+              </button>
+              <button
+                onClick={() => moveCategory(category.id, 'down')}
+                className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-[var(--text-secondary)]"
+                title="아래로"
+              >
+                <ChevronDown size={14} />
+              </button>
+            </div>
+
+            {/* Visibility Toggle */}
+            <button
+              onClick={() => toggleVisibility(category.id)}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                category.visible
+                  ? 'hover:bg-gray-100 text-[var(--text-secondary)]'
+                  : 'hover:bg-gray-100 text-gray-400'
+              }`}
+              title={category.visible ? '숨기기' : '보이기'}
+            >
+              {category.visible ? <Eye size={16} /> : <EyeOff size={16} />}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Settings */}
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-5 mt-6">
+        <h3 className="text-sm font-semibold text-[var(--text)] mb-4 flex items-center gap-2">
+          <Filter size={16} />
+          카테고리 표시 설정
+        </h3>
+        <div className="space-y-4">
+          {/* Sidebar Max Count */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-[var(--text)]">사이드바 최대 표시 개수</label>
+            <input
+              type="number"
+              value={sidebarMaxCount}
+              onChange={(e) => setSidebarMaxCount(Number(e.target.value))}
+              min={1}
+              max={20}
+              className="w-20 h-[var(--btn-height)] px-3 border border-[var(--border)] rounded-lg text-sm text-[var(--text)] bg-[var(--bg)] focus:outline-none focus:border-orange-500 text-center"
+            />
+          </div>
+
+          {/* Hide Empty */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-[var(--text)]">비어있는 카테고리 숨김</label>
+            <button
+              onClick={() => setHideEmpty(!hideEmpty)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hideEmpty ? 'bg-orange-600' : 'bg-gray-200'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${hideEmpty ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+
+          {/* Show Item Count */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-[var(--text)]">제품수 표시</label>
+            <button
+              onClick={() => setShowItemCount(!showItemCount)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${showItemCount ? 'bg-orange-600' : 'bg-gray-200'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${showItemCount ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[60] bg-gray-900 text-white px-5 py-3 rounded-lg text-sm shadow-lg">{toast}</div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// Tab 7: 팝업 관리
+// =============================================================================
+
+function PopupManagement() {
+  const [popups, setPopups] = useState<Popup[]>(initialPopups);
+  const [activeModal, setActiveModal] = useState<'create' | null>(null);
+  const [toast, setToast] = useState('');
+
+  const [form, setForm] = useState({
+    title: '',
+    type: '이벤트' as Popup['type'],
+    content: '',
+    position: 'center' as Popup['position'],
+    startDate: '',
+    endDate: '',
+    showOnce: false,
+  });
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2500);
+  };
+
+  const activeCount = popups.filter((p) => p.status === '활성').length;
+  const scheduledCount = popups.filter((p) => p.status === '예약').length;
+  const totalViews = popups.reduce((sum, p) => sum + p.views, 0);
+  const totalClosed = popups.reduce((sum, p) => sum + p.closedCount, 0);
+  const avgCloseRate = totalViews > 0 ? ((totalClosed / totalViews) * 100).toFixed(1) : '0.0';
+
+  const activePopup = popups.find((p) => p.status === '활성');
+
+  const openCreate = () => {
+    setForm({ title: '', type: '이벤트', content: '', position: 'center', startDate: '', endDate: '', showOnce: false });
+    setActiveModal('create');
+  };
+
+  const handleSave = () => {
+    if (!form.title.trim()) return;
+    const newPopup: Popup = {
+      id: `PU-${String(popups.length + 1).padStart(3, '0')}`,
+      title: form.title,
+      type: form.type,
+      startDate: form.startDate,
+      endDate: form.endDate,
+      showOnce: form.showOnce,
+      status: '예약',
+      views: 0,
+      closedCount: 0,
+      position: form.position,
+    };
+    setPopups((prev) => [...prev, newPopup]);
+    setActiveModal(null);
+    showToast('팝업이 생성되었습니다.');
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <StatCard icon={<Maximize size={20} />} label="활성 팝업" value={String(activeCount)} change={`${activeCount}개`} up={true} />
+        <StatCard icon={<Calendar size={20} />} label="예약 팝업" value={String(scheduledCount)} change={`${scheduledCount}개`} up={true} />
+        <StatCard icon={<Eye size={20} />} label="총 노출수" value={totalViews.toLocaleString()} change={`${totalViews.toLocaleString()}회`} up={true} />
+        <StatCard icon={<Minimize size={20} />} label="평균 닫기율" value={`${avgCloseRate}%`} change={`${avgCloseRate}%`} up={false} />
+      </div>
+
+      {/* Add Button */}
+      <div className="flex justify-end">
+        <button onClick={openCreate} className="h-[var(--btn-height)] px-4 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 transition-colors flex items-center gap-2">
+          <Plus size={16} />
+          팝업 생성
+        </button>
+      </div>
+
+      {/* Popup Table */}
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-[var(--bg)] border-b border-[var(--border)]">
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">ID</th>
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">제목</th>
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">유형</th>
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">위치</th>
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">기간</th>
+                <th className="text-center px-5 py-3 font-medium text-[var(--text-secondary)]">노출수</th>
+                <th className="text-center px-5 py-3 font-medium text-[var(--text-secondary)]">닫기수</th>
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              {popups.map((popup) => (
+                <tr key={popup.id} className="border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--bg)] transition-colors">
+                  <td className="px-5 py-3 text-xs font-mono text-[var(--text-secondary)]">{popup.id}</td>
+                  <td className="px-5 py-3 text-[var(--text)] font-medium">{popup.title}</td>
+                  <td className="px-5 py-3"><StatusBadge status={popup.type} colorMap={POPUP_TYPE_COLORS} /></td>
+                  <td className="px-5 py-3 text-[var(--text-secondary)] text-xs">{POPUP_POSITION_LABELS[popup.position]}</td>
+                  <td className="px-5 py-3 text-[var(--text-secondary)] text-xs">{popup.startDate} ~ {popup.endDate}</td>
+                  <td className="px-5 py-3 text-center text-[var(--text)]">{popup.views.toLocaleString()}</td>
+                  <td className="px-5 py-3 text-center text-[var(--text)]">{popup.closedCount.toLocaleString()}</td>
+                  <td className="px-5 py-3"><StatusBadge status={popup.status} colorMap={POPUP_STATUS_COLORS} /></td>
+                </tr>
+              ))}
+              {popups.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-5 py-12 text-center text-[var(--text-secondary)]">등록된 팝업이 없습니다.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Active Popup Preview */}
+      {activePopup && (
+        <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-5">
+          <h3 className="text-sm font-semibold text-[var(--text)] mb-3 flex items-center gap-2">
+            <MonitorSmartphone size={16} />
+            현재 활성 팝업 미리보기
+          </h3>
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-6">
+            <div className="max-w-sm mx-auto bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-lg overflow-hidden">
+              {/* Popup Header */}
+              <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <StatusBadge status={activePopup.type} colorMap={POPUP_TYPE_COLORS} />
+                  <span className="text-xs text-[var(--text-secondary)]">{POPUP_POSITION_LABELS[activePopup.position]}</span>
+                </div>
+                <button onClick={() => showToast('팝업 닫기 미리보기')} className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 text-[var(--text-secondary)]">
+                  <X size={14} />
+                </button>
+              </div>
+              {/* Popup Content */}
+              <div className="p-5 text-center">
+                <h4 className="text-base font-semibold text-[var(--text)] mb-2">{activePopup.title}</h4>
+                <div className="w-full h-32 bg-[var(--bg)] rounded-lg border border-dashed border-[var(--border)] flex items-center justify-center mb-3">
+                  <div className="text-center">
+                    <Image size={24} className="text-[var(--text-secondary)] mx-auto mb-1 opacity-40" />
+                    <p className="text-xs text-[var(--text-secondary)]">팝업 이미지 영역</p>
+                  </div>
+                </div>
+                <p className="text-xs text-[var(--text-secondary)]">{activePopup.startDate} ~ {activePopup.endDate}</p>
+              </div>
+              {/* Popup Footer */}
+              <div className="px-4 py-3 border-t border-[var(--border)] flex items-center justify-between">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked={activePopup.showOnce} readOnly className="accent-orange-600" />
+                  <span className="text-xs text-[var(--text-secondary)]">하루 동안 보지 않기</span>
+                </label>
+                <span className="text-xs text-[var(--text-secondary)]">노출 {activePopup.views.toLocaleString()}회</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Modal */}
+      {activeModal === 'create' && (
+        <Modal isOpen={true} onClose={() => setActiveModal(null)} title="팝업 생성" size="lg">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-[var(--text)] mb-1.5">제목</label>
+              <input type="text" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} className="w-full h-[var(--btn-height)] px-3 border border-[var(--border)] rounded-lg text-sm text-[var(--text)] bg-[var(--bg)] focus:outline-none focus:border-orange-500" placeholder="팝업 제목을 입력하세요" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--text)] mb-1.5">유형</label>
+              <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as Popup['type'] }))} className="w-full h-[var(--btn-height)] px-3 border border-[var(--border)] rounded-lg text-sm text-[var(--text)] bg-[var(--bg)] focus:outline-none focus:border-orange-500">
+                <option value="공지">공지</option>
+                <option value="이벤트">이벤트</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--text)] mb-1.5">내용</label>
+              <textarea value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} className="w-full h-32 px-3 py-2 border border-[var(--border)] rounded-lg text-sm text-[var(--text)] bg-[var(--bg)] focus:outline-none focus:border-orange-500 resize-none" placeholder="팝업 내용을 입력하세요" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--text)] mb-1.5">위치</label>
+              <select value={form.position} onChange={(e) => setForm((f) => ({ ...f, position: e.target.value as Popup['position'] }))} className="w-full h-[var(--btn-height)] px-3 border border-[var(--border)] rounded-lg text-sm text-[var(--text)] bg-[var(--bg)] focus:outline-none focus:border-orange-500">
+                <option value="center">중앙</option>
+                <option value="bottom-right">우하단</option>
+                <option value="top-bar">상단 바</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">시작일</label>
+                <input type="date" value={form.startDate} onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} className="w-full h-[var(--btn-height)] px-3 border border-[var(--border)] rounded-lg text-sm text-[var(--text)] bg-[var(--bg)] focus:outline-none focus:border-orange-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">종료일</label>
+                <input type="date" value={form.endDate} onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} className="w-full h-[var(--btn-height)] px-3 border border-[var(--border)] rounded-lg text-sm text-[var(--text)] bg-[var(--bg)] focus:outline-none focus:border-orange-500" />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium text-[var(--text)]">하루 한번만 표시</label>
+              <button onClick={() => setForm((f) => ({ ...f, showOnce: !f.showOnce }))} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.showOnce ? 'bg-orange-600' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${form.showOnce ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+            {/* Image Upload Placeholder */}
+            <div>
+              <label className="block text-sm font-medium text-[var(--text)] mb-1.5">이미지</label>
+              <div className="border-2 border-dashed border-[var(--border)] rounded-lg p-8 text-center hover:border-orange-300 transition-colors cursor-pointer">
+                <Upload size={28} className="mx-auto mb-2 text-[var(--text-secondary)] opacity-50" />
+                <p className="text-sm text-[var(--text-secondary)]">클릭 또는 드래그하여 이미지를 업로드하세요</p>
+                <p className="text-xs text-[var(--text-secondary)] opacity-60 mt-1">권장 크기: 480 x 360px / JPG, PNG, WebP</p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setActiveModal(null)} className="h-[var(--btn-height)] px-4 border border-[var(--border)] rounded-lg text-sm text-[var(--text)] hover:bg-gray-50 transition-colors">취소</button>
+              <button onClick={handleSave} className="h-[var(--btn-height)] px-6 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 transition-colors">저장</button>
             </div>
           </div>
         </Modal>

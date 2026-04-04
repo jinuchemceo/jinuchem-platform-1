@@ -15,7 +15,7 @@ import { mockReturns, formatCurrency } from '@/lib/mock-data';
 
 const statusStyles: Record<ReturnStatus, string> = {
   '접수': 'bg-amber-50 text-amber-700',
-  '처리중': 'bg-blue-50 text-blue-700',
+  '처리중': 'bg-purple-50 text-purple-700',
   '완료': 'bg-green-50 text-green-700',
 };
 

@@ -50,7 +50,7 @@ const statCards = [
 const colorMap: Record<string, { bg: string; icon: string }> = {
   purple: { bg: 'bg-purple-50', icon: 'text-purple-600' },
   orange: { bg: 'bg-orange-50', icon: 'text-orange-600' },
-  blue: { bg: 'bg-blue-50', icon: 'text-blue-600' },
+  blue: { bg: 'bg-purple-50', icon: 'text-purple-600' },
   green: { bg: 'bg-green-50', icon: 'text-green-600' },
 };
 
@@ -63,9 +63,9 @@ const recentOrders = [
 ];
 
 const statusStyles: Record<string, string> = {
-  '신규주문': 'bg-blue-100 text-blue-700',
+  '신규주문': 'bg-blue-100 text-purple-700',
   '준비중': 'bg-yellow-100 text-yellow-700',
-  '출고완료': 'bg-purple-100 text-purple-700',
+  '출고완료': 'bg-blue-100 text-purple-700',
   '배송완료': 'bg-green-100 text-green-700',
 };
 
@@ -193,7 +193,7 @@ export default function DashboardPage() {
               {topProducts.map((product) => (
                 <div key={product.rank} className="flex items-center gap-3 px-5 py-3">
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    product.rank <= 3 ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+                    product.rank <= 3 ? 'bg-blue-100 text-purple-700' : 'bg-gray-100 text-gray-600'
                   }`}>
                     {product.rank}
                   </span>

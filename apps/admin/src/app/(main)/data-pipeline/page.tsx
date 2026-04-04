@@ -22,13 +22,13 @@ import {
   Minus,
   Zap,
   FileSearch,
+  ShieldCheck,
 } from 'lucide-react';
 import { AdminTabs } from '@/components/shared/AdminTabs';
 import { Modal } from '@/components/shared/Modal';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Pagination } from '@/components/shared/Pagination';
 import { StatCard } from '@/components/shared/StatCard';
-import { ChartPlaceholder } from '@/components/shared/ChartPlaceholder';
 import { FilterBar } from '@/components/shared/FilterBar';
 import {
   mockDataEvents,
@@ -48,6 +48,7 @@ const tabs = [
   { id: 'searchLog', label: 'SearchLog' },
   { id: 'priceHistory', label: 'PriceHistory' },
   { id: 'batchJobs', label: '배치 작업' },
+  { id: 'dataQuality', label: '데이터 품질' },
 ];
 
 const sourceAppColors: Record<string, string> = {
@@ -142,6 +143,7 @@ export default function DataPipelinePage() {
     dataPipelineTab === 'SearchLog' ? 'searchLog' :
     dataPipelineTab === 'PriceHistory' ? 'priceHistory' :
     dataPipelineTab === '배치 작업' ? 'batchJobs' :
+    dataPipelineTab === '데이터 품질' ? 'dataQuality' :
     dataPipelineTab === '개요' ? 'overview' :
     dataPipelineTab;
 
@@ -152,6 +154,7 @@ export default function DataPipelinePage() {
       searchLog: 'SearchLog',
       priceHistory: 'PriceHistory',
       batchJobs: '배치 작업',
+      dataQuality: '데이터 품질',
     };
     setDataPipelineTab(labelMap[id] ?? id);
   }
@@ -229,10 +232,41 @@ export default function DataPipelinePage() {
         <StatCard icon={<TrendingUp size={20} />} label="PriceHistory - 오늘 수집" value="567건" change="+3%" up />
       </div>
 
-      {/* Data volume chart */}
+      {/* Data volume chart - bar chart */}
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
         <h2 className="text-base font-semibold text-[var(--text)] mb-4">데이터 수집 추이</h2>
-        <ChartPlaceholder title="일별 데이터 수집량 추이" height="h-56" />
+        <div className="h-56 flex items-end gap-1.5">
+          {[
+            { day: '3/26', de: 9800, sl: 1800, ph: 420 },
+            { day: '3/27', de: 11200, sl: 2100, ph: 380 },
+            { day: '3/28', de: 8500, sl: 1600, ph: 510 },
+            { day: '3/29', de: 13400, sl: 2500, ph: 600 },
+            { day: '3/30', de: 10100, sl: 1900, ph: 450 },
+            { day: '3/31', de: 9200, sl: 2200, ph: 390 },
+            { day: '4/1', de: 12800, sl: 2400, ph: 550 },
+            { day: '4/2', de: 12345, sl: 2345, ph: 567 },
+          ].map((d) => {
+            const max = 14000;
+            return (
+              <div key={d.day} className="flex-1 flex flex-col items-center gap-0.5 group">
+                <span className="text-[9px] text-[var(--text-secondary)] opacity-0 group-hover:opacity-100 transition-opacity">
+                  {(d.de + d.sl + d.ph).toLocaleString()}
+                </span>
+                <div className="w-full flex flex-col items-center gap-px">
+                  <div className="w-6 bg-orange-500 rounded-t transition-all" style={{ height: `${(d.de / max) * 160}px` }} />
+                  <div className="w-6 bg-blue-500 transition-all" style={{ height: `${(d.sl / max) * 160}px` }} />
+                  <div className="w-6 bg-emerald-500 rounded-b transition-all" style={{ height: `${(d.ph / max) * 160}px` }} />
+                </div>
+                <span className="text-[10px] text-[var(--text-secondary)]">{d.day}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[var(--border)]">
+          <span className="flex items-center gap-1.5 text-[10px] text-[var(--text-secondary)]"><span className="w-2.5 h-2.5 rounded-sm bg-orange-500" />DataEvent</span>
+          <span className="flex items-center gap-1.5 text-[10px] text-[var(--text-secondary)]"><span className="w-2.5 h-2.5 rounded-sm bg-blue-500" />SearchLog</span>
+          <span className="flex items-center gap-1.5 text-[10px] text-[var(--text-secondary)]"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />PriceHistory</span>
+        </div>
       </div>
 
       {/* Storage stats */}
@@ -544,7 +578,7 @@ export default function DataPipelinePage() {
                 <td className={`${tdCell} text-[var(--text)]`}>{item.count}</td>
                 <td className={`${tdCell} text-[var(--text-secondary)] whitespace-nowrap`}>{item.lastSearched}</td>
                 <td className={tdCell}>
-                  <button className="h-[var(--btn-height)] px-3 text-xs font-medium rounded-lg bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 transition-colors">
+                  <button onClick={() => alert(`"${item.query}" 제품 추가 화면으로 이동합니다.`)} className="h-[var(--btn-height)] px-3 text-xs font-medium rounded-lg bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 transition-colors">
                     제품 추가
                   </button>
                 </td>
@@ -554,10 +588,28 @@ export default function DataPipelinePage() {
         </table>
       </div>
 
-      {/* Search type distribution chart */}
+      {/* Search type distribution - horizontal bars */}
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
         <h2 className="text-sm font-semibold text-[var(--text)] mb-4">검색 유형 분포</h2>
-        <ChartPlaceholder title="검색 유형 분포" height="h-48" />
+        <div className="space-y-3">
+          {[
+            { type: '제품명 검색', count: 1245, pct: 53, color: 'bg-orange-500' },
+            { type: 'CAS 번호', count: 620, pct: 26, color: 'bg-blue-500' },
+            { type: '카탈로그 번호', count: 285, pct: 12, color: 'bg-emerald-500' },
+            { type: '분자식', count: 142, pct: 6, color: 'bg-purple-500' },
+            { type: '기타', count: 53, pct: 3, color: 'bg-gray-400' },
+          ].map((item) => (
+            <div key={item.type} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-[var(--text)]">{item.type}</span>
+                <span className="text-xs text-[var(--text-secondary)]">{item.count.toLocaleString()}건 ({item.pct}%)</span>
+              </div>
+              <div className="h-2 bg-[var(--bg)] rounded-full overflow-hidden">
+                <div className={`h-full ${item.color} rounded-full transition-all duration-500`} style={{ width: `${item.pct}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -645,10 +697,37 @@ export default function DataPipelinePage() {
         </div>
       </div>
 
-      {/* Chart placeholder */}
+      {/* Supplier price change chart */}
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
         <h2 className="text-sm font-semibold text-[var(--text)] mb-4">공급사별 가격 변동 현황</h2>
-        <ChartPlaceholder title="공급사별 가격 변동 현황" height="h-48" />
+        <div className="space-y-3">
+          {[
+            { name: 'Sigma-Aldrich', up: 23, down: 8, total: 156 },
+            { name: 'Alfa Aesar', up: 12, down: 15, total: 89 },
+            { name: 'TCI', up: 18, down: 5, total: 124 },
+            { name: 'Daejung', up: 7, down: 3, total: 67 },
+            { name: 'Samchun', up: 9, down: 11, total: 45 },
+          ].map((s) => (
+            <div key={s.name} className="flex items-center gap-3">
+              <span className="text-xs font-medium text-[var(--text)] w-28 shrink-0">{s.name}</span>
+              <div className="flex-1 flex items-center gap-1 h-5">
+                <div className="flex-1 flex items-center gap-0.5">
+                  <div className="bg-red-400 h-4 rounded-l" style={{ width: `${(s.up / s.total) * 100}%` }} />
+                  <div className="bg-blue-400 h-4 rounded-r" style={{ width: `${(s.down / s.total) * 100}%` }} />
+                  <div className="bg-gray-200 h-4 rounded flex-1" />
+                </div>
+              </div>
+              <span className="text-[10px] text-[var(--text-secondary)] w-24 text-right shrink-0">
+                <span className="text-red-500">+{s.up}</span> / <span className="text-blue-500">-{s.down}</span> / {s.total}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[var(--border)]">
+          <span className="flex items-center gap-1.5 text-[10px] text-[var(--text-secondary)]"><span className="w-2.5 h-2.5 rounded-sm bg-red-400" />인상</span>
+          <span className="flex items-center gap-1.5 text-[10px] text-[var(--text-secondary)]"><span className="w-2.5 h-2.5 rounded-sm bg-blue-400" />인하</span>
+          <span className="flex items-center gap-1.5 text-[10px] text-[var(--text-secondary)]"><span className="w-2.5 h-2.5 rounded-sm bg-gray-200" />변동 없음</span>
+        </div>
       </div>
     </div>
   );
@@ -698,6 +777,7 @@ export default function DataPipelinePage() {
                 <td className={tdCell}>
                   <div className="flex items-center gap-1">
                     <button
+                      onClick={() => alert(`"${job.name}" 작업을 수동 실행합니다.`)}
                       className="h-[var(--btn-height)] px-3 text-xs font-medium rounded-lg bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 transition-colors flex items-center gap-1"
                     >
                       <Play size={12} />
@@ -780,7 +860,7 @@ export default function DataPipelinePage() {
 
             {/* Manual run button */}
             <div className="flex justify-end pt-2">
-              <button className="h-[var(--btn-height)] px-4 text-sm font-medium rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors flex items-center gap-2">
+              <button onClick={() => { alert(`"${selectedJob?.name}" 작업을 수동 실행합니다.`); setSelectedJob(null); }} className="h-[var(--btn-height)] px-4 text-sm font-medium rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors flex items-center gap-2">
                 <Play size={14} />
                 수동 실행
               </button>
@@ -790,6 +870,187 @@ export default function DataPipelinePage() {
       </Modal>
     </div>
   );
+
+  // =========================================================================
+  // TAB 6: 데이터 품질
+  // =========================================================================
+
+  const renderDataQuality = () => {
+    const qualityScoreColor = (score: number) =>
+      score >= 95 ? 'text-emerald-600' :
+      score >= 90 ? 'text-blue-600' :
+      score >= 80 ? 'text-amber-600' :
+      'text-red-600';
+
+    const qualityScoreBg = (score: number) =>
+      score >= 95 ? 'bg-emerald-50 border-emerald-200' :
+      score >= 90 ? 'bg-blue-50 border-blue-200' :
+      score >= 80 ? 'bg-amber-50 border-amber-200' :
+      'bg-red-50 border-red-200';
+
+    const actionStatusStyle: Record<string, string> = {
+      '자동수정': 'bg-emerald-100 text-emerald-700',
+      '수동확인필요': 'bg-amber-100 text-amber-700',
+      '무시': 'bg-gray-100 text-gray-600',
+    };
+
+    const tableQuality = [
+      { name: 'DataEvent', records: '2.4M', duplicateRate: 0.5, missingRate: 0.8, anomalies: 8, score: 96.2, lastCheck: '2026-04-03 09:00' },
+      { name: 'SearchLog', records: '890K', duplicateRate: 1.2, missingRate: 1.5, anomalies: 5, score: 93.1, lastCheck: '2026-04-03 09:00' },
+      { name: 'PriceHistory', records: '345K', duplicateRate: 0.3, missingRate: 0.9, anomalies: 3, score: 97.5, lastCheck: '2026-04-03 09:00' },
+      { name: 'Product', records: '12.5K', duplicateRate: 0.1, missingRate: 2.3, anomalies: 4, score: 91.8, lastCheck: '2026-04-03 08:30' },
+      { name: 'Order', records: '45.2K', duplicateRate: 0.0, missingRate: 0.5, anomalies: 2, score: 98.1, lastCheck: '2026-04-03 09:00' },
+      { name: 'User', records: '3.8K', duplicateRate: 2.5, missingRate: 3.1, anomalies: 1, score: 88.4, lastCheck: '2026-04-03 08:00' },
+    ];
+
+    const recentAnomalies = [
+      { id: 1, time: '2026-04-03 08:45', table: 'DataEvent', field: 'payload', type: '형식오류', affected: 12, status: '자동수정' },
+      { id: 2, time: '2026-04-03 08:30', table: 'PriceHistory', field: 'newPrice', type: '범위초과', affected: 3, status: '수동확인필요' },
+      { id: 3, time: '2026-04-03 07:15', table: 'SearchLog', field: 'query', type: '누락', affected: 5, status: '자동수정' },
+      { id: 4, time: '2026-04-03 06:50', table: 'User', field: 'email', type: '중복', affected: 1, status: '수동확인필요' },
+      { id: 5, time: '2026-04-02 23:10', table: 'DataEvent', field: 'timestamp', type: '범위초과', affected: 2, status: '무시' },
+      { id: 6, time: '2026-04-02 21:30', table: 'Product', field: 'casNumber', type: '형식오류', affected: 4, status: '자동수정' },
+    ];
+
+    const cleaningRules = [
+      { name: '가격 음수 제거', condition: 'newPrice < 0 OR previousPrice < 0', action: '해당 레코드 제외 후 알림 발송', applied: 47, lastRun: '2026-04-03 09:00' },
+      { name: 'CAS번호 형식 검증', condition: 'casNumber NOT MATCH /^\\d{2,7}-\\d{2}-\\d$/', action: '형식 자동 보정 시도, 실패 시 플래그', applied: 156, lastRun: '2026-04-03 08:30' },
+      { name: '중복 이벤트 제거', condition: 'same userId + eventType + timestamp within 1s', action: '후속 중복 레코드 soft-delete', applied: 892, lastRun: '2026-04-03 09:00' },
+      { name: '빈 검색어 필터링', condition: 'query IS NULL OR query = ""', action: '레코드 제외, 로그 기록', applied: 34, lastRun: '2026-04-03 09:00' },
+    ];
+
+    const anomalyTypeColors: Record<string, string> = {
+      '중복': 'bg-purple-100 text-purple-700',
+      '누락': 'bg-amber-100 text-amber-700',
+      '범위초과': 'bg-red-100 text-red-700',
+      '형식오류': 'bg-blue-100 text-blue-700',
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* 품질 지표 요약 */}
+        <div className="grid grid-cols-4 gap-4">
+          <StatCard icon={<ShieldCheck size={20} />} label="전체 품질 점수" value="94.2 / 100" change="+0.3" up />
+          <StatCard icon={<Database size={20} />} label="중복 데이터율" value="0.8%" change="-0.1%" up />
+          <StatCard icon={<AlertTriangle size={20} />} label="누락 필드율" value="1.2%" change="-0.2%" up />
+          <StatCard icon={<Search size={20} />} label="이상 데이터 건수" value="23건" change="-5건" up />
+        </div>
+
+        {/* 테이블별 품질 현황 */}
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-2">
+            <Database size={16} className="text-orange-600" />
+            <h2 className="text-sm font-semibold text-[var(--text)]">테이블별 품질 현황</h2>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-[var(--bg)] border-b border-[var(--border)]">
+                <th className={thCell}>테이블명</th>
+                <th className={thCell}>레코드 수</th>
+                <th className={thCell}>중복률</th>
+                <th className={thCell}>누락률</th>
+                <th className={thCell}>이상 건수</th>
+                <th className={thCell}>품질 점수</th>
+                <th className={thCell}>마지막 검사</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tableQuality.map((row) => (
+                <tr key={row.name} className="border-b border-[var(--border)] hover:bg-[var(--bg)] transition-colors">
+                  <td className={`${tdCell} font-mono text-orange-600 font-medium`}>{row.name}</td>
+                  <td className={`${tdCell} text-[var(--text)] font-medium`}>{row.records}</td>
+                  <td className={`${tdCell} text-[var(--text-secondary)]`}>{row.duplicateRate}%</td>
+                  <td className={`${tdCell} text-[var(--text-secondary)]`}>{row.missingRate}%</td>
+                  <td className={`${tdCell} text-[var(--text)]`}>{row.anomalies}</td>
+                  <td className={tdCell}>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${qualityScoreBg(row.score)} ${qualityScoreColor(row.score)}`}>
+                      {row.score}
+                    </span>
+                  </td>
+                  <td className={`${tdCell} text-[var(--text-secondary)] whitespace-nowrap`}>{row.lastCheck}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* 최근 이상 데이터 */}
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-2">
+            <AlertTriangle size={16} className="text-amber-500" />
+            <h2 className="text-sm font-semibold text-[var(--text)]">최근 이상 데이터</h2>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-[var(--bg)] border-b border-[var(--border)]">
+                <th className={thCell}>감지시각</th>
+                <th className={thCell}>테이블</th>
+                <th className={thCell}>필드</th>
+                <th className={thCell}>유형</th>
+                <th className={thCell}>영향 건수</th>
+                <th className={thCell}>조치상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentAnomalies.map((a) => (
+                <tr key={a.id} className="border-b border-[var(--border)] hover:bg-[var(--bg)] transition-colors">
+                  <td className={`${tdCell} text-[var(--text-secondary)] whitespace-nowrap`}>{a.time}</td>
+                  <td className={`${tdCell} font-mono text-orange-600 font-medium`}>{a.table}</td>
+                  <td className={`${tdCell} font-mono text-xs text-[var(--text)]`}>{a.field}</td>
+                  <td className={tdCell}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${anomalyTypeColors[a.type]}`}>
+                      {a.type}
+                    </span>
+                  </td>
+                  <td className={`${tdCell} text-[var(--text)] font-medium`}>{a.affected}건</td>
+                  <td className={tdCell}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${actionStatusStyle[a.status]}`}>
+                      {a.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* 데이터 정제 규칙 */}
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-2">
+            <Filter size={16} className="text-orange-600" />
+            <h2 className="text-sm font-semibold text-[var(--text)]">데이터 정제 규칙</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-4 p-5">
+            {cleaningRules.map((rule) => (
+              <div key={rule.name} className="border border-[var(--border)] rounded-xl p-4 space-y-3 bg-[var(--bg)]">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-[var(--text)]">{rule.name}</h3>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700">활성</span>
+                </div>
+                <div className="space-y-1.5">
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wide text-[var(--text-secondary)] font-medium">조건</span>
+                    <p className="text-xs font-mono text-[var(--text)] mt-0.5 bg-[var(--bg-card)] border border-[var(--border)] rounded px-2 py-1">{rule.condition}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wide text-[var(--text-secondary)] font-medium">액션</span>
+                    <p className="text-xs text-[var(--text)] mt-0.5">{rule.action}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
+                  <div className="flex items-center gap-1 text-xs text-[var(--text-secondary)]">
+                    <RefreshCw size={12} />
+                    <span>적용: {rule.applied.toLocaleString()}건</span>
+                  </div>
+                  <span className="text-xs text-[var(--text-secondary)]">{rule.lastRun}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // =========================================================================
   // Main Render
@@ -803,7 +1064,7 @@ export default function DataPipelinePage() {
           <h1 className="text-2xl font-bold text-[var(--text)]">데이터 파이프라인</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">데이터 수집, 검색 로그, 가격 이력, 배치 작업 모니터링</p>
         </div>
-        <button className="h-[var(--btn-height)] px-4 bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
+        <button onClick={() => window.location.reload()} className="h-[var(--btn-height)] px-4 bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
           <RefreshCw size={16} />
           새로고침
         </button>
@@ -822,6 +1083,7 @@ export default function DataPipelinePage() {
       {activeTab === 'searchLog' && renderSearchLog()}
       {activeTab === 'priceHistory' && renderPriceHistory()}
       {activeTab === 'batchJobs' && renderBatchJobs()}
+      {activeTab === 'dataQuality' && renderDataQuality()}
     </div>
   );
 }

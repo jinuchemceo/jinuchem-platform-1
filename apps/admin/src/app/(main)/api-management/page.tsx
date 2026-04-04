@@ -22,13 +22,17 @@ import {
   Shield,
   Zap,
   X,
+  Heart,
+  Bell,
+  AlertTriangle,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { AdminTabs } from '@/components/shared/AdminTabs';
 import { Modal } from '@/components/shared/Modal';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Pagination } from '@/components/shared/Pagination';
 import { StatCard } from '@/components/shared/StatCard';
-import { ChartPlaceholder } from '@/components/shared/ChartPlaceholder';
 import { FilterBar } from '@/components/shared/FilterBar';
 import {
   mockApiKeys,
@@ -44,6 +48,7 @@ const TABS = [
   { id: '사용량', label: '사용량 모니터링' },
   { id: '에러', label: '에러 로그' },
   { id: 'Rate Limit', label: 'Rate Limit 설정' },
+  { id: '헬스체크', label: '헬스체크' },
 ];
 
 const TIERS = ['전체', 'Free', 'Basic', 'Pro', 'Enterprise'] as const;
@@ -295,10 +300,10 @@ export default function ApiManagementPage() {
                           >
                             <Eye size={16} />
                           </button>
-                          <button className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-gray-100 transition-colors" title="수정">
+                          <button onClick={() => { setRevealedKey(false); openModal('keyDetail', key); }} className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-gray-100 transition-colors" title="수정">
                             <Edit size={16} />
                           </button>
-                          <button className="w-8 h-8 flex items-center justify-center rounded-lg text-red-400 hover:bg-red-50 transition-colors" title="삭제">
+                          <button onClick={() => { if (confirm(`"${key.org}" API 키를 삭제하시겠습니까?`)) { /* mock delete */ } }} className="w-8 h-8 flex items-center justify-center rounded-lg text-red-400 hover:bg-red-50 transition-colors" title="삭제">
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -378,16 +383,26 @@ export default function ApiManagementPage() {
                   </div>
                 </div>
 
-                {/* Chart */}
-                <ChartPlaceholder title="일별 사용량 추이" height="h-40" />
+                {/* 일별 사용량 미니 차트 */}
+                <div>
+                  <h3 className="text-sm font-medium text-[var(--text)] mb-2">일별 사용량 추이</h3>
+                  <div className="flex items-end gap-1 h-24">
+                    {[45, 62, 38, 71, 55, 80, 67].map((v, i) => (
+                      <div key={i} className="flex-1 bg-orange-500 rounded-t-sm opacity-70 hover:opacity-100 transition-opacity" style={{ height: `${v}%` }} title={`${v}건`} />
+                    ))}
+                  </div>
+                  <div className="flex justify-between mt-1 text-[10px] text-[var(--text-secondary)]">
+                    <span>3/27</span><span>3/28</span><span>3/29</span><span>3/30</span><span>3/31</span><span>4/1</span><span>4/2</span>
+                  </div>
+                </div>
 
                 {/* Actions */}
                 <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--border)]">
-                  <button className="h-[var(--btn-height)] px-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-sm font-medium text-[var(--text)] hover:bg-gray-100 transition-colors flex items-center gap-2">
+                  <button onClick={() => alert('API Key가 회전되었습니다. 새 키가 발급됩니다.')} className="h-[var(--btn-height)] px-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-sm font-medium text-[var(--text)] hover:bg-gray-100 transition-colors flex items-center gap-2">
                     <RefreshCw size={14} />
                     Key 회전
                   </button>
-                  <button className="h-[var(--btn-height)] px-4 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors flex items-center gap-2">
+                  <button onClick={() => { if (confirm('이 API Key를 폐기하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) { closeModal(); } }} className="h-[var(--btn-height)] px-4 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors flex items-center gap-2">
                     <Trash2 size={14} />
                     폐기
                   </button>
@@ -497,10 +512,45 @@ export default function ApiManagementPage() {
             ))}
           </div>
 
-          {/* Chart */}
+          {/* Chart - API 호출량 추이 */}
           <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
-            <h2 className="text-base font-semibold text-[var(--text)] mb-4">API 호출량 추이</h2>
-            <ChartPlaceholder title="API 호출량 추이" height="h-64" />
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-[var(--text)]">API 호출량 추이</h2>
+              <div className="flex gap-4 text-xs text-[var(--text-secondary)]">
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-orange-500" />성공</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-400" />실패</span>
+              </div>
+            </div>
+            {(() => {
+              const apiDaily = [
+                { date: '3/26', success: 4200, fail: 120 },
+                { date: '3/27', success: 4800, fail: 95 },
+                { date: '3/28', success: 3900, fail: 150 },
+                { date: '3/29', success: 5100, fail: 88 },
+                { date: '3/30', success: 4600, fail: 110 },
+                { date: '3/31', success: 5300, fail: 72 },
+                { date: '4/1', success: 4400, fail: 130 },
+                { date: '4/2', success: 4900, fail: 98 },
+              ];
+              const maxVal = Math.max(...apiDaily.map(d => d.success + d.fail));
+              return (
+                <div className="flex items-end gap-3 h-56">
+                  {apiDaily.map(d => {
+                    const total = d.success + d.fail;
+                    return (
+                      <div key={d.date} className="flex-1 flex flex-col items-center gap-1 group relative">
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">{total.toLocaleString()}건</div>
+                        <div className="w-full flex flex-col justify-end" style={{ height: '200px' }}>
+                          <div className="w-full bg-red-400 rounded-t-sm" style={{ height: `${(d.fail / maxVal) * 200}px` }} />
+                          <div className="w-full bg-orange-500 rounded-b-sm" style={{ height: `${(d.success / maxVal) * 200}px` }} />
+                        </div>
+                        <span className="text-xs text-[var(--text-secondary)]">{d.date}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Endpoint usage table */}
@@ -795,7 +845,7 @@ export default function ApiManagementPage() {
                         >
                           <Edit size={16} />
                         </button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-lg text-red-400 hover:bg-red-50 transition-colors">
+                        <button onClick={() => { if (confirm(`"${cl.org}" 커스텀 규칙을 삭제하시겠습니까?`)) { /* mock delete */ } }} className="w-8 h-8 flex items-center justify-center rounded-lg text-red-400 hover:bg-red-50 transition-colors">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -889,6 +939,243 @@ export default function ApiManagementPage() {
           </Modal>
         </div>
       )}
+
+      {/* ================================================================ */}
+      {/* Tab 5: 헬스체크 */}
+      {/* ================================================================ */}
+      {apiManagementTab === '헬스체크' && <HealthCheckTab />}
+    </div>
+  );
+}
+
+/* ================================================================ */
+/* HealthCheckTab Component                                         */
+/* ================================================================ */
+function HealthCheckTab() {
+  const services = [
+    { name: 'JINU Shop API', status: '정상' as const, responseTime: '85ms', uptime: 99.98 },
+    { name: 'E-Note API', status: '정상' as const, responseTime: '92ms', uptime: 99.95 },
+    { name: 'Supplier API', status: '경고' as const, responseTime: '245ms', uptime: 99.82 },
+    { name: 'External API v1', status: '정상' as const, responseTime: '68ms', uptime: 99.99 },
+    { name: 'AI Engine', status: '정상' as const, responseTime: '1.2s', uptime: 99.90 },
+  ];
+
+  const [alertRules, setAlertRules] = useState([
+    { id: 1, name: '응답시간 초과', condition: '응답시간 > 500ms', severity: '경고' as const, channel: 'Slack #ops-alert', active: true },
+    { id: 2, name: '에러율 급증', condition: '에러율 > 5%', severity: '위험' as const, channel: 'Slack + Email', active: true },
+    { id: 3, name: '연속 실패 감지', condition: '연속 실패 > 3회', severity: '위험' as const, channel: 'Slack + PagerDuty', active: true },
+    { id: 4, name: 'Rate Limit 임계', condition: 'Rate Limit 80% 도달', severity: '정보' as const, channel: 'Slack #ops-info', active: false },
+  ]);
+
+  const incidents = [
+    { id: 1, time: '2026-04-03 09:42', service: 'Supplier API', type: '응답 지연', severity: '경고' as const, duration: '12분', resolved: true },
+    { id: 2, time: '2026-04-02 22:15', service: 'AI Engine', type: '타임아웃', severity: '위험' as const, duration: '8분', resolved: true },
+    { id: 3, time: '2026-04-02 14:30', service: 'External API v1', type: '429 급증', severity: '정보' as const, duration: '5분', resolved: true },
+    { id: 4, time: '2026-04-01 11:05', service: 'Supplier API', type: '502 에러', severity: '위험' as const, duration: '23분', resolved: true },
+    { id: 5, time: '2026-04-01 08:20', service: 'JINU Shop API', type: '응답 지연', severity: '경고' as const, duration: '3분', resolved: true },
+  ];
+
+  const responseTimeTrend = [
+    { label: '09:00', value: 95 },
+    { label: '10:00', value: 110 },
+    { label: '11:00', value: 88 },
+    { label: '12:00', value: 245 },
+    { label: '13:00', value: 180 },
+    { label: '14:00', value: 120 },
+    { label: '15:00', value: 105 },
+    { label: '16:00', value: 98 },
+  ];
+  const maxResponse = Math.max(...responseTimeTrend.map((d) => d.value));
+  const chartHeight = 200;
+  const warningThreshold = 500;
+
+  const statusDot = (status: '정상' | '경고' | '장애') => {
+    if (status === '정상') return 'bg-emerald-500';
+    if (status === '경고') return 'bg-amber-500';
+    return 'bg-red-500';
+  };
+
+  const statusBg = (status: '정상' | '경고' | '장애') => {
+    if (status === '정상') return 'bg-emerald-50 border-emerald-200';
+    if (status === '경고') return 'bg-amber-50 border-amber-200';
+    return 'bg-red-50 border-red-200';
+  };
+
+  const severityStyle = (severity: '경고' | '위험' | '정보') => {
+    if (severity === '위험') return 'bg-red-100 text-red-700';
+    if (severity === '경고') return 'bg-amber-100 text-amber-700';
+    return 'bg-blue-100 text-blue-700';
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* ---- 서비스 상태 대시보드 ---- */}
+      <div>
+        <h2 className="text-base font-semibold text-[var(--text)] mb-4 flex items-center gap-2">
+          <Heart size={18} className="text-orange-600" />
+          서비스 상태 대시보드
+        </h2>
+        <div className="grid grid-cols-5 gap-4">
+          {services.map((svc) => (
+            <div key={svc.name} className={`border rounded-xl p-4 ${statusBg(svc.status)}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <span className={`w-2.5 h-2.5 rounded-full ${statusDot(svc.status)} animate-pulse`} />
+                <span className="text-xs font-semibold text-[var(--text)]">{svc.status}</span>
+              </div>
+              <h3 className="text-sm font-medium text-[var(--text)] mb-1 truncate" title={svc.name}>{svc.name}</h3>
+              <div className="text-xs text-[var(--text-secondary)] mb-1">응답시간: <span className="font-medium text-[var(--text)]">{svc.responseTime}</span></div>
+              <div className="text-xs text-[var(--text-secondary)] mb-2">Uptime: <span className="font-medium text-[var(--text)]">{svc.uptime}%</span></div>
+              {/* Uptime progress bar */}
+              <div className="w-full h-1.5 bg-white/60 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${svc.status === '경고' ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                  style={{ width: `${svc.uptime}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ---- 이상 탐지 알림 규칙 ---- */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-2">
+          <Bell size={18} className="text-orange-600" />
+          <h2 className="text-base font-semibold text-[var(--text)]">이상 탐지 알림 규칙</h2>
+        </div>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-[var(--bg)] border-b border-[var(--border)]">
+              <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)]">규칙명</th>
+              <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)]">조건</th>
+              <th className="text-center px-5 py-3 font-semibold text-[var(--text-secondary)]">심각도</th>
+              <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)]">알림 채널</th>
+              <th className="text-center px-5 py-3 font-semibold text-[var(--text-secondary)]">상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            {alertRules.map((rule) => (
+              <tr key={rule.id} className="border-b border-[var(--border)] hover:bg-[var(--bg)] transition-colors">
+                <td className="px-5 py-3.5 font-medium text-[var(--text)]">{rule.name}</td>
+                <td className="px-5 py-3.5 text-xs font-mono text-[var(--text-secondary)]">{rule.condition}</td>
+                <td className="px-5 py-3.5 text-center">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${severityStyle(rule.severity)}`}>
+                    {rule.severity}
+                  </span>
+                </td>
+                <td className="px-5 py-3.5 text-xs text-[var(--text-secondary)]">{rule.channel}</td>
+                <td className="px-5 py-3.5 text-center">
+                  <button
+                    onClick={() => setAlertRules((prev) => prev.map((r) => r.id === rule.id ? { ...r, active: !r.active } : r))}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                      rule.active ? 'bg-orange-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                        rule.active ? 'translate-x-4' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ---- 최근 인시던트 ---- */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-2">
+          <AlertTriangle size={18} className="text-orange-600" />
+          <h2 className="text-base font-semibold text-[var(--text)]">최근 인시던트</h2>
+        </div>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-[var(--bg)] border-b border-[var(--border)]">
+              <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)]">시각</th>
+              <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)]">서비스</th>
+              <th className="text-left px-5 py-3 font-semibold text-[var(--text-secondary)]">유형</th>
+              <th className="text-center px-5 py-3 font-semibold text-[var(--text-secondary)]">심각도</th>
+              <th className="text-right px-5 py-3 font-semibold text-[var(--text-secondary)]">지속시간</th>
+              <th className="text-center px-5 py-3 font-semibold text-[var(--text-secondary)]">상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            {incidents.map((inc) => (
+              <tr key={inc.id} className="border-b border-[var(--border)] hover:bg-[var(--bg)] transition-colors">
+                <td className="px-5 py-3.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">{inc.time}</td>
+                <td className="px-5 py-3.5 font-medium text-[var(--text)]">{inc.service}</td>
+                <td className="px-5 py-3.5 text-xs text-[var(--text-secondary)]">{inc.type}</td>
+                <td className="px-5 py-3.5 text-center">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${severityStyle(inc.severity)}`}>
+                    {inc.severity}
+                  </span>
+                </td>
+                <td className="px-5 py-3.5 text-right text-xs text-[var(--text-secondary)]">{inc.duration}</td>
+                <td className="px-5 py-3.5 text-center">
+                  {inc.resolved ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                      <CheckCircle size={14} />
+                      해결
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+                      <Activity size={14} />
+                      진행중
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ---- 응답시간 추이 ---- */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Activity size={18} className="text-orange-600" />
+          <h2 className="text-base font-semibold text-[var(--text)]">응답시간 추이 (평균)</h2>
+        </div>
+
+        <div className="relative">
+          {/* Warning threshold line */}
+          <div
+            className="absolute left-0 right-0 border-t border-dashed border-red-300 z-10 pointer-events-none"
+            style={{ bottom: `${(warningThreshold / (maxResponse * 1.2)) * chartHeight}px` }}
+          >
+            <span className="absolute -top-3 right-0 text-[10px] text-red-400 font-medium">500ms (경고)</span>
+          </div>
+
+          {/* Bar chart */}
+          <div className="flex items-end gap-3" style={{ height: `${chartHeight}px` }}>
+            {responseTimeTrend.map((d) => {
+              const barHeight = (d.value / (maxResponse * 1.2)) * chartHeight;
+              const isWarning = d.value > 200;
+              return (
+                <div key={d.label} className="flex-1 flex flex-col items-center gap-1 group relative">
+                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-20">
+                    {d.value}ms
+                  </div>
+                  <div className="w-full flex flex-col justify-end" style={{ height: `${chartHeight}px` }}>
+                    <div
+                      className={`w-full rounded-t-sm transition-opacity hover:opacity-80 ${isWarning ? 'bg-amber-500' : 'bg-orange-500'}`}
+                      style={{ height: `${barHeight}px` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* X-axis labels */}
+          <div className="flex justify-between mt-2 px-1">
+            {responseTimeTrend.map((d) => (
+              <span key={d.label} className="text-[10px] text-[var(--text-secondary)] flex-1 text-center">{d.label}</span>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

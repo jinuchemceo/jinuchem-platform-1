@@ -14,6 +14,9 @@ import {
   Settings,
   LogOut,
   Megaphone,
+  ShoppingCart,
+  Tag,
+  UserCircle,
 } from 'lucide-react';
 
 interface NavItem {
@@ -24,6 +27,8 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: '대시보드', href: '/dashboard', icon: <LayoutDashboard size={18} /> },
+  { label: 'Shop 주문 관리', href: '/orders-mgmt', icon: <ShoppingCart size={18} /> },
+  { label: '프로모션 관리', href: '/promotions', icon: <Tag size={18} /> },
   { label: '고객 관리', href: '/customers', icon: <Users size={18} /> },
   { label: '공급자 관리', href: '/suppliers-mgmt', icon: <Truck size={18} /> },
   { label: '제품 관리', href: '/products', icon: <Package size={18} /> },
@@ -72,6 +77,17 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div className="border-t border-[var(--border)] px-3 py-3 space-y-1">
+        <Link
+          href="/mypage"
+          className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors ${
+            pathname === '/mypage'
+              ? 'bg-orange-50 text-orange-600 font-semibold'
+              : 'text-[var(--sidebar-text)] hover:bg-gray-100'
+          }`}
+        >
+          <UserCircle size={18} />
+          <span>마이페이지</span>
+        </Link>
         <button className="flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg text-[var(--sidebar-text)] hover:bg-gray-100 w-full">
           <LogOut size={18} />
           <span>로그아웃</span>

@@ -18,10 +18,16 @@ import {
   Brain,
   Zap,
   Download,
+  Settings,
+  Rocket,
+  Calendar,
+  History,
+  Play,
+  Pause,
+  RotateCcw,
 } from 'lucide-react';
 import { AdminTabs } from '@/components/shared/AdminTabs';
 import { StatCard } from '@/components/shared/StatCard';
-import { ChartPlaceholder } from '@/components/shared/ChartPlaceholder';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Pagination } from '@/components/shared/Pagination';
 import {
@@ -68,6 +74,29 @@ const tabs = [
   { id: '예측 엔진', label: '예측 엔진' },
   { id: '분석 리포트', label: '분석 리포트' },
   { id: '지식 그래프', label: '지식 그래프' },
+  { id: '모델 관리', label: '모델 관리' },
+];
+
+// ---------------------------------------------------------------------------
+// Model Management mock data
+// ---------------------------------------------------------------------------
+const modelVersions = [
+  { engine: '추천 엔진', version: 'v2.4.0-beta', baseModel: 'Claude 3.5 Sonnet', deployedAt: '2026-03-28', status: '테스트', accuracy: 19.2, metricLabel: 'CTR' },
+  { engine: '추천 엔진', version: 'v2.3.1', baseModel: 'Claude 3.5 Sonnet', deployedAt: '2026-03-15', status: '운영중', accuracy: 18.5, metricLabel: 'CTR' },
+  { engine: '예측 엔진', version: 'v1.8.0', baseModel: 'Claude 3.5 Sonnet', deployedAt: '2026-03-10', status: '운영중', accuracy: 84.8, metricLabel: '정확도' },
+  { engine: '예측 엔진', version: 'v1.7.2', baseModel: 'Claude 3 Haiku', deployedAt: '2026-02-20', status: '대기', accuracy: 81.3, metricLabel: '정확도' },
+  { engine: '분석 엔진', version: 'v1.5.2', baseModel: 'Claude 3.5 Sonnet', deployedAt: '2026-03-08', status: '운영중', accuracy: 92.0, metricLabel: '정확도' },
+  { engine: '분석 엔진', version: 'v1.4.0', baseModel: 'Claude 3 Haiku', deployedAt: '2026-01-15', status: '폐기', accuracy: 86.5, metricLabel: '정확도' },
+  { engine: '지식 그래프', version: 'v1.2.0', baseModel: 'Claude 3.5 Sonnet', deployedAt: '2026-03-01', status: '운영중', accuracy: 95.2, metricLabel: '정확도' },
+  { engine: '지식 그래프', version: 'v1.1.1', baseModel: 'Claude 3 Haiku', deployedAt: '2026-02-01', status: '폐기', accuracy: 89.7, metricLabel: '정확도' },
+];
+
+const deploymentHistory = [
+  { engine: '추천 엔진', version: 'v2.4.0-beta', deployedAt: '2026-03-28 14:30', deployer: '김운영', rollback: false, duration: '3분 42초' },
+  { engine: '추천 엔진', version: 'v2.3.1', deployedAt: '2026-03-15 10:15', deployer: '박관리', rollback: false, duration: '4분 18초' },
+  { engine: '예측 엔진', version: 'v1.8.0', deployedAt: '2026-03-10 09:00', deployer: '김운영', rollback: false, duration: '5분 05초' },
+  { engine: '분석 엔진', version: 'v1.5.2', deployedAt: '2026-03-08 16:45', deployer: '이시스템', rollback: false, duration: '3분 55초' },
+  { engine: '지식 그래프', version: 'v1.2.0', deployedAt: '2026-03-01 11:20', deployer: '박관리', rollback: true, duration: '6분 12초' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -109,10 +138,49 @@ function OverviewTab() {
       </div>
 
       {/* Daily usage chart */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
-        <h2 className="text-base font-semibold text-[var(--text)] mb-4">일별 AI 호출량 추이</h2>
-        <ChartPlaceholder title="일별 AI 호출량 추이" height="h-56" />
-      </div>
+      {(() => {
+        const dailyAI = [
+          { date: '3/26', recommend: 142, predict: 53, analyze: 12, knowledge: 28 },
+          { date: '3/27', recommend: 158, predict: 48, analyze: 15, knowledge: 32 },
+          { date: '3/28', recommend: 135, predict: 61, analyze: 18, knowledge: 25 },
+          { date: '3/29', recommend: 167, predict: 55, analyze: 11, knowledge: 30 },
+          { date: '3/30', recommend: 148, predict: 62, analyze: 20, knowledge: 27 },
+          { date: '3/31', recommend: 172, predict: 58, analyze: 14, knowledge: 35 },
+          { date: '4/1', recommend: 155, predict: 50, analyze: 16, knowledge: 29 },
+          { date: '4/2', recommend: 163, predict: 56, analyze: 19, knowledge: 33 },
+        ];
+        const maxVal = Math.max(...dailyAI.map(d => d.recommend + d.predict + d.analyze + d.knowledge));
+        return (
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-[var(--text)]">일별 AI 호출량 추이</h2>
+              <div className="flex gap-4 text-xs text-[var(--text-secondary)]">
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-orange-500" />추천</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-purple-500" />예측</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />분석</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" />지식그래프</span>
+              </div>
+            </div>
+            <div className="flex items-end gap-3 h-56">
+              {dailyAI.map(d => {
+                const total = d.recommend + d.predict + d.analyze + d.knowledge;
+                return (
+                  <div key={d.date} className="flex-1 flex flex-col items-center gap-1 group relative">
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">{total}건</div>
+                    <div className="w-full flex flex-col justify-end" style={{ height: '200px' }}>
+                      <div className="w-full bg-blue-500 rounded-t-sm" style={{ height: `${(d.knowledge / maxVal) * 200}px` }} />
+                      <div className="w-full bg-emerald-500" style={{ height: `${(d.analyze / maxVal) * 200}px` }} />
+                      <div className="w-full bg-purple-500" style={{ height: `${(d.predict / maxVal) * 200}px` }} />
+                      <div className="w-full bg-orange-500 rounded-b-sm" style={{ height: `${(d.recommend / maxVal) * 200}px` }} />
+                    </div>
+                    <span className="text-xs text-[var(--text-secondary)]">{d.date}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Cost breakdown */}
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
@@ -385,11 +453,41 @@ function PredictTab() {
           </div>
         </div>
 
-        {/* Chart */}
-        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
-          <h2 className="text-base font-semibold text-[var(--text)] mb-4">예측 정확도 추이</h2>
-          <ChartPlaceholder title="예측 정확도 추이" height="h-52" />
-        </div>
+        {/* Chart - 예측 정확도 추이 */}
+        {(() => {
+          const accuracyData = [
+            { month: '10월', consumption: 88, budget: 82, reorder: 64 },
+            { month: '11월', consumption: 90, budget: 85, reorder: 67 },
+            { month: '12월', consumption: 87, budget: 83, reorder: 65 },
+            { month: '1월', consumption: 91, budget: 86, reorder: 68 },
+            { month: '2월', consumption: 93, budget: 87, reorder: 70 },
+            { month: '3월', consumption: 92, budget: 87, reorder: 69 },
+          ];
+          return (
+            <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-[var(--text)]">예측 정확도 추이</h2>
+                <div className="flex gap-4 text-xs text-[var(--text-secondary)]">
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" />소모량</span>
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" />예산</span>
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-teal-500" />재주문</span>
+                </div>
+              </div>
+              <div className="flex items-end gap-4 h-52">
+                {accuracyData.map(d => (
+                  <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
+                    <div className="w-full flex items-end justify-center gap-1" style={{ height: '180px' }}>
+                      <div className="w-1/4 bg-blue-500 rounded-t-sm" style={{ height: `${d.consumption * 1.8}px` }} title={`소모량 ${d.consumption}%`} />
+                      <div className="w-1/4 bg-amber-500 rounded-t-sm" style={{ height: `${d.budget * 1.8}px` }} title={`예산 ${d.budget}%`} />
+                      <div className="w-1/4 bg-teal-500 rounded-t-sm" style={{ height: `${d.reorder * 1.8}px` }} title={`재주문 ${d.reorder}%`} />
+                    </div>
+                    <span className="text-xs text-[var(--text-secondary)]">{d.month}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Predictions table */}
@@ -484,10 +582,27 @@ function ReportsTab() {
         <StatCard icon={<BarChart3 size={20} />} label="인기 유형" value={popularType} change="40%" up />
       </div>
 
-      {/* Chart */}
+      {/* Chart - 리포트 유형 분포 */}
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
         <h2 className="text-base font-semibold text-[var(--text)] mb-4">리포트 유형 분포</h2>
-        <ChartPlaceholder title="리포트 유형 분포" height="h-48" />
+        <div className="space-y-3">
+          {[
+            { type: '구매 패턴 분석', count: 34, pct: 38, color: 'bg-blue-500' },
+            { type: '트렌드 분석', count: 22, pct: 25, color: 'bg-purple-500' },
+            { type: '계절성 분석', count: 18, pct: 20, color: 'bg-emerald-500' },
+            { type: '비용 최적화', count: 15, pct: 17, color: 'bg-amber-500' },
+          ].map(item => (
+            <div key={item.type} className="flex items-center gap-3">
+              <span className="text-sm text-[var(--text)] w-28 shrink-0">{item.type}</span>
+              <div className="flex-1 bg-[var(--bg)] rounded-full h-6 overflow-hidden">
+                <div className={`${item.color} h-full rounded-full flex items-center justify-end pr-2 transition-all`} style={{ width: `${item.pct}%` }}>
+                  <span className="text-xs text-white font-medium">{item.count}건</span>
+                </div>
+              </div>
+              <span className="text-xs text-[var(--text-secondary)] w-10 text-right">{item.pct}%</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Reports table */}
@@ -521,7 +636,7 @@ function ReportsTab() {
                 <td className="px-4 py-3 text-right text-[var(--text-secondary)] whitespace-nowrap">{rpt.generatedAt}</td>
                 <td className="px-4 py-3 text-center">
                   {rpt.status === '완료' ? (
-                    <button className="text-orange-600 hover:text-orange-700 transition-colors">
+                    <button onClick={() => alert(`리포트 "${rpt.orgName} - ${rpt.type}" 다운로드를 시작합니다.`)} className="text-orange-600 hover:text-orange-700 transition-colors">
                       <Download size={16} />
                     </button>
                   ) : (
@@ -570,10 +685,28 @@ function KnowledgeTab() {
         <StatCard icon={<Zap size={20} />} label="소스" value="3개" change="" up />
       </div>
 
-      {/* Chart */}
+      {/* Chart - 관계 유형 분포 */}
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
         <h2 className="text-base font-semibold text-[var(--text)] mb-4">관계 유형 분포</h2>
-        <ChartPlaceholder title="관계 유형 분포" height="h-48" />
+        <div className="space-y-3">
+          {[
+            { type: '호환성(Compatible)', count: 1523, pct: 33, color: 'bg-blue-500' },
+            { type: '대체품(Substitute)', count: 1245, pct: 27, color: 'bg-emerald-500' },
+            { type: '반응물(Reactant)', count: 876, pct: 19, color: 'bg-purple-500' },
+            { type: '유도체(Derivative)', count: 589, pct: 13, color: 'bg-amber-500' },
+            { type: '기타(Other)', count: 334, pct: 8, color: 'bg-gray-400' },
+          ].map(item => (
+            <div key={item.type} className="flex items-center gap-3">
+              <span className="text-sm text-[var(--text)] w-40 shrink-0">{item.type}</span>
+              <div className="flex-1 bg-[var(--bg)] rounded-full h-6 overflow-hidden">
+                <div className={`${item.color} h-full rounded-full flex items-center justify-end pr-2 transition-all`} style={{ width: `${item.pct}%` }}>
+                  <span className="text-xs text-white font-medium">{item.count.toLocaleString()}</span>
+                </div>
+              </div>
+              <span className="text-xs text-[var(--text-secondary)] w-10 text-right">{item.pct}%</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Nodes table */}
@@ -616,6 +749,277 @@ function KnowledgeTab() {
 }
 
 // ---------------------------------------------------------------------------
+// Tab 6: Model Management
+// ---------------------------------------------------------------------------
+function ModelManagementTab() {
+  const statusColors: Record<string, string> = {
+    '운영중': 'bg-emerald-100 text-emerald-700',
+    '대기': 'bg-amber-100 text-amber-700',
+    '테스트': 'bg-blue-100 text-blue-700',
+    '폐기': 'bg-gray-100 text-gray-500',
+  };
+
+  const statusDot: Record<string, string> = {
+    '운영중': 'bg-emerald-500',
+    '대기': 'bg-amber-500',
+    '테스트': 'bg-blue-500',
+    '폐기': 'bg-gray-400',
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* 모델 버전 목록 */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Settings size={18} className="text-orange-600" />
+            <h2 className="text-base font-semibold text-[var(--text)]">모델 버전 목록</h2>
+          </div>
+          <span className="text-xs text-[var(--text-secondary)]">총 {modelVersions.length}개 버전</span>
+        </div>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-[var(--border)]">
+              <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">엔진</th>
+              <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">버전</th>
+              <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">기반 모델</th>
+              <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">배포일</th>
+              <th className="text-center px-4 py-2.5 font-semibold text-[var(--text-secondary)]">상태</th>
+              <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">성능 지표</th>
+              <th className="text-center px-4 py-2.5 font-semibold text-[var(--text-secondary)]">액션</th>
+            </tr>
+          </thead>
+          <tbody>
+            {modelVersions.map((m, idx) => (
+              <tr key={`${m.engine}-${m.version}`} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg)] transition-colors">
+                <td className="px-4 py-3 text-[var(--text)] font-medium whitespace-nowrap">{m.engine}</td>
+                <td className="px-4 py-3">
+                  <span className="font-mono text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded">{m.version}</span>
+                </td>
+                <td className="px-4 py-3 text-[var(--text-secondary)] text-xs">{m.baseModel}</td>
+                <td className="px-4 py-3 text-[var(--text-secondary)] text-xs whitespace-nowrap">{m.deployedAt}</td>
+                <td className="px-4 py-3 text-center">
+                  <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-medium ${statusColors[m.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${statusDot[m.status] ?? 'bg-gray-400'}`} />
+                    {m.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${m.accuracy >= 90 ? 'bg-emerald-500' : m.accuracy >= 70 ? 'bg-blue-500' : m.accuracy >= 50 ? 'bg-amber-500' : 'bg-orange-500'}`}
+                        style={{ width: `${Math.min(m.accuracy, 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-mono text-[var(--text)]">{m.accuracy}%</span>
+                    <span className="text-xs text-[var(--text-secondary)]">{m.metricLabel}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    {m.status === '운영중' && (
+                      <button onClick={() => alert(`${m.engine} ${m.version} 롤백을 진행합니다.`)} className="h-[38px] px-2.5 text-xs text-gray-500 hover:text-orange-600 transition-colors" title="롤백">
+                        <RotateCcw size={14} />
+                      </button>
+                    )}
+                    {m.status === '대기' && (
+                      <button onClick={() => alert(`${m.engine} ${m.version} 배포를 시작합니다.`)} className="h-[38px] px-2.5 text-xs text-blue-600 hover:text-blue-700 transition-colors" title="배포">
+                        <Rocket size={14} />
+                      </button>
+                    )}
+                    {m.status === '테스트' && (
+                      <button onClick={() => alert(`${m.engine} ${m.version}을 운영 환경으로 승격합니다.`)} className="h-[38px] px-2.5 text-xs text-emerald-600 hover:text-emerald-700 transition-colors" title="승격">
+                        <Play size={14} />
+                      </button>
+                    )}
+                    {m.status === '폐기' && (
+                      <span className="text-xs text-gray-300">-</span>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* A/B 테스트 현황 */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <GitBranch size={18} className="text-orange-600" />
+          <h2 className="text-base font-semibold text-[var(--text)]">A/B 테스트 현황</h2>
+        </div>
+        <div className="border border-[var(--border)] rounded-lg p-5 bg-[var(--bg)]">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-[var(--text)]">추천 엔진 v2.3.1 vs v2.4.0-beta</h3>
+              <p className="text-xs text-[var(--text-secondary)] mt-1">2026-03-28 시작 -- 진행중</p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full font-medium bg-blue-100 text-blue-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+              진행중
+            </span>
+          </div>
+
+          {/* Traffic Split */}
+          <div className="mb-5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-[var(--text-secondary)]">트래픽 분배</span>
+            </div>
+            <div className="flex h-3 rounded-full overflow-hidden">
+              <div className="bg-blue-500 flex items-center justify-center" style={{ width: '80%' }}>
+                <span className="text-[10px] text-white font-medium">Control 80%</span>
+              </div>
+              <div className="bg-orange-500 flex items-center justify-center" style={{ width: '20%' }}>
+                <span className="text-[10px] text-white font-medium">Test 20%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Metrics Comparison */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="border border-[var(--border)] rounded-lg p-3 bg-[var(--bg-card)]">
+              <div className="text-xs text-[var(--text-secondary)] mb-2">CTR</div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <div className="text-xs text-[var(--text-secondary)]">Control (v2.3.1)</div>
+                  <div className="text-sm font-bold text-[var(--text)]">18.5%</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-[var(--text-secondary)]">Test (v2.4.0-beta)</div>
+                  <div className="text-sm font-bold text-emerald-600">19.2%</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 mt-1">
+                <ArrowUpRight size={12} className="text-emerald-600" />
+                <span className="text-xs text-emerald-600 font-medium">+0.7%p</span>
+              </div>
+            </div>
+            <div className="border border-[var(--border)] rounded-lg p-3 bg-[var(--bg-card)]">
+              <div className="text-xs text-[var(--text-secondary)] mb-2">평균 응답시간</div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <div className="text-xs text-[var(--text-secondary)]">Control</div>
+                  <div className="text-sm font-bold text-[var(--text)]">1.2s</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-[var(--text-secondary)]">Test</div>
+                  <div className="text-sm font-bold text-amber-600">1.4s</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 mt-1">
+                <ArrowUpRight size={12} className="text-amber-600" />
+                <span className="text-xs text-amber-600 font-medium">+0.2s</span>
+              </div>
+            </div>
+            <div className="border border-[var(--border)] rounded-lg p-3 bg-[var(--bg-card)]">
+              <div className="text-xs text-[var(--text-secondary)] mb-2">호출당 비용</div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <div className="text-xs text-[var(--text-secondary)]">Control</div>
+                  <div className="text-sm font-bold text-[var(--text)]">$0.072</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-[var(--text-secondary)]">Test</div>
+                  <div className="text-sm font-bold text-amber-600">$0.085</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 mt-1">
+                <ArrowUpRight size={12} className="text-amber-600" />
+                <span className="text-xs text-amber-600 font-medium">+18.1%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 모델 배포 이력 */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <History size={18} className="text-orange-600" />
+          <h2 className="text-base font-semibold text-[var(--text)]">모델 배포 이력</h2>
+        </div>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-[var(--border)]">
+              <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">엔진</th>
+              <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">버전</th>
+              <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">배포일</th>
+              <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">배포자</th>
+              <th className="text-center px-4 py-2.5 font-semibold text-[var(--text-secondary)]">롤백 여부</th>
+              <th className="text-right px-4 py-2.5 font-semibold text-[var(--text-secondary)]">소요시간</th>
+            </tr>
+          </thead>
+          <tbody>
+            {deploymentHistory.map((d, idx) => (
+              <tr key={`${d.engine}-${d.version}-${idx}`} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg)] transition-colors">
+                <td className="px-4 py-3 text-[var(--text)] font-medium whitespace-nowrap">{d.engine}</td>
+                <td className="px-4 py-3">
+                  <span className="font-mono text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded">{d.version}</span>
+                </td>
+                <td className="px-4 py-3 text-[var(--text-secondary)] text-xs whitespace-nowrap">{d.deployedAt}</td>
+                <td className="px-4 py-3 text-[var(--text)]">{d.deployer}</td>
+                <td className="px-4 py-3 text-center">
+                  {d.rollback ? (
+                    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">
+                      <RotateCcw size={10} />
+                      롤백
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-400">-</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-right font-mono text-xs text-[var(--text)]">{d.duration}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 배포 스케줄 */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Calendar size={18} className="text-orange-600" />
+          <h2 className="text-base font-semibold text-[var(--text)]">배포 스케줄</h2>
+        </div>
+        <div className="border border-dashed border-[var(--border)] rounded-lg p-5 bg-[var(--bg)]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center">
+                <Rocket size={22} className="text-orange-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-[var(--text)]">예측 엔진 v1.9.0</h3>
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">Claude 3.5 Sonnet -- 소모량 예측 정확도 개선</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-bold text-[var(--text)]">2026-04-07 10:00</div>
+              <div className="text-xs text-[var(--text-secondary)] mt-0.5">배포자: 김운영</div>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <div className="flex-1 bg-[var(--bg-card)] rounded-full h-2 overflow-hidden">
+              <div className="h-full rounded-full bg-orange-500" style={{ width: '60%' }} />
+            </div>
+            <span className="text-xs text-[var(--text-secondary)]">테스트 진행률 60%</span>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => alert('A/B 테스트 스케줄 수정 화면으로 이동합니다.')} className="h-[38px] px-4 text-xs font-medium rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-card)] transition-colors">
+              스케줄 수정
+            </button>
+            <button onClick={() => alert('즉시 배포를 시작합니다.')} className="h-[38px] px-4 text-xs font-medium rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors">
+              즉시 배포
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
 export default function AiMonitorPage() {
@@ -638,6 +1042,7 @@ export default function AiMonitorPage() {
       {aiMonitorTab === '예측 엔진' && <PredictTab />}
       {aiMonitorTab === '분석 리포트' && <ReportsTab />}
       {aiMonitorTab === '지식 그래프' && <KnowledgeTab />}
+      {aiMonitorTab === '모델 관리' && <ModelManagementTab />}
     </div>
   );
 }

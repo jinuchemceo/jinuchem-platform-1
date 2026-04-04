@@ -64,7 +64,7 @@ const sampleChats: ChatRoom[] = [
 ];
 
 const typeStyles: Record<InquiryType, string> = {
-  '제품': 'bg-blue-50 text-blue-700',
+  '제품': 'bg-purple-50 text-purple-700',
   '주문': 'bg-green-50 text-green-700',
   '배송': 'bg-purple-50 text-purple-700',
   '가격': 'bg-amber-50 text-amber-700',
@@ -196,7 +196,7 @@ export default function CustomersPage() {
                 onClick={() => setActiveChatId(chat.id)}
                 className={`flex items-center gap-3 px-4 py-3.5 border-b border-[var(--border)] cursor-pointer transition-colors ${activeChatId === chat.id ? 'bg-purple-50' : 'hover:bg-gray-50'}`}
               >
-                <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                <div className="w-9 h-9 rounded-full bg-purple-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
                   {chat.name[0]}
                 </div>
                 <div className="flex-1 min-w-0">

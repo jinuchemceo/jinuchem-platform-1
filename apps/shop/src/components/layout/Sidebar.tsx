@@ -7,15 +7,10 @@ import {
   ShoppingCart,
   Zap,
   ClipboardList,
-  CreditCard,
-  RotateCcw,
   FileText,
-  Heart,
   FlaskConical,
   MessageCircle,
   Headphones,
-  HelpCircle,
-  Mail,
   User,
   LogOut,
   ChevronRight,
@@ -27,7 +22,6 @@ interface NavItem {
   label: string;
   href?: string;
   icon: React.ReactNode;
-  iconBg: string;
   children?: { label: string; href: string }[];
 }
 
@@ -37,19 +31,13 @@ const navGroups: { title: string; items: NavItem[] }[] = [
     items: [
       {
         label: '제품 주문',
-        icon: <ShoppingCart size={16} />,
-        iconBg: '#007AFF',
+        icon: <ShoppingCart size={17} />,
         children: [
           { label: '시약 주문', href: '/order' },
           { label: '소모품 주문', href: '/supplies' },
         ],
       },
-      {
-        label: '빠른 주문',
-        href: '/quickorder',
-        icon: <Zap size={16} />,
-        iconBg: '#FF9500',
-      },
+      { label: '빠른 주문', href: '/quickorder', icon: <Zap size={17} /> },
     ],
   },
   {
@@ -57,20 +45,14 @@ const navGroups: { title: string; items: NavItem[] }[] = [
     items: [
       {
         label: '주문 관리',
-        icon: <ClipboardList size={16} />,
-        iconBg: '#34C759',
+        icon: <ClipboardList size={17} />,
         children: [
           { label: '주문 내역', href: '/orders' },
           { label: '결제하기', href: '/approvals' },
           { label: '취소 내역', href: '/cancel' },
         ],
       },
-      {
-        label: '증빙서류',
-        href: '/documents',
-        icon: <FileText size={16} />,
-        iconBg: '#5AC8FA',
-      },
+      { label: '증빙서류', href: '/documents', icon: <FileText size={17} /> },
     ],
   },
   {
@@ -78,26 +60,15 @@ const navGroups: { title: string; items: NavItem[] }[] = [
     items: [
       {
         label: '내 연구실',
-        icon: <FlaskConical size={16} />,
-        iconBg: '#AF52DE',
+        icon: <FlaskConical size={17} />,
         children: [
           { label: '즐겨찾기', href: '/favorites' },
           { label: '내 시약장', href: '/inventory' },
           { label: '실험실 멤버', href: '/members' },
         ],
       },
-      {
-        label: '대화',
-        href: '/chat',
-        icon: <MessageCircle size={16} />,
-        iconBg: '#30B0C7',
-      },
-      {
-        label: '알림',
-        href: '/notifications',
-        icon: <Bell size={16} />,
-        iconBg: '#FF3B30',
-      },
+      { label: '대화', href: '/chat', icon: <MessageCircle size={17} /> },
+      { label: '알림', href: '/notifications', icon: <Bell size={17} /> },
     ],
   },
   {
@@ -105,8 +76,7 @@ const navGroups: { title: string; items: NavItem[] }[] = [
     items: [
       {
         label: '고객센터',
-        icon: <Headphones size={16} />,
-        iconBg: '#64D2FF',
+        icon: <Headphones size={17} />,
         children: [
           { label: '고객센터 홈', href: '/cs' },
           { label: '자주 묻는 질문', href: '/faq' },
@@ -131,7 +101,7 @@ export function Sidebar() {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
-  const renderItem = (item: NavItem, isLast: boolean) => {
+  const renderItem = (item: NavItem) => {
     if (item.children) {
       const isOpen = openGroups[item.label] ?? false;
       const isActive = item.children.some((c) => pathname === c.href);
@@ -140,49 +110,39 @@ export function Sidebar() {
         <div key={item.label}>
           <button
             onClick={() => toggleGroup(item.label)}
-            className="flex items-center gap-3 w-full px-4 py-2.5 transition-colors"
+            className="flex items-center w-full gap-3 px-4 py-2.5 rounded-lg transition-colors"
             style={{
-              color: isActive ? 'var(--primary)' : 'var(--text)',
+              color: isActive ? 'var(--primary)' : 'var(--sidebar-text)',
             }}
           >
-            {/* Icon */}
-            <span
-              className="ios-icon-wrap"
-              style={{ background: item.iconBg }}
-            >
+            <span className="flex-shrink-0" style={{ color: isActive ? 'var(--primary)' : 'var(--text-secondary)' }}>
               {item.icon}
             </span>
-            {/* Label */}
-            <span className="flex-1 text-left text-[15px]">{item.label}</span>
-            {/* Chevron */}
+            <span className="flex-1 text-left text-[14px]">{item.label}</span>
             <ChevronDown
-              size={14}
-              className="text-[var(--text-tertiary)] transition-transform duration-200"
-              style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+              size={13}
+              style={{
+                color: 'var(--text-tertiary)',
+                transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+                transition: 'transform 0.2s',
+              }}
             />
           </button>
 
-          {/* Children */}
           {isOpen && (
-            <div className="ml-[52px] border-t border-[var(--border)]">
-              {item.children.map((child, i) => (
+            <div className="ml-9 mt-0.5 space-y-0.5">
+              {item.children.map((child) => (
                 <Link
                   key={child.href}
                   href={child.href}
-                  className="flex items-center justify-between px-4 py-2.5 text-[15px] transition-colors"
+                  className="flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-colors"
                   style={{
-                    color: pathname === child.href ? 'var(--primary)' : 'var(--text)',
+                    color: pathname === child.href ? 'var(--primary)' : 'var(--sidebar-text)',
                     fontWeight: pathname === child.href ? 600 : 400,
-                    borderBottom:
-                      i < item.children!.length - 1
-                        ? '0.5px solid var(--border)'
-                        : 'none',
+                    background: pathname === child.href ? 'var(--primary-light)' : 'transparent',
                   }}
                 >
-                  <span>{child.label}</span>
-                  {pathname === child.href && (
-                    <ChevronRight size={14} style={{ color: 'var(--primary)' }} />
-                  )}
+                  {child.label}
                 </Link>
               ))}
             </div>
@@ -195,20 +155,16 @@ export function Sidebar() {
       <Link
         key={item.href}
         href={item.href!}
-        className="flex items-center gap-3 px-4 py-2.5 transition-colors"
-        style={{ color: pathname === item.href ? 'var(--primary)' : 'var(--text)' }}
+        className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors"
+        style={{
+          color: pathname === item.href ? 'var(--primary)' : 'var(--sidebar-text)',
+          background: pathname === item.href ? 'var(--primary-light)' : 'transparent',
+        }}
       >
-        <span
-          className="ios-icon-wrap"
-          style={{
-            background:
-              pathname === item.href ? 'var(--primary)' : item.iconBg,
-          }}
-        >
+        <span style={{ color: pathname === item.href ? 'var(--primary)' : 'var(--text-secondary)' }}>
           {item.icon}
         </span>
-        <span className="flex-1 text-[15px]">{item.label}</span>
-        <ChevronRight size={14} className="text-[var(--text-tertiary)]" />
+        <span className="text-[14px]">{item.label}</span>
       </Link>
     );
   };
@@ -219,7 +175,7 @@ export function Sidebar() {
       style={{
         width: 'var(--sidebar-width)',
         background: 'var(--sidebar-bg)',
-        borderRight: '0.5px solid var(--border-strong)',
+        borderRight: '0.5px solid var(--border)',
       }}
     >
       {/* Logo */}
@@ -237,30 +193,19 @@ export function Sidebar() {
           >
             J
           </span>
-          <span
-            className="text-[17px] font-bold tracking-tight"
-            style={{ color: 'var(--text)' }}
-          >
+          <span className="text-[17px] font-bold tracking-tight" style={{ color: 'var(--text)' }}>
             JINU Shop
           </span>
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-4">
         {navGroups.map((group) => (
           <div key={group.title}>
-            {/* Section header */}
-            <p className="ios-section-header px-1">{group.title}</p>
-
-            {/* Grouped card */}
-            <div
-              className="ios-card divide-y divide-[var(--border)]"
-              style={{}}
-            >
-              {group.items.map((item, i) =>
-                renderItem(item, i === group.items.length - 1)
-              )}
+            <p className="ios-section-header px-1 mb-1">{group.title}</p>
+            <div className="space-y-0.5">
+              {group.items.map((item) => renderItem(item))}
             </div>
           </div>
         ))}
@@ -268,39 +213,32 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div
-        className="shrink-0 px-3 py-3 space-y-1"
+        className="shrink-0 px-3 py-3 space-y-0.5"
         style={{ borderTop: '0.5px solid var(--border)' }}
       >
-        <div className="ios-card">
-          <Link
-            href="/mypage"
-            className="flex items-center gap-3 px-4 py-2.5 transition-colors"
-            style={{
-              color: pathname === '/mypage' ? 'var(--primary)' : 'var(--text)',
-              borderBottom: '0.5px solid var(--border)',
-            }}
-          >
-            <span className="ios-icon-wrap" style={{ background: '#8E8E93' }}>
-              <User size={16} />
-            </span>
-            <span className="flex-1 text-[15px]">마이페이지</span>
-            <ChevronRight size={14} className="text-[var(--text-tertiary)]" />
-          </Link>
+        <Link
+          href="/mypage"
+          className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors"
+          style={{
+            color: pathname === '/mypage' ? 'var(--primary)' : 'var(--sidebar-text)',
+            background: pathname === '/mypage' ? 'var(--primary-light)' : 'transparent',
+          }}
+        >
+          <User size={17} style={{ color: 'var(--text-secondary)' }} />
+          <span className="text-[14px]">마이페이지</span>
+        </Link>
 
-          <button
-            onClick={async () => {
-              await fetch('/api/auth/logout', { method: 'POST' });
-              window.location.href = '/login';
-            }}
-            className="flex items-center gap-3 px-4 py-2.5 w-full transition-colors"
-            style={{ color: 'var(--danger)' }}
-          >
-            <span className="ios-icon-wrap" style={{ background: '#FF3B30' }}>
-              <LogOut size={16} />
-            </span>
-            <span className="text-[15px]">로그아웃</span>
-          </button>
-        </div>
+        <button
+          onClick={async () => {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+          }}
+          className="flex items-center gap-3 px-4 py-2.5 rounded-lg w-full transition-colors"
+          style={{ color: 'var(--danger)' }}
+        >
+          <LogOut size={17} style={{ color: 'var(--danger)' }} />
+          <span className="text-[14px]">로그아웃</span>
+        </button>
       </div>
     </aside>
   );

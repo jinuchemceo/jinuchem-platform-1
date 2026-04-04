@@ -150,7 +150,7 @@ export default function ProductNewPage() {
                   <label className="text-sm font-semibold text-[var(--text-secondary)] block mb-1.5">GHS 픽토그램</label>
                   <div className="flex flex-wrap gap-3">
                     {['인화성', '부식성', '급성독성', '자극성', '건강유해', '환경유해', '산화성'].map(g => (
-                      <label key={g} className="flex items-center gap-1.5 text-sm cursor-pointer"><input type="checkbox" className="accent-purple-600" />{g}</label>
+                      <label key={g} className="flex items-center gap-1.5 text-sm cursor-pointer"><input type="checkbox" className="accent-blue-600" />{g}</label>
                     ))}
                   </div>
                 </div>
@@ -194,7 +194,7 @@ export default function ProductNewPage() {
                       <td className="px-3 py-2"><input type="text" className="w-24 h-8 px-2 border border-[var(--border)] rounded text-sm" placeholder="0" /></td>
                       <td className="px-3 py-2"><input type="text" className="w-24 h-8 px-2 border border-[var(--border)] rounded text-sm" placeholder="0" /></td>
                       <td className="px-3 py-2"><input type="text" className="w-16 h-8 px-2 border border-[var(--border)] rounded text-sm" placeholder="0" /></td>
-                      <td className="px-3 py-2"><input type="checkbox" defaultChecked={v.sameDay} className="accent-purple-600" /></td>
+                      <td className="px-3 py-2"><input type="checkbox" defaultChecked={v.sameDay} className="accent-blue-600" /></td>
                       <td className="px-3 py-2"><input type="text" defaultValue={v.deliveryDays} className="w-12 h-8 px-2 border border-[var(--border)] rounded text-sm" />일</td>
                       <td className="px-3 py-2"><button onClick={() => removeVariant(v.id)} className="p-1 text-[var(--text-secondary)] hover:text-red-500"><X size={16} /></button></td>
                     </tr>

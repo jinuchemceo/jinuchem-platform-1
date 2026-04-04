@@ -144,9 +144,9 @@ const statusTabs: { label: string; value: OrderStatus | 'all'; icon: React.React
 ];
 
 const statusStyles: Record<OrderStatus, string> = {
-  '신규주문': 'bg-blue-100 text-blue-700',
+  '신규주문': 'bg-blue-100 text-purple-700',
   '준비중': 'bg-yellow-100 text-yellow-700',
-  '출고완료': 'bg-purple-100 text-purple-700',
+  '출고완료': 'bg-blue-100 text-purple-700',
   '배송완료': 'bg-green-100 text-green-700',
 };
 
@@ -220,7 +220,7 @@ export default function OrdersPage() {
               {tab.icon}
               {tab.label}
               <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
-                activeTab === tab.value ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+                activeTab === tab.value ? 'bg-blue-100 text-purple-700' : 'bg-gray-100 text-gray-600'
               }`}>
                 {count}
               </span>

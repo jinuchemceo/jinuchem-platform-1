@@ -27,6 +27,13 @@ import {
   HardDrive,
   Eye,
   EyeOff,
+  Link,
+  CreditCard,
+  Truck,
+  FileText,
+  RefreshCw,
+  ExternalLink,
+  Notebook,
 } from 'lucide-react';
 import { AdminTabs } from '@/components/shared/AdminTabs';
 import { Modal } from '@/components/shared/Modal';
@@ -49,6 +56,7 @@ const TABS = [
   { id: 'notices', label: '공지사항 관리' },
   { id: 'faqs', label: 'FAQ 관리' },
   { id: 'system', label: '시스템 정보' },
+  { id: 'integration', label: '외부 연동' },
 ];
 
 const NOTICE_CATEGORY_COLORS: Record<string, string> = {
@@ -99,12 +107,15 @@ export default function SettingsPage() {
     'FAQ 관리': 'faqs',
     시스템정보: 'system',
     '시스템 정보': 'system',
+    외부연동: 'integration',
+    '외부 연동': 'integration',
   };
   const tabIdToLabel: Record<string, string> = {
     general: '일반 설정',
     notices: '공지사항 관리',
     faqs: 'FAQ 관리',
     system: '시스템 정보',
+    integration: '외부 연동',
   };
 
   const activeTab = tabLabelToId[settingsTab] ?? 'general';
@@ -130,6 +141,7 @@ export default function SettingsPage() {
       {activeTab === 'notices' && <NoticeManagement />}
       {activeTab === 'faqs' && <FaqManagement />}
       {activeTab === 'system' && <SystemInformation />}
+      {activeTab === 'integration' && <ExternalIntegrationTab />}
     </div>
   );
 }
@@ -1211,6 +1223,360 @@ function SystemInformation() {
               </button>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===========================================================================
+// Tab 5: 외부 연동
+// ===========================================================================
+
+const DELIVERY_COMPANIES = [
+  {
+    name: 'CJ대한통운',
+    status: '정상' as const,
+    apiKeyStatus: '유효',
+    todayQueries: 128,
+  },
+  {
+    name: '한진택배',
+    status: '정상' as const,
+    apiKeyStatus: '유효',
+    todayQueries: 67,
+  },
+  {
+    name: '로젠택배',
+    status: '점검' as const,
+    apiKeyStatus: '유효',
+    todayQueries: 34,
+  },
+];
+
+const INTEGRATION_LOGS = [
+  {
+    time: '2026-04-03 14:23:15',
+    system: 'KG이니시스',
+    type: '결제',
+    status: '성공' as const,
+    message: '주문 ORD-20260403-0023 결제 승인 완료',
+  },
+  {
+    time: '2026-04-03 14:15:42',
+    system: 'E-Note',
+    type: '동기화',
+    status: '성공' as const,
+    message: '시약장 재고 동기화 완료 (12건)',
+  },
+  {
+    time: '2026-04-03 13:58:03',
+    system: '팝빌',
+    type: '세금계산서',
+    status: '성공' as const,
+    message: '전자세금계산서 발행 완료 (INV-2026-0412)',
+  },
+  {
+    time: '2026-04-03 13:45:22',
+    system: '로젠택배',
+    type: '배송조회',
+    status: '경고' as const,
+    message: 'API 응답 지연 (2.3초, 임계값: 2초)',
+  },
+  {
+    time: '2026-04-03 13:30:00',
+    system: 'E-Note',
+    type: '동기화',
+    status: '성공' as const,
+    message: '프로토콜 기반 시약 주문 연동 (3건)',
+  },
+  {
+    time: '2026-04-03 12:55:18',
+    system: 'KG이니시스',
+    type: '결제',
+    status: '실패' as const,
+    message: '주문 ORD-20260403-0019 카드 한도 초과',
+  },
+];
+
+const LOG_STATUS_COLORS: Record<string, string> = {
+  성공: 'text-emerald-600',
+  실패: 'text-red-600',
+  경고: 'text-amber-600',
+};
+
+const LOG_STATUS_DOT: Record<string, string> = {
+  성공: 'bg-emerald-500',
+  실패: 'bg-red-500',
+  경고: 'bg-amber-500',
+};
+
+function ExternalIntegrationTab() {
+  const [pgTestMode, setPgTestMode] = useState(false);
+  const [enoteSync, setEnoteSync] = useState(true);
+
+  return (
+    <div className="space-y-6">
+      {/* Card 1: PG사 결제 연동 상태 */}
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-5">
+        <div className="flex items-center gap-2 mb-5">
+          <CreditCard size={18} className="text-orange-600" />
+          <h2 className="text-base font-semibold text-[var(--text)]">PG사 결제 연동 상태</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">연동 PG</p>
+            <p className="text-sm font-semibold text-[var(--text)]">KG이니시스</p>
+          </div>
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">상태</p>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <span className="text-sm font-semibold text-emerald-600">정상</span>
+            </div>
+          </div>
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">MID</p>
+            <p className="text-sm font-mono text-[var(--text)]">INIpay****</p>
+          </div>
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">마지막 결제</p>
+            <p className="text-sm text-[var(--text)]">2026-04-03 14:23</p>
+          </div>
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">오늘 결제 건수</p>
+            <p className="text-sm font-semibold text-[var(--text)]">23건</p>
+          </div>
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">성공률</p>
+            <p className="text-sm font-semibold text-emerald-600">98.5%</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between py-2 border-t border-[var(--border)] pt-4">
+          <div>
+            <p className="text-sm font-medium text-[var(--text)]">
+              {pgTestMode ? '테스트 모드' : '운영 모드'}
+            </p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+              {pgTestMode
+                ? '실제 결제가 이루어지지 않습니다'
+                : '실제 결제가 처리됩니다'}
+            </p>
+          </div>
+          <button
+            onClick={() => setPgTestMode(!pgTestMode)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              pgTestMode ? 'bg-amber-500' : 'bg-orange-600'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${
+                pgTestMode ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Card 2: 배송 추적 API */}
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-5">
+        <div className="flex items-center gap-2 mb-5">
+          <Truck size={18} className="text-orange-600" />
+          <h2 className="text-base font-semibold text-[var(--text)]">배송 추적 API</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-[var(--bg)] border-b border-[var(--border)]">
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">택배사</th>
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">상태</th>
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">API 키 상태</th>
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">오늘 조회 건수</th>
+              </tr>
+            </thead>
+            <tbody>
+              {DELIVERY_COMPANIES.map((company) => (
+                <tr
+                  key={company.name}
+                  className="border-b border-[var(--border)] last:border-b-0"
+                >
+                  <td className="px-5 py-3 text-[var(--text)] font-medium">{company.name}</td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-2.5 h-2.5 rounded-full ${
+                          SERVICE_STATUS_DOT[company.status] ?? 'bg-gray-400'
+                        }`}
+                      />
+                      <span
+                        className={`text-sm ${
+                          company.status === '정상'
+                            ? 'text-emerald-600'
+                            : company.status === '점검'
+                            ? 'text-amber-600'
+                            : 'text-red-600'
+                        }`}
+                      >
+                        {company.status}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 size={14} className="text-emerald-500" />
+                      <span className="text-sm text-emerald-600">{company.apiKeyStatus}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 text-[var(--text)] font-mono text-xs">
+                    {company.todayQueries}건
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Card 3: 전자세금계산서 */}
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-5">
+        <div className="flex items-center gap-2 mb-5">
+          <FileText size={18} className="text-orange-600" />
+          <h2 className="text-base font-semibold text-[var(--text)]">전자세금계산서</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">연동 서비스</p>
+            <p className="text-sm font-semibold text-[var(--text)]">팝빌(Popbill)</p>
+          </div>
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">상태</p>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <span className="text-sm font-semibold text-emerald-600">정상</span>
+            </div>
+          </div>
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">이번 달 발행</p>
+            <p className="text-sm font-semibold text-[var(--text)]">156건</p>
+          </div>
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">미발행</p>
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={14} className="text-amber-500" />
+              <span className="text-sm font-semibold text-amber-600">3건</span>
+            </div>
+          </div>
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">마지막 발행</p>
+            <p className="text-sm text-[var(--text)]">2026-04-03 11:45</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Card 4: E-Note 연동 상태 */}
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-5">
+        <div className="flex items-center gap-2 mb-5">
+          <Notebook size={18} className="text-orange-600" />
+          <h2 className="text-base font-semibold text-[var(--text)]">E-Note 연동 상태</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">동기화 상태</p>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <span className="text-sm font-semibold text-emerald-600">정상</span>
+            </div>
+          </div>
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">마지막 동기화</p>
+            <p className="text-sm text-[var(--text)]">5분 전</p>
+          </div>
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">오늘 동기화 건수</p>
+            <p className="text-sm font-semibold text-[var(--text)]">234건</p>
+          </div>
+          <div className="bg-[var(--bg)] rounded-lg border border-[var(--border)] p-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-1">실패 건수</p>
+            <p className="text-sm font-semibold text-emerald-600">0건</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between py-2 border-t border-[var(--border)] pt-4">
+          <div>
+            <p className="text-sm font-medium text-[var(--text)]">양방향 동기화</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+              시약장과 전자노트(ELN) 간 양방향 데이터 동기화
+            </p>
+          </div>
+          <button
+            onClick={() => setEnoteSync(!enoteSync)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              enoteSync ? 'bg-orange-600' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${
+                enoteSync ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Card 5: 연동 로그 */}
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-5">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <Link size={18} className="text-orange-600" />
+            <h2 className="text-base font-semibold text-[var(--text)]">연동 로그</h2>
+          </div>
+          <button onClick={() => window.location.reload()} className="h-[var(--btn-height)] px-4 border border-[var(--border)] rounded-lg text-sm text-[var(--text-secondary)] hover:bg-[var(--bg)] transition-colors flex items-center gap-2">
+            <RefreshCw size={14} />
+            새로고침
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-[var(--bg)] border-b border-[var(--border)]">
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">시각</th>
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">시스템</th>
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">유형</th>
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">상태</th>
+                <th className="text-left px-5 py-3 font-medium text-[var(--text-secondary)]">메시지</th>
+              </tr>
+            </thead>
+            <tbody>
+              {INTEGRATION_LOGS.map((log, idx) => (
+                <tr
+                  key={idx}
+                  className="border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--bg)] transition-colors"
+                >
+                  <td className="px-5 py-3 text-[var(--text-secondary)] font-mono text-xs whitespace-nowrap">
+                    {log.time}
+                  </td>
+                  <td className="px-5 py-3 text-[var(--text)] font-medium whitespace-nowrap">
+                    {log.system}
+                  </td>
+                  <td className="px-5 py-3 text-[var(--text-secondary)] whitespace-nowrap">
+                    {log.type}
+                  </td>
+                  <td className="px-5 py-3 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-2 h-2 rounded-full ${LOG_STATUS_DOT[log.status] ?? 'bg-gray-400'}`}
+                      />
+                      <span className={`text-sm font-medium ${LOG_STATUS_COLORS[log.status] ?? 'text-gray-600'}`}>
+                        {log.status}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 text-[var(--text-secondary)] text-xs">
+                    {log.message}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

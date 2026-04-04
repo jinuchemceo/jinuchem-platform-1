@@ -64,7 +64,7 @@ export default function OrderDetailPage() {
           <p className="text-sm text-[var(--text-secondary)]">{order.id}</p>
         </div>
         <div className="ml-auto flex gap-2">
-          <span className="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-blue-50 text-blue-700">{order.status}</span>
+          <span className="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-purple-50 text-purple-700">{order.status}</span>
         </div>
       </div>
 

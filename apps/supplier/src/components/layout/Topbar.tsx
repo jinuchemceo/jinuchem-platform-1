@@ -1,6 +1,7 @@
 'use client';
 
-import { Bell, Sun, Moon, Search } from 'lucide-react';
+import { Bell, Sun, Moon, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 export function Topbar() {
@@ -12,46 +13,71 @@ export function Topbar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 h-14 bg-[var(--bg-card)] border-b border-[var(--border)] flex items-center justify-between px-6">
-      {/* Search */}
-      <div className="flex items-center flex-1 max-w-xl">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
-          <input
-            type="search"
-            placeholder="주문번호, 제품명, 고객사 검색..."
-            className="w-full pl-10 pr-4 h-[var(--btn-height)] border border-[var(--border)] rounded-lg bg-[var(--bg)] text-sm focus:outline-none focus:border-purple-500 text-[var(--text)]"
-          />
-        </div>
-      </div>
+    <header
+      className="sticky top-0 z-30 flex items-center justify-end px-5"
+      style={{
+        height: 'var(--topbar-height)',
+        background: isDark
+          ? 'rgba(28,28,30,0.85)'
+          : 'rgba(255,255,255,0.82)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        borderBottom: '0.5px solid var(--border)',
+      }}
+    >
+      <div className="flex items-center gap-2">
+        {/* JINU Shop */}
+        <Link
+          href="http://localhost:3000"
+          target="_blank"
+          className="flex items-center gap-1.5 px-3 text-xs font-semibold rounded-full transition-colors"
+          style={{
+            height: 32,
+            color: 'var(--primary)',
+            background: 'var(--primary-light)',
+            textDecoration: 'none',
+          }}
+        >
+          <ExternalLink size={14} />
+          JINU Shop
+        </Link>
 
-      {/* Right Actions */}
-      <div className="flex items-center gap-2 ml-4">
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="w-9 h-9 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-gray-100 transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-full transition-colors"
+          style={{ color: 'var(--text-secondary)' }}
           aria-label="테마 전환"
         >
           {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
         {/* Notifications */}
-        <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-gray-100 transition-colors">
+        <button
+          className="relative w-9 h-9 flex items-center justify-center rounded-full transition-colors"
+          style={{ color: 'var(--text-secondary)' }}
+        >
           <Bell size={18} />
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 text-white text-[10px] font-bold rounded-full flex items-center justify-center"
+            style={{ background: 'var(--danger)', minWidth: '18px', height: '18px' }}>
             4
           </span>
         </button>
 
+        {/* Divider */}
+        <div className="w-px h-5 mx-1" style={{ background: 'var(--border)' }} />
+
         {/* User */}
-        <div className="flex items-center gap-2 ml-2 pl-2 border-l border-[var(--border)]">
-          <span className="text-sm font-medium text-[var(--text)]">김공급</span>
-          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-            공급사
-          </span>
-          <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            K
+        <div className="flex items-center gap-2.5 cursor-pointer">
+          <div>
+            <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>Sigma-Aldrich</span>
+            <span className="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full"
+              style={{ background: 'rgba(52,199,89,0.15)', color: '#34C759' }}>
+              공급사
+            </span>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-white text-sm font-bold">
+            S
           </div>
         </div>
       </div>

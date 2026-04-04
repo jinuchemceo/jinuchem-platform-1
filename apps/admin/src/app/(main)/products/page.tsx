@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import {
-  Package, Plus, Upload, Edit, Trash2, Filter,
+  Package, Plus, Upload, Edit, Trash2, Filter, Download,
   FolderTree, RefreshCw, ChevronDown, ChevronRight, Eye, X, Layers, Tag,
 } from 'lucide-react';
 import { AdminTabs } from '@/components/shared/AdminTabs';
@@ -160,6 +160,16 @@ export default function ProductsPage() {
   const [statusFilter, setStatusFilter] = useState('전체');
   const [page, setPage] = useState(1);
 
+  // ------ CSV upload state ------
+  const [csvData, setCsvData] = useState<string>('');
+  const [csvPreview, setCsvPreview] = useState<{name:string; catalogNo:string; cas:string; supplier:string; price:string}[]>([]);
+  const [csvFileName, setCsvFileName] = useState<string | null>(null);
+
+  // ------ Price adjust state ------
+  const [priceAdjustType, setPriceAdjustType] = useState<'percent' | 'fixed'>('percent');
+  const [priceAdjustValue, setPriceAdjustValue] = useState('');
+  const [priceAdjustDirection, setPriceAdjustDirection] = useState<'up' | 'down'>('up');
+
   // ------ Tab 2 local state ------
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [catForm, setCatForm] = useState<CategoryForm>(defaultCategoryForm());
@@ -292,12 +302,88 @@ export default function ProductsPage() {
   };
 
   const bulkCsvExport = () => {
+    const selected = mockAdminProducts.filter(p => selectedProductIds.includes(p.id));
+    const bom = '\uFEFF';
+    const headers = ['제품명', 'CAS No.', '카탈로그번호', '카테고리', '공급사', '상태'];
+    const rows = selected.map(p => [p.name, p.casNumber, p.catalogNo, p.category, p.supplier, p.variants[0]?.status ?? '']);
+    const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `products_export_${selected.length}.csv`; a.click();
+    URL.revokeObjectURL(url);
     showToast(`CSV 내보내기 완료 (${selectedProductIds.length}건)`);
     clearProductSelection();
   };
 
   const bulkPriceAdjust = () => {
-    showToast('가격 일괄 조정은 준비 중입니다.');
+    if (selectedProductIds.length === 0) return;
+    setPriceAdjustValue('');
+    setPriceAdjustType('percent');
+    setPriceAdjustDirection('up');
+    openModal('price-adjust', null);
+  };
+
+  const applyPriceAdjust = () => {
+    const val = parseFloat(priceAdjustValue);
+    if (isNaN(val) || val <= 0) { showToast('올바른 값을 입력해 주세요.'); return; }
+    setProducts((prev) => prev.map((p) => {
+      if (!selectedProductIds.includes(p.id)) return p;
+      return {
+        ...p,
+        variants: p.variants.map((v) => {
+          let newPrice = v.salePrice;
+          if (priceAdjustType === 'percent') {
+            newPrice = priceAdjustDirection === 'up'
+              ? Math.round(v.salePrice * (1 + val / 100))
+              : Math.round(v.salePrice * (1 - val / 100));
+          } else {
+            newPrice = priceAdjustDirection === 'up'
+              ? v.salePrice + val
+              : Math.max(0, v.salePrice - val);
+          }
+          return { ...v, salePrice: newPrice };
+        }),
+      };
+    }));
+    showToast(`${selectedProductIds.length}건 제품 가격이 ${priceAdjustDirection === 'up' ? '인상' : '인하'}되었습니다.`);
+    clearProductSelection();
+    closeModal();
+  };
+
+  const handleCsvUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv,.txt';
+    input.onchange = (e: Event) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      setCsvFileName(file.name);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const text = ev.target?.result as string;
+        setCsvData(text);
+        const lines = text.split('\n').filter((l) => l.trim());
+        const preview = lines.slice(1, 6).map((line) => {
+          const cols = line.split(',').map((c) => c.trim());
+          return { name: cols[0] || '', catalogNo: cols[1] || '', cas: cols[2] || '', supplier: cols[3] || '', price: cols[4] || '' };
+        });
+        setCsvPreview(preview);
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
+  const applyCsvImport = () => {
+    if (!csvData) { showToast('CSV 파일을 먼저 업로드해 주세요.'); return; }
+    const lines = csvData.split('\n').filter((l) => l.trim());
+    const count = Math.max(0, lines.length - 1);
+    showToast(`${count}건의 제품이 일괄 등록되었습니다.`);
+    setCsvData('');
+    setCsvPreview([]);
+    setCsvFileName(null);
+    closeModal();
   };
 
   // ------ Category CRUD ------
@@ -376,7 +462,24 @@ export default function ProductsPage() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => showToast('CSV 업로드 기능은 준비 중입니다.')}
+            onClick={() => {
+              const bom = '\uFEFF';
+              const headers = ['제품명', 'CAS No.', '카탈로그번호', '카테고리', '공급사', '상태'];
+              const rows = mockAdminProducts.map(p => [p.name, p.casNumber, p.catalogNo, p.category, p.supplier, p.variants[0]?.status ?? '']);
+              const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+              const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `products_all_${mockAdminProducts.length}.csv`; a.click();
+              URL.revokeObjectURL(url);
+              showToast(`전체 제품 CSV 내보내기 완료 (${mockAdminProducts.length}건)`);
+            }}
+            className="h-[var(--btn-height)] px-4 bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
+          >
+            <Download size={16} /> 전체 내보내기
+          </button>
+          <button
+            onClick={() => { setCsvData(''); setCsvPreview([]); setCsvFileName(null); openModal('csv-upload', null); }}
             className="h-[var(--btn-height)] px-4 bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
           >
             <Upload size={16} /> CSV 일괄 업로드
@@ -571,7 +674,7 @@ export default function ProductsPage() {
                     className="flex items-center gap-3 px-5 py-3.5 hover:bg-[var(--bg)] transition-colors cursor-pointer"
                     onClick={() => toggleExpand(cat.id)}
                   >
-                    <button className="w-6 h-6 flex items-center justify-center text-[var(--text-secondary)]">
+                    <button onClick={() => toggleExpand(cat.id)} className="w-6 h-6 flex items-center justify-center text-[var(--text-secondary)]">
                       {subs.length > 0 ? (isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />) : <span className="w-4" />}
                     </button>
                     <FolderTree size={16} className="text-orange-600" />
@@ -1022,6 +1125,147 @@ export default function ProductsPage() {
           </Modal>
         );
       })()}
+
+      {/* ================================================================ */}
+      {/* CSV Upload Modal                                                  */}
+      {/* ================================================================ */}
+      {activeModal === 'csv-upload' && (
+        <Modal isOpen title="CSV 일괄 업로드" onClose={closeModal} size="lg">
+          <div className="space-y-4">
+            <div className="text-sm text-[var(--text-secondary)]">
+              CSV 파일 형식: <span className="font-mono text-xs bg-[var(--bg)] px-1.5 py-0.5 rounded">제품명, 카탈로그번호, CAS번호, 공급사, 가격</span>
+            </div>
+
+            {/* Upload area */}
+            <div
+              onClick={handleCsvUpload}
+              className="border-2 border-dashed border-[var(--border)] rounded-xl p-8 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 transition-colors"
+            >
+              <Upload size={32} className="mx-auto text-[var(--text-secondary)] mb-2" />
+              {csvFileName ? (
+                <p className="text-sm font-medium text-orange-600">{csvFileName}</p>
+              ) : (
+                <p className="text-sm text-[var(--text-secondary)]">클릭하여 CSV 파일 선택</p>
+              )}
+              <p className="text-xs text-[var(--text-secondary)] mt-1">.csv, .txt 파일 지원</p>
+            </div>
+
+            {/* Preview */}
+            {csvPreview.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-[var(--text)] mb-2">미리보기 (최대 5건)</h4>
+                <div className="border border-[var(--border)] rounded-lg overflow-hidden">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-[var(--bg)] border-b border-[var(--border)]">
+                        <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">제품명</th>
+                        <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">카탈로그 번호</th>
+                        <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">CAS No.</th>
+                        <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">공급사</th>
+                        <th className="text-right px-3 py-2 font-semibold text-[var(--text-secondary)]">가격</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {csvPreview.map((row, i) => (
+                        <tr key={i} className="border-b border-[var(--border)] last:border-0">
+                          <td className="px-3 py-2 text-[var(--text)]">{row.name}</td>
+                          <td className="px-3 py-2 font-mono text-orange-600">{row.catalogNo}</td>
+                          <td className="px-3 py-2 text-[var(--text-secondary)]">{row.cas}</td>
+                          <td className="px-3 py-2 text-[var(--text)]">{row.supplier}</td>
+                          <td className="px-3 py-2 text-right text-[var(--text)]">{row.price}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button onClick={closeModal} className="h-[var(--btn-height)] px-4 text-sm border border-[var(--border)] rounded-lg hover:bg-gray-50 text-[var(--text)]">
+                취소
+              </button>
+              <button onClick={applyCsvImport} className="h-[var(--btn-height)] px-4 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium">
+                일괄 등록
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* ================================================================ */}
+      {/* Price Adjust Modal                                                */}
+      {/* ================================================================ */}
+      {activeModal === 'price-adjust' && (
+        <Modal isOpen title="가격 일괄 조정" onClose={closeModal}>
+          <div className="space-y-4">
+            <p className="text-sm text-[var(--text-secondary)]">
+              선택된 <span className="font-bold text-orange-600">{selectedProductIds.length}</span>건 제품의 판매가를 일괄 조정합니다.
+            </p>
+
+            {/* Direction */}
+            <div>
+              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">조정 방향</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPriceAdjustDirection('up')}
+                  className={`flex-1 h-[var(--btn-height)] text-sm rounded-lg border font-medium transition-colors ${priceAdjustDirection === 'up' ? 'bg-red-50 border-red-300 text-red-600' : 'border-[var(--border)] text-[var(--text-secondary)]'}`}
+                >
+                  인상
+                </button>
+                <button
+                  onClick={() => setPriceAdjustDirection('down')}
+                  className={`flex-1 h-[var(--btn-height)] text-sm rounded-lg border font-medium transition-colors ${priceAdjustDirection === 'down' ? 'bg-blue-50 border-blue-300 text-blue-600' : 'border-[var(--border)] text-[var(--text-secondary)]'}`}
+                >
+                  인하
+                </button>
+              </div>
+            </div>
+
+            {/* Type */}
+            <div>
+              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">조정 방식</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPriceAdjustType('percent')}
+                  className={`flex-1 h-[var(--btn-height)] text-sm rounded-lg border font-medium transition-colors ${priceAdjustType === 'percent' ? 'bg-orange-50 border-orange-300 text-orange-600' : 'border-[var(--border)] text-[var(--text-secondary)]'}`}
+                >
+                  비율 (%)
+                </button>
+                <button
+                  onClick={() => setPriceAdjustType('fixed')}
+                  className={`flex-1 h-[var(--btn-height)] text-sm rounded-lg border font-medium transition-colors ${priceAdjustType === 'fixed' ? 'bg-orange-50 border-orange-300 text-orange-600' : 'border-[var(--border)] text-[var(--text-secondary)]'}`}
+                >
+                  고정금액 (원)
+                </button>
+              </div>
+            </div>
+
+            {/* Value */}
+            <div>
+              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">
+                {priceAdjustType === 'percent' ? '비율 (%)' : '금액 (원)'}
+              </label>
+              <input
+                type="number"
+                value={priceAdjustValue}
+                onChange={(e) => setPriceAdjustValue(e.target.value)}
+                placeholder={priceAdjustType === 'percent' ? '예: 10' : '예: 5000'}
+                className="w-full h-[var(--btn-height)] px-3 text-sm border border-[var(--border)] rounded-lg bg-[var(--bg)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button onClick={closeModal} className="h-[var(--btn-height)] px-4 text-sm border border-[var(--border)] rounded-lg hover:bg-gray-50 text-[var(--text)]">
+                취소
+              </button>
+              <button onClick={applyPriceAdjust} className="h-[var(--btn-height)] px-4 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium">
+                적용
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* ================================================================ */}
       {/* TOAST                                                             */}

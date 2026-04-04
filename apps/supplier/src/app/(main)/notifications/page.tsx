@@ -13,9 +13,9 @@ import { useNotificationStore } from '@/stores/notificationStore';
 import type { NotificationType } from '@/types';
 
 const notiIcons: Record<NotificationType, { icon: React.ReactNode; bg: string }> = {
-  new_order: { icon: <Package size={16} />, bg: 'bg-blue-100 text-blue-700' },
+  new_order: { icon: <Package size={16} />, bg: 'bg-blue-100 text-purple-700' },
   new_quote: { icon: <FileText size={16} />, bg: 'bg-amber-100 text-amber-700' },
-  inquiry: { icon: <MessageSquare size={16} />, bg: 'bg-purple-100 text-purple-700' },
+  inquiry: { icon: <MessageSquare size={16} />, bg: 'bg-blue-100 text-purple-700' },
   low_stock: { icon: <AlertTriangle size={16} />, bg: 'bg-red-100 text-red-700' },
   settlement: { icon: <DollarSign size={16} />, bg: 'bg-green-100 text-green-700' },
   return: { icon: <RotateCcw size={16} />, bg: 'bg-orange-100 text-orange-700' },

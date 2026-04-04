@@ -29,7 +29,7 @@ const maxProductRevenue = topProducts[0].revenue;
 
 const categoryData = [
   { name: '용매', pct: 42, color: 'bg-purple-500' },
-  { name: '유기화합물', pct: 28, color: 'bg-blue-500' },
+  { name: '유기화합물', pct: 28, color: 'bg-purple-500' },
   { name: '무기화합물', pct: 15, color: 'bg-green-500' },
   { name: '생화학시약', pct: 10, color: 'bg-amber-500' },
   { name: '기타', pct: 5, color: 'bg-red-500' },
@@ -157,7 +157,7 @@ export default function AnalyticsPage() {
               {[{d:'월',v:6},{d:'화',v:9},{d:'수',v:11},{d:'목',v:8},{d:'금',v:7}].map(d => (
                 <div key={d.d} className="flex-1 flex flex-col items-center gap-2">
                   <span className="text-xs font-bold">{d.v}</span>
-                  <div className="w-full bg-blue-500 rounded-t-md" style={{ height: `${(d.v / 11) * 100}%`, minHeight: 4 }} />
+                  <div className="w-full bg-purple-500 rounded-t-md" style={{ height: `${(d.v / 11) * 100}%`, minHeight: 4 }} />
                   <span className="text-xs text-[var(--text-secondary)]">{d.d}</span>
                 </div>
               ))}
