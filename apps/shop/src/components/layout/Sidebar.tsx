@@ -7,7 +7,10 @@ import {
   ShoppingCart,
   Zap,
   ClipboardList,
+  CreditCard,
+  RotateCcw,
   FileText,
+  Heart,
   FlaskConical,
   MessageCircle,
   Headphones,
@@ -16,7 +19,6 @@ import {
   User,
   LogOut,
   ChevronDown,
-  ChevronRight,
   Bell,
 } from 'lucide-react';
 
@@ -27,48 +29,70 @@ interface NavItem {
   children?: { label: string; href: string }[];
 }
 
-const mainNav: NavItem[] = [
-  {
-    label: '제품 주문',
-    icon: <ShoppingCart size={16} />,
-    children: [
-      { label: '시약 주문', href: '/order' },
-      { label: '소모품 주문', href: '/supplies' },
-    ],
-  },
-  { label: '빠른 주문', href: '/quickorder', icon: <Zap size={16} /> },
-  {
-    label: '주문 관리',
-    icon: <ClipboardList size={16} />,
-    children: [
-      { label: '주문 내역', href: '/orders' },
-      { label: '결제하기', href: '/approvals' },
-      { label: '취소 내역', href: '/cancel' },
-    ],
-  },
-  { label: '증빙서류', href: '/documents', icon: <FileText size={16} /> },
-];
+interface NavGroup {
+  title: string;
+  items: NavItem[];
+}
 
-const labNav: NavItem[] = [
+const navGroups: NavGroup[] = [
   {
-    label: '내 연구실',
-    icon: <FlaskConical size={16} />,
-    children: [
-      { label: '즐겨찾기', href: '/favorites' },
-      { label: '내 시약장', href: '/inventory' },
-      { label: '실험실 멤버', href: '/members' },
+    title: '주문',
+    items: [
+      {
+        label: '제품 주문',
+        icon: <ShoppingCart size={16} />,
+        children: [
+          { label: '시약 주문', href: '/order' },
+          { label: '소모품 주문', href: '/supplies' },
+        ],
+      },
+      { label: '빠른 주문', href: '/quickorder', icon: <Zap size={16} /> },
     ],
   },
-  { label: '대화', href: '/chat', icon: <MessageCircle size={16} /> },
-  { label: '알림', href: '/notifications', icon: <Bell size={16} /> },
   {
-    label: '고객센터',
-    icon: <Headphones size={16} />,
-    children: [
-      { label: '고객센터 홈', href: '/cs' },
-      { label: '자주 묻는 질문', href: '/faq' },
-      { label: '1:1 문의하기', href: '/inquiry' },
-      { label: 'MSDS 검색', href: '/msds' },
+    title: '관리',
+    items: [
+      {
+        label: '주문 관리',
+        icon: <ClipboardList size={16} />,
+        children: [
+          { label: '주문 내역', href: '/orders' },
+          { label: '결제하기', href: '/approvals' },
+          { label: '취소 내역', href: '/cancel' },
+        ],
+      },
+      { label: '증빙서류', href: '/documents', icon: <FileText size={16} /> },
+    ],
+  },
+  {
+    title: '연구실',
+    items: [
+      {
+        label: '내 연구실',
+        icon: <FlaskConical size={16} />,
+        children: [
+          { label: '즐겨찾기', href: '/favorites' },
+          { label: '내 시약장', href: '/inventory' },
+          { label: '실험실 멤버', href: '/members' },
+        ],
+      },
+      { label: '대화', href: '/chat', icon: <MessageCircle size={16} /> },
+      { label: '알림', href: '/notifications', icon: <Bell size={16} /> },
+    ],
+  },
+  {
+    title: '지원',
+    items: [
+      {
+        label: '고객센터',
+        icon: <Headphones size={16} />,
+        children: [
+          { label: '고객센터 홈', href: '/cs' },
+          { label: '자주 묻는 질문', href: '/faq' },
+          { label: '1:1 문의하기', href: '/inquiry' },
+          { label: 'MSDS 검색', href: '/msds' },
+        ],
+      },
     ],
   },
 ];
@@ -99,6 +123,9 @@ export function Sidebar() {
               height: 38,
               color: isActive ? 'var(--primary)' : 'var(--sidebar-text)',
               background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 13.5,
             }}
             onMouseEnter={(e) => {
               if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--bg-secondary)';
@@ -110,7 +137,7 @@ export function Sidebar() {
             <span style={{ color: isActive ? 'var(--primary)' : '#94a3b8', display: 'flex' }}>
               {item.icon}
             </span>
-            <span className="flex-1 text-left text-[13.5px]">{item.label}</span>
+            <span className="flex-1 text-left">{item.label}</span>
             <ChevronDown
               size={13}
               style={{
@@ -136,6 +163,7 @@ export function Sidebar() {
                     color: pathname === child.href ? 'var(--primary)' : '#64748b',
                     fontWeight: pathname === child.href ? 600 : 400,
                     background: pathname === child.href ? 'var(--primary-light)' : 'transparent',
+                    textDecoration: 'none',
                   }}
                   onMouseEnter={(e) => {
                     if (pathname !== child.href)
@@ -165,6 +193,8 @@ export function Sidebar() {
           color: pathname === item.href ? 'var(--primary)' : 'var(--sidebar-text)',
           background: pathname === item.href ? 'var(--primary-light)' : 'transparent',
           fontWeight: pathname === item.href ? 600 : 400,
+          fontSize: 13.5,
+          textDecoration: 'none',
         }}
         onMouseEnter={(e) => {
           if (pathname !== item.href)
@@ -178,7 +208,7 @@ export function Sidebar() {
         <span style={{ color: pathname === item.href ? 'var(--primary)' : '#94a3b8', display: 'flex' }}>
           {item.icon}
         </span>
-        <span className="text-[13.5px]">{item.label}</span>
+        <span>{item.label}</span>
       </Link>
     );
   };
@@ -195,12 +225,9 @@ export function Sidebar() {
       {/* Logo */}
       <div
         className="flex items-center px-4 shrink-0"
-        style={{
-          height: 'var(--topbar-height)',
-          borderBottom: '1px solid var(--border)',
-        }}
+        style={{ height: 'var(--topbar-height)', borderBottom: '1px solid var(--border)' }}
       >
-        <Link href="/dashboard" className="flex items-center gap-1">
+        <Link href="/dashboard" className="flex items-center gap-1" style={{ textDecoration: 'none' }}>
           <span className="text-[20px] font-extrabold tracking-tight" style={{ color: 'var(--text)', letterSpacing: '-0.5px' }}>
             JINU
           </span>
@@ -212,12 +239,24 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3">
-        {mainNav.map((item) => renderItem(item))}
-
-        {/* Divider */}
-        <div style={{ height: 1, background: 'var(--border)', margin: '8px 20px' }} />
-
-        {labNav.map((item) => renderItem(item))}
+        {navGroups.map((group, gi) => (
+          <div key={group.title}>
+            {gi > 0 && (
+              <div style={{ height: 1, background: 'var(--border)', margin: '6px 20px' }} />
+            )}
+            {/* Section header */}
+            <div
+              className="px-5 py-1.5 text-[11px] font-semibold tracking-wider uppercase"
+              style={{ color: 'var(--text-tertiary)' }}
+            >
+              {group.title}
+            </div>
+            {/* Items */}
+            <div>
+              {group.items.map((item) => renderItem(item))}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Bottom */}
@@ -228,22 +267,24 @@ export function Sidebar() {
           style={{
             height: 38,
             color: pathname === '/mypage' ? 'var(--primary)' : '#64748b',
-            fontSize: 13,
+            fontSize: 13.5,
+            textDecoration: 'none',
+            background: pathname === '/mypage' ? 'var(--primary-light)' : 'transparent',
           }}
         >
           <User size={16} style={{ color: '#94a3b8' }} />
-          <span>마이페이지</span>
+          마이페이지
         </Link>
         <button
           onClick={async () => {
             await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = '/login';
           }}
-          className="flex items-center gap-2.5 px-5 w-full transition-colors"
-          style={{ height: 38, color: '#64748b', fontSize: 13 }}
+          className="flex items-center gap-2.5 px-5 w-full"
+          style={{ height: 38, color: 'var(--danger)', fontSize: 13.5, border: 'none', background: 'transparent', cursor: 'pointer' }}
         >
-          <LogOut size={16} style={{ color: '#94a3b8' }} />
-          <span>로그아웃</span>
+          <LogOut size={16} style={{ color: 'var(--danger)' }} />
+          로그아웃
         </button>
       </div>
     </aside>
