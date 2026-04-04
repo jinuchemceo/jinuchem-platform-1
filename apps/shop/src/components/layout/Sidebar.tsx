@@ -120,10 +120,10 @@ export function Sidebar() {
             onClick={() => toggle(item.label)}
             className="flex items-center w-full gap-3.5 mx-2 px-3.5 py-2.5 rounded-xl transition-all"
             style={{
-              color: isActive ? 'var(--text)' : 'var(--text-secondary)',
+              color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
               fontWeight: isActive ? 600 : 400,
               fontSize: 14,
-              background: isActive ? 'var(--primary-light)' : 'transparent',
+              background: 'transparent',
               border: 'none',
               cursor: 'pointer',
               width: 'calc(100% - 16px)',

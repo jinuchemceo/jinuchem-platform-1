@@ -98,19 +98,19 @@ export function Topbar() {
 
         {/* User */}
         <div className="flex items-center gap-2">
-          <div className="text-right hidden sm:block">
-            <p
-              className="text-[13px] font-semibold leading-none mb-0.5"
+          <div className="hidden sm:flex items-center gap-1.5">
+            <span
+              className="text-[13px] font-semibold"
               style={{ color: 'var(--text)' }}
             >
               김연구
-            </p>
-            <p
-              className="text-[11px] leading-none"
-              style={{ color: 'var(--primary)' }}
+            </span>
+            <span
+              className="text-[11px] font-medium px-1.5 py-0.5 rounded-md"
+              style={{ color: 'var(--primary)', background: 'var(--primary-light)' }}
             >
               연구원
-            </p>
+            </span>
           </div>
           {/* Avatar */}
           <div

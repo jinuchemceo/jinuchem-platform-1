@@ -52,13 +52,19 @@ export function Topbar() {
 
         {/* User */}
         <div className="flex items-center gap-2">
-          <div className="text-right hidden sm:block">
-            <p className="text-[13px] font-semibold leading-none mb-0.5" style={{ color: 'var(--text)' }}>
+          <div className="hidden sm:flex items-center gap-1.5">
+            <span
+              className="text-[13px] font-semibold"
+              style={{ color: 'var(--text)' }}
+            >
               Sigma-Aldrich
-            </p>
-            <p className="text-[11px] leading-none" style={{ color: 'var(--success)' }}>
+            </span>
+            <span
+              className="text-[11px] font-medium px-1.5 py-0.5 rounded-md"
+              style={{ color: 'var(--success)', background: 'rgba(52,199,89,0.12)' }}
+            >
               공급사
-            </p>
+            </span>
           </div>
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[13px] font-bold"
