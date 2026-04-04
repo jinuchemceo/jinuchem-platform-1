@@ -68,7 +68,7 @@ export function Topbar() {
           </div>
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[13px] font-bold"
-            style={{ background: 'linear-gradient(135deg, #5856D6, #007AFF)' }}
+            style={{ background: 'linear-gradient(135deg, #AF52DE, #8B5CF6)' }}
           >
             S
           </div>
