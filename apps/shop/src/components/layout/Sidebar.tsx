@@ -11,10 +11,12 @@ import {
   FlaskConical,
   MessageCircle,
   Headphones,
+  HelpCircle,
+  Mail,
   User,
   LogOut,
-  ChevronRight,
   ChevronDown,
+  ChevronRight,
   Bell,
 } from 'lucide-react';
 
@@ -25,65 +27,48 @@ interface NavItem {
   children?: { label: string; href: string }[];
 }
 
-const navGroups: { title: string; items: NavItem[] }[] = [
+const mainNav: NavItem[] = [
   {
-    title: '주문',
-    items: [
-      {
-        label: '제품 주문',
-        icon: <ShoppingCart size={17} />,
-        children: [
-          { label: '시약 주문', href: '/order' },
-          { label: '소모품 주문', href: '/supplies' },
-        ],
-      },
-      { label: '빠른 주문', href: '/quickorder', icon: <Zap size={17} /> },
+    label: '제품 주문',
+    icon: <ShoppingCart size={16} />,
+    children: [
+      { label: '시약 주문', href: '/order' },
+      { label: '소모품 주문', href: '/supplies' },
     ],
   },
+  { label: '빠른 주문', href: '/quickorder', icon: <Zap size={16} /> },
   {
-    title: '관리',
-    items: [
-      {
-        label: '주문 관리',
-        icon: <ClipboardList size={17} />,
-        children: [
-          { label: '주문 내역', href: '/orders' },
-          { label: '결제하기', href: '/approvals' },
-          { label: '취소 내역', href: '/cancel' },
-        ],
-      },
-      { label: '증빙서류', href: '/documents', icon: <FileText size={17} /> },
+    label: '주문 관리',
+    icon: <ClipboardList size={16} />,
+    children: [
+      { label: '주문 내역', href: '/orders' },
+      { label: '결제하기', href: '/approvals' },
+      { label: '취소 내역', href: '/cancel' },
     ],
   },
+  { label: '증빙서류', href: '/documents', icon: <FileText size={16} /> },
+];
+
+const labNav: NavItem[] = [
   {
-    title: '연구실',
-    items: [
-      {
-        label: '내 연구실',
-        icon: <FlaskConical size={17} />,
-        children: [
-          { label: '즐겨찾기', href: '/favorites' },
-          { label: '내 시약장', href: '/inventory' },
-          { label: '실험실 멤버', href: '/members' },
-        ],
-      },
-      { label: '대화', href: '/chat', icon: <MessageCircle size={17} /> },
-      { label: '알림', href: '/notifications', icon: <Bell size={17} /> },
+    label: '내 연구실',
+    icon: <FlaskConical size={16} />,
+    children: [
+      { label: '즐겨찾기', href: '/favorites' },
+      { label: '내 시약장', href: '/inventory' },
+      { label: '실험실 멤버', href: '/members' },
     ],
   },
+  { label: '대화', href: '/chat', icon: <MessageCircle size={16} /> },
+  { label: '알림', href: '/notifications', icon: <Bell size={16} /> },
   {
-    title: '지원',
-    items: [
-      {
-        label: '고객센터',
-        icon: <Headphones size={17} />,
-        children: [
-          { label: '고객센터 홈', href: '/cs' },
-          { label: '자주 묻는 질문', href: '/faq' },
-          { label: '1:1 문의하기', href: '/inquiry' },
-          { label: 'MSDS 검색', href: '/msds' },
-        ],
-      },
+    label: '고객센터',
+    icon: <Headphones size={16} />,
+    children: [
+      { label: '고객센터 홈', href: '/cs' },
+      { label: '자주 묻는 질문', href: '/faq' },
+      { label: '1:1 문의하기', href: '/inquiry' },
+      { label: 'MSDS 검색', href: '/msds' },
     ],
   },
 ];
@@ -97,9 +82,8 @@ export function Sidebar() {
     '고객센터': false,
   });
 
-  const toggleGroup = (label: string) => {
+  const toggle = (label: string) =>
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
-  };
 
   const renderItem = (item: NavItem) => {
     if (item.children) {
@@ -109,37 +93,57 @@ export function Sidebar() {
       return (
         <div key={item.label}>
           <button
-            onClick={() => toggleGroup(item.label)}
-            className="flex items-center w-full gap-3 px-4 py-2.5 rounded-lg transition-colors"
+            onClick={() => toggle(item.label)}
+            className="flex items-center w-full gap-2.5 px-5 transition-colors"
             style={{
+              height: 38,
               color: isActive ? 'var(--primary)' : 'var(--sidebar-text)',
+              background: 'transparent',
+            }}
+            onMouseEnter={(e) => {
+              if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--bg-secondary)';
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent';
             }}
           >
-            <span className="flex-shrink-0" style={{ color: isActive ? 'var(--primary)' : 'var(--text-secondary)' }}>
+            <span style={{ color: isActive ? 'var(--primary)' : '#94a3b8', display: 'flex' }}>
               {item.icon}
             </span>
-            <span className="flex-1 text-left text-[14px]">{item.label}</span>
+            <span className="flex-1 text-left text-[13.5px]">{item.label}</span>
             <ChevronDown
               size={13}
               style={{
-                color: 'var(--text-tertiary)',
+                color: '#94a3b8',
                 transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
-                transition: 'transform 0.2s',
+                transition: 'transform 0.18s',
               }}
             />
           </button>
 
           {isOpen && (
-            <div className="ml-9 mt-0.5 space-y-0.5">
+            <div>
               {item.children.map((child) => (
                 <Link
                   key={child.href}
                   href={child.href}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-colors"
+                  className="flex items-center transition-colors"
                   style={{
-                    color: pathname === child.href ? 'var(--primary)' : 'var(--sidebar-text)',
+                    height: 36,
+                    paddingLeft: 48,
+                    paddingRight: 20,
+                    fontSize: 13,
+                    color: pathname === child.href ? 'var(--primary)' : '#64748b',
                     fontWeight: pathname === child.href ? 600 : 400,
                     background: pathname === child.href ? 'var(--primary-light)' : 'transparent',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (pathname !== child.href)
+                      (e.currentTarget as HTMLElement).style.background = 'var(--bg-secondary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (pathname !== child.href)
+                      (e.currentTarget as HTMLElement).style.background = 'transparent';
                   }}
                 >
                   {child.label}
@@ -155,16 +159,26 @@ export function Sidebar() {
       <Link
         key={item.href}
         href={item.href!}
-        className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors"
+        className="flex items-center gap-2.5 px-5 transition-colors"
         style={{
+          height: 38,
           color: pathname === item.href ? 'var(--primary)' : 'var(--sidebar-text)',
           background: pathname === item.href ? 'var(--primary-light)' : 'transparent',
+          fontWeight: pathname === item.href ? 600 : 400,
+        }}
+        onMouseEnter={(e) => {
+          if (pathname !== item.href)
+            (e.currentTarget as HTMLElement).style.background = 'var(--bg-secondary)';
+        }}
+        onMouseLeave={(e) => {
+          if (pathname !== item.href)
+            (e.currentTarget as HTMLElement).style.background = 'transparent';
         }}
       >
-        <span style={{ color: pathname === item.href ? 'var(--primary)' : 'var(--text-secondary)' }}>
+        <span style={{ color: pathname === item.href ? 'var(--primary)' : '#94a3b8', display: 'flex' }}>
           {item.icon}
         </span>
-        <span className="text-[14px]">{item.label}</span>
+        <span className="text-[13.5px]">{item.label}</span>
       </Link>
     );
   };
@@ -175,69 +189,61 @@ export function Sidebar() {
       style={{
         width: 'var(--sidebar-width)',
         background: 'var(--sidebar-bg)',
-        borderRight: '0.5px solid var(--border)',
+        borderRight: '1px solid var(--border)',
       }}
     >
       {/* Logo */}
       <div
-        className="flex items-center gap-3 px-5 shrink-0"
+        className="flex items-center px-4 shrink-0"
         style={{
           height: 'var(--topbar-height)',
-          borderBottom: '0.5px solid var(--border)',
+          borderBottom: '1px solid var(--border)',
         }}
       >
-        <Link href="/dashboard" className="flex items-center gap-2.5">
-          <span
-            className="w-8 h-8 flex items-center justify-center text-white text-sm font-bold"
-            style={{ background: 'var(--primary)', borderRadius: 9 }}
-          >
-            J
+        <Link href="/dashboard" className="flex items-center gap-1">
+          <span className="text-[20px] font-extrabold tracking-tight" style={{ color: 'var(--text)', letterSpacing: '-0.5px' }}>
+            JINU
           </span>
-          <span className="text-[17px] font-bold tracking-tight" style={{ color: 'var(--text)' }}>
-            JINU Shop
+          <span className="text-[20px] font-light tracking-tight" style={{ color: '#64748b', letterSpacing: '-0.5px' }}>
+            shop
           </span>
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-4">
-        {navGroups.map((group) => (
-          <div key={group.title}>
-            <p className="ios-section-header px-1 mb-1">{group.title}</p>
-            <div className="space-y-0.5">
-              {group.items.map((item) => renderItem(item))}
-            </div>
-          </div>
-        ))}
+      <nav className="flex-1 overflow-y-auto py-3">
+        {mainNav.map((item) => renderItem(item))}
+
+        {/* Divider */}
+        <div style={{ height: 1, background: 'var(--border)', margin: '8px 20px' }} />
+
+        {labNav.map((item) => renderItem(item))}
       </nav>
 
       {/* Bottom */}
-      <div
-        className="shrink-0 px-3 py-3 space-y-0.5"
-        style={{ borderTop: '0.5px solid var(--border)' }}
-      >
+      <div style={{ borderTop: '1px solid var(--border)', padding: '8px 0' }}>
         <Link
           href="/mypage"
-          className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors"
+          className="flex items-center gap-2.5 px-5 transition-colors"
           style={{
-            color: pathname === '/mypage' ? 'var(--primary)' : 'var(--sidebar-text)',
-            background: pathname === '/mypage' ? 'var(--primary-light)' : 'transparent',
+            height: 38,
+            color: pathname === '/mypage' ? 'var(--primary)' : '#64748b',
+            fontSize: 13,
           }}
         >
-          <User size={17} style={{ color: 'var(--text-secondary)' }} />
-          <span className="text-[14px]">마이페이지</span>
+          <User size={16} style={{ color: '#94a3b8' }} />
+          <span>마이페이지</span>
         </Link>
-
         <button
           onClick={async () => {
             await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = '/login';
           }}
-          className="flex items-center gap-3 px-4 py-2.5 rounded-lg w-full transition-colors"
-          style={{ color: 'var(--danger)' }}
+          className="flex items-center gap-2.5 px-5 w-full transition-colors"
+          style={{ height: 38, color: '#64748b', fontSize: 13 }}
         >
-          <LogOut size={17} style={{ color: 'var(--danger)' }} />
-          <span className="text-[14px]">로그아웃</span>
+          <LogOut size={16} style={{ color: '#94a3b8' }} />
+          <span>로그아웃</span>
         </button>
       </div>
     </aside>
