@@ -40,13 +40,13 @@ const navGroups: NavGroup[] = [
     items: [
       {
         label: '제품 주문',
-        icon: <ShoppingCart size={16} />,
+        icon: <ShoppingCart size={16} strokeWidth={1.5} />,
         children: [
           { label: '시약 주문', href: '/order' },
           { label: '소모품 주문', href: '/supplies' },
         ],
       },
-      { label: '빠른 주문', href: '/quickorder', icon: <Zap size={16} /> },
+      { label: '빠른 주문', href: '/quickorder', icon: <Zap size={16} strokeWidth={1.5} /> },
     ],
   },
   {
@@ -54,14 +54,14 @@ const navGroups: NavGroup[] = [
     items: [
       {
         label: '주문 관리',
-        icon: <ClipboardList size={16} />,
+        icon: <ClipboardList size={16} strokeWidth={1.5} />,
         children: [
           { label: '주문 내역', href: '/orders' },
           { label: '결제하기', href: '/approvals' },
           { label: '취소 내역', href: '/cancel' },
         ],
       },
-      { label: '증빙서류', href: '/documents', icon: <FileText size={16} /> },
+      { label: '증빙서류', href: '/documents', icon: <FileText size={16} strokeWidth={1.5} /> },
     ],
   },
   {
@@ -69,15 +69,15 @@ const navGroups: NavGroup[] = [
     items: [
       {
         label: '내 연구실',
-        icon: <FlaskConical size={16} />,
+        icon: <FlaskConical size={16} strokeWidth={1.5} />,
         children: [
           { label: '즐겨찾기', href: '/favorites' },
           { label: '내 시약장', href: '/inventory' },
           { label: '실험실 멤버', href: '/members' },
         ],
       },
-      { label: '대화', href: '/chat', icon: <MessageCircle size={16} /> },
-      { label: '알림', href: '/notifications', icon: <Bell size={16} /> },
+      { label: '대화', href: '/chat', icon: <MessageCircle size={16} strokeWidth={1.5} /> },
+      { label: '알림', href: '/notifications', icon: <Bell size={16} strokeWidth={1.5} /> },
     ],
   },
   {
@@ -85,7 +85,7 @@ const navGroups: NavGroup[] = [
     items: [
       {
         label: '고객센터',
-        icon: <Headphones size={16} />,
+        icon: <Headphones size={16} strokeWidth={1.5} />,
         children: [
           { label: '고객센터 홈', href: '/cs' },
           { label: '자주 묻는 질문', href: '/faq' },
@@ -118,30 +118,25 @@ export function Sidebar() {
         <div key={item.label}>
           <button
             onClick={() => toggle(item.label)}
-            className="flex items-center w-full gap-2.5 px-5 transition-colors"
+            className="flex items-center w-full gap-3.5 mx-2 px-3.5 py-2.5 rounded-xl transition-all"
             style={{
-              height: 38,
-              color: isActive ? 'var(--primary)' : 'var(--sidebar-text)',
-              background: 'transparent',
+              color: isActive ? 'var(--text)' : 'var(--text-secondary)',
+              fontWeight: isActive ? 600 : 400,
+              fontSize: 14,
+              background: isActive ? 'var(--primary-light)' : 'transparent',
               border: 'none',
               cursor: 'pointer',
-              fontSize: 13.5,
-            }}
-            onMouseEnter={(e) => {
-              if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--bg-secondary)';
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent';
+              width: 'calc(100% - 16px)',
             }}
           >
-            <span style={{ color: isActive ? 'var(--primary)' : '#94a3b8', display: 'flex' }}>
+            <span className="flex items-center justify-center w-6" style={{ color: isActive ? 'var(--primary)' : 'var(--text-secondary)' }}>
               {item.icon}
             </span>
             <span className="flex-1 text-left">{item.label}</span>
             <ChevronDown
               size={13}
               style={{
-                color: '#94a3b8',
+                color: 'var(--text-secondary)',
                 transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
                 transition: 'transform 0.18s',
               }}
@@ -149,29 +144,19 @@ export function Sidebar() {
           </button>
 
           {isOpen && (
-            <div>
+            <div className="ml-6">
               {item.children.map((child) => (
                 <Link
                   key={child.href}
                   href={child.href}
-                  className="flex items-center transition-colors"
+                  className="flex items-center gap-3.5 mx-2 px-3.5 py-2.5 rounded-xl transition-all"
                   style={{
-                    height: 36,
-                    paddingLeft: 48,
-                    paddingRight: 20,
                     fontSize: 13,
-                    color: pathname === child.href ? 'var(--primary)' : '#64748b',
+                    color: pathname === child.href ? 'var(--text)' : 'var(--text-secondary)',
                     fontWeight: pathname === child.href ? 600 : 400,
                     background: pathname === child.href ? 'var(--primary-light)' : 'transparent',
                     textDecoration: 'none',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (pathname !== child.href)
-                      (e.currentTarget as HTMLElement).style.background = 'var(--bg-secondary)';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (pathname !== child.href)
-                      (e.currentTarget as HTMLElement).style.background = 'transparent';
+                    display: 'flex',
                   }}
                 >
                   {child.label}
@@ -187,103 +172,94 @@ export function Sidebar() {
       <Link
         key={item.href}
         href={item.href!}
-        className="flex items-center gap-2.5 px-5 transition-colors"
+        className="flex items-center gap-3.5 mx-2 px-3.5 py-2.5 rounded-xl transition-all"
         style={{
-          height: 38,
-          color: pathname === item.href ? 'var(--primary)' : 'var(--sidebar-text)',
-          background: pathname === item.href ? 'var(--primary-light)' : 'transparent',
+          color: pathname === item.href ? 'var(--text)' : 'var(--text-secondary)',
           fontWeight: pathname === item.href ? 600 : 400,
-          fontSize: 13.5,
+          fontSize: 14,
+          background: pathname === item.href ? 'var(--primary-light)' : 'transparent',
           textDecoration: 'none',
         }}
-        onMouseEnter={(e) => {
-          if (pathname !== item.href)
-            (e.currentTarget as HTMLElement).style.background = 'var(--bg-secondary)';
-        }}
-        onMouseLeave={(e) => {
-          if (pathname !== item.href)
-            (e.currentTarget as HTMLElement).style.background = 'transparent';
-        }}
       >
-        <span style={{ color: pathname === item.href ? 'var(--primary)' : '#94a3b8', display: 'flex' }}>
+        <span className="flex items-center justify-center w-6" style={{ color: pathname === item.href ? 'var(--primary)' : 'var(--text-secondary)' }}>
           {item.icon}
         </span>
-        <span>{item.label}</span>
+        {item.label}
       </Link>
     );
   };
 
   return (
     <aside
-      className="fixed top-0 left-0 h-screen flex flex-col z-40"
+      className="fixed top-0 left-0 h-screen flex flex-col z-40 overflow-y-auto"
       style={{
         width: 'var(--sidebar-width)',
-        background: 'var(--sidebar-bg)',
-        borderRight: '1px solid var(--border)',
+        background: 'var(--bg-card)',
+        borderRight: '0.5px solid var(--border)',
       }}
     >
       {/* Logo */}
       <div
-        className="flex items-center px-4 shrink-0"
-        style={{ height: 'var(--topbar-height)', borderBottom: '1px solid var(--border)' }}
+        className="flex items-center gap-2.5 px-5 shrink-0"
+        style={{ height: 'var(--topbar-height)', borderBottom: '0.5px solid var(--border)' }}
       >
-        <Link href="/dashboard" className="flex items-center gap-1" style={{ textDecoration: 'none' }}>
-          <span className="text-[20px] font-extrabold tracking-tight" style={{ color: 'var(--text)', letterSpacing: '-0.5px' }}>
-            JINU
+        <Link href="/dashboard" className="flex items-center gap-2.5 font-bold" style={{ color: 'var(--text)', textDecoration: 'none', fontSize: 17 }}>
+          <span className="w-8 h-8 bg-gradient-to-br from-blue-500 to-violet-600 rounded-lg flex items-center justify-center text-white text-sm font-bold">
+            J
           </span>
-          <span className="text-[20px] font-light tracking-tight" style={{ color: '#64748b', letterSpacing: '-0.5px' }}>
-            shop
-          </span>
+          JINU Shop
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3">
+      <nav className="flex-1 py-3 overflow-y-auto">
         {navGroups.map((group, gi) => (
-          <div key={group.title}>
+          <div key={group.title} className="mb-1">
             {gi > 0 && (
-              <div style={{ height: 1, background: 'var(--border)', margin: '6px 20px' }} />
+              <div style={{ height: 1, background: 'var(--border)', margin: '4px 20px 8px' }} />
             )}
-            {/* Section header */}
-            <div
-              className="px-5 py-1.5 text-[11px] font-semibold tracking-wider uppercase"
-              style={{ color: 'var(--text-tertiary)' }}
-            >
+            <div className="px-5 py-1.5 text-[11px] font-semibold tracking-wider uppercase" style={{ color: 'var(--text-tertiary)' }}>
               {group.title}
             </div>
-            {/* Items */}
-            <div>
-              {group.items.map((item) => renderItem(item))}
-            </div>
+            {group.items.map((item) => renderItem(item))}
           </div>
         ))}
       </nav>
 
       {/* Bottom */}
-      <div style={{ borderTop: '1px solid var(--border)', padding: '8px 0' }}>
-        <Link
-          href="/mypage"
-          className="flex items-center gap-2.5 px-5 transition-colors"
-          style={{
-            height: 38,
-            color: pathname === '/mypage' ? 'var(--primary)' : '#64748b',
-            fontSize: 13.5,
-            textDecoration: 'none',
-            background: pathname === '/mypage' ? 'var(--primary-light)' : 'transparent',
-          }}
-        >
-          <User size={16} style={{ color: '#94a3b8' }} />
-          마이페이지
-        </Link>
+      <div className="shrink-0 py-2" style={{ borderTop: '0.5px solid var(--border)' }}>
+        {[
+          { label: '마이페이지', href: '/mypage', icon: <User size={16} strokeWidth={1.5} /> },
+        ].map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="flex items-center gap-3.5 mx-2 px-3.5 py-2.5 rounded-xl transition-all"
+            style={{
+              color: pathname === item.href ? 'var(--text)' : 'var(--text-secondary)',
+              fontWeight: pathname === item.href ? 600 : 400,
+              fontSize: 14,
+              textDecoration: 'none',
+              background: pathname === item.href ? 'var(--primary-light)' : 'transparent',
+            }}
+          >
+            <span className="flex items-center justify-center w-6" style={{ color: 'var(--text-secondary)' }}>
+              {item.icon}
+            </span>
+            {item.label}
+          </Link>
+        ))}
         <button
           onClick={async () => {
             await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = '/login';
           }}
-          className="flex items-center gap-2.5 px-5 w-full"
-          style={{ height: 38, color: 'var(--danger)', fontSize: 13.5, border: 'none', background: 'transparent', cursor: 'pointer' }}
+          className="flex items-center gap-3.5 mx-2 px-3.5 py-2.5 rounded-xl w-[calc(100%-16px)] transition-all"
+          style={{ color: 'var(--danger)', fontSize: 14, border: 'none', background: 'transparent', cursor: 'pointer' }}
         >
-          <LogOut size={16} style={{ color: 'var(--danger)' }} />
+          <span className="flex items-center justify-center w-6">
+            <LogOut size={16} strokeWidth={1.5} />
+          </span>
           로그아웃
         </button>
       </div>

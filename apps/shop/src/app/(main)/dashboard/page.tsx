@@ -9,10 +9,12 @@ import {
   RotateCcw,
   Search,
 } from 'lucide-react';
+import BannerPopup from '@/components/BannerPopup';
 
 export default function DashboardPage() {
   return (
     <div>
+      <BannerPopup />
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-[var(--text)]">대시보드</h1>

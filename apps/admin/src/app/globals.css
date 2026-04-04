@@ -1,75 +1,287 @@
 @import 'tailwindcss';
 
 /* ================================================================
-   JINUCHEM Admin 디자인 시스템 — CSS Custom Properties
-   Orange accent 기반 관리자 테마
+   JINUCHEM 디자인 시스템 — iOS HIG 기반
    ================================================================ */
 
 :root {
-  /* Primary — Orange */
-  --primary: #ea580c;
-  --primary-hover: #c2410c;
-  --primary-light: #fff7ed;
+  /* iOS System Colors */
+  --primary:        #007AFF;
+  --primary-hover:  #0062CC;
+  --primary-light:  rgba(0, 122, 255, 0.12);
 
-  /* Accents */
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  --success:  #34C759;
+  --warning:  #FF9500;
+  --danger:   #FF3B30;
+  --purple:   #AF52DE;
+  --teal:     #5AC8FA;
 
-  /* Layout */
-  --sidebar-width: 250px;
-  --topbar-height: 56px;
+  /* iOS System Backgrounds */
+  --bg:             #F2F2F7;
+  --bg-secondary:   #EFEFF4;
+  --bg-card:        #FFFFFF;
+  --bg-grouped:     #F2F2F7;
+
+  /* iOS Labels */
+  --text:           #000000;
+  --text-secondary: #8E8E93;
+  --text-tertiary:  #C7C7CC;
+
+  /* iOS Separators */
+  --border:         rgba(60, 60, 67, 0.18);
+  --border-strong:  rgba(60, 60, 67, 0.29);
+
+  /* Sidebar */
+  --sidebar-width:   260px;
+  --sidebar-bg:      #F2F2F7;
+  --sidebar-text:    #3C3C43;
+
+  /* Topbar */
+  --topbar-height:   52px;
+
+  /* Button */
   --btn-height: 38px;
 
-  /* Light theme */
-  --bg: #f8fafc;
-  --bg-card: #ffffff;
-  --text: #1e293b;
-  --text-secondary: #64748b;
-  --border: #e2e8f0;
-  --sidebar-bg: #ffffff;
-  --sidebar-text: #475569;
+  /* iOS corner radius */
+  --radius-sm:   8px;
+  --radius-md:   10px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-full: 9999px;
+
+  /* iOS-style shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.06);
 }
 
+/* ——— Dark Theme ——— */
 [data-theme='dark'] {
-  --bg: #0f172a;
-  --bg-card: #1e293b;
-  --text: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --border: #334155;
-  --sidebar-bg: #1e293b;
-  --sidebar-text: #94a3b8;
+  --bg:             #000000;
+  --bg-secondary:   #1C1C1E;
+  --bg-card:        #1C1C1E;
+  --bg-grouped:     #000000;
+
+  --text:           #FFFFFF;
+  --text-secondary: #8E8E93;
+  --text-tertiary:  #48484A;
+
+  --border:        rgba(84, 84, 88, 0.65);
+  --border-strong: rgba(84, 84, 88, 0.80);
+
+  --sidebar-bg:   #1C1C1E;
+  --sidebar-text: #EBEBF5;
+
+  --primary:       #0A84FF;
+  --primary-hover: #409CFF;
+  --primary-light: rgba(10, 132, 255, 0.18);
+
+  --success: #30D158;
+  --warning: #FF9F0A;
+  --danger:  #FF453A;
 }
 
-/* Global resets */
-* {
+/* ——— Global Reset ——— */
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+               'Noto Sans KR', 'Helvetica Neue', Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
   margin: 0;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
 }
 
-/* Button height standard: 38px */
-button,
-.btn,
-select,
-input[type='search'] {
+/* ——— Scrollbar (iOS-style thin) ——— */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: var(--radius-full);
+}
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+}
+
+/* ——— Button height standard ——— */
+button, .btn, select, input[type='search'] {
   height: var(--btn-height);
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
+/* ——— iOS Card ——— */
+.ios-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
+
+/* ——— iOS Section Header ——— */
+.ios-section-header {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 16px 16px 6px;
 }
-::-webkit-scrollbar-thumb {
+
+/* ——— iOS List Cell ——— */
+.ios-list-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  background: var(--bg-card);
+  transition: background 0.15s ease;
+  cursor: pointer;
+  position: relative;
+}
+.ios-list-cell::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 56px;
+  right: 0;
+  height: 0.5px;
   background: var(--border);
-  border-radius: 3px;
 }
+.ios-list-cell:last-child::after { display: none; }
+.ios-list-cell:active,
+.ios-list-cell:hover { background: rgba(0,0,0,0.04); }
+[data-theme='dark'] .ios-list-cell:active,
+[data-theme='dark'] .ios-list-cell:hover { background: rgba(255,255,255,0.04); }
+
+/* ——— iOS Icon Container ——— */
+.ios-icon-wrap {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+/* ——— iOS Filled Button ——— */
+.ios-btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 0 20px;
+  height: var(--btn-height);
+  transition: opacity 0.15s, transform 0.1s;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.ios-btn-primary:hover  { opacity: 0.88; }
+.ios-btn-primary:active { transform: scale(0.98); opacity: 0.82; }
+
+/* ——— iOS Tinted Button ——— */
+.ios-btn-tinted {
+  background: var(--primary-light);
+  color: var(--primary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 0 20px;
+  height: var(--btn-height);
+  transition: opacity 0.15s, transform 0.1s;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.ios-btn-tinted:hover  { opacity: 0.80; }
+.ios-btn-tinted:active { transform: scale(0.98); }
+
+/* ——— iOS Badge ——— */
+.ios-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  line-height: 1;
+}
+
+/* ——— Dark mode Tailwind overrides ——— */
+[data-theme='dark'] .bg-white     { background-color: var(--bg-card) !important; }
+[data-theme='dark'] .bg-gray-50   { background-color: var(--bg) !important; }
+[data-theme='dark'] .bg-gray-100  { background-color: #2C2C2E !important; }
+[data-theme='dark'] .bg-slate-50  { background-color: var(--bg) !important; }
+[data-theme='dark'] .bg-slate-100 { background-color: #2C2C2E !important; }
+
+[data-theme='dark'] .hover\:bg-gray-50:hover   { background-color: #2C2C2E !important; }
+[data-theme='dark'] .hover\:bg-gray-100:hover  { background-color: #3A3A3C !important; }
+[data-theme='dark'] .hover\:bg-slate-50:hover  { background-color: #2C2C2E !important; }
+[data-theme='dark'] .hover\:bg-slate-100:hover { background-color: #3A3A3C !important; }
+
+[data-theme='dark'] .bg-blue-50  { background-color: rgba(10,132,255,0.15) !important; }
+[data-theme='dark'] .bg-blue-100 { background-color: rgba(10,132,255,0.20) !important; }
+
+[data-theme='dark'] .text-gray-900  { color: var(--text) !important; }
+[data-theme='dark'] .text-gray-800  { color: var(--text) !important; }
+[data-theme='dark'] .text-gray-700  { color: #EBEBF5 !important; }
+[data-theme='dark'] .text-gray-600  { color: var(--text-secondary) !important; }
+[data-theme='dark'] .text-gray-500  { color: var(--text-secondary) !important; }
+[data-theme='dark'] .text-slate-900 { color: var(--text) !important; }
+[data-theme='dark'] .text-slate-700 { color: #EBEBF5 !important; }
+[data-theme='dark'] .text-slate-600 { color: var(--text-secondary) !important; }
+[data-theme='dark'] .text-slate-500 { color: var(--text-secondary) !important; }
+
+[data-theme='dark'] .border-gray-100  { border-color: var(--border) !important; }
+[data-theme='dark'] .border-gray-200  { border-color: var(--border) !important; }
+[data-theme='dark'] .border-slate-200 { border-color: var(--border) !important; }
+[data-theme='dark'] .divide-gray-200 > :not(:last-child) { border-color: var(--border) !important; }
+
+[data-theme='dark'] input,
+[data-theme='dark'] select,
+[data-theme='dark'] textarea {
+  background-color: #2C2C2E !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+[data-theme='dark'] input::placeholder,
+[data-theme='dark'] textarea::placeholder { color: #48484A !important; }
+
+[data-theme='dark'] thead  { background-color: #2C2C2E !important; }
+[data-theme='dark'] th     { color: var(--text-secondary) !important; border-color: var(--border) !important; }
+[data-theme='dark'] td     { border-color: var(--border) !important; }
+[data-theme='dark'] tr:hover td { background-color: rgba(255,255,255,0.04) !important; }
+
+[data-theme='dark'] .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important; }
+[data-theme='dark'] .shadow    { box-shadow: 0 2px 8px rgba(0,0,0,0.45) !important; }
+[data-theme='dark'] .shadow-md { box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important; }
+[data-theme='dark'] .shadow-lg { box-shadow: 0 8px 24px rgba(0,0,0,0.55) !important; }
+
+[data-theme='dark'] .bg-black\/50 { background-color: rgba(0,0,0,0.75) !important; }
+
+[data-theme='dark'] .bg-blue-100    { background-color: rgba(10,132,255,0.20) !important; }
+[data-theme='dark'] .bg-green-100   { background-color: rgba(48,209,88,0.20) !important; }
+[data-theme='dark'] .bg-red-100     { background-color: rgba(255,69,58,0.20) !important; }
+[data-theme='dark'] .bg-yellow-100  { background-color: rgba(255,159,10,0.20) !important; }
+[data-theme='dark'] .bg-orange-100  { background-color: rgba(255,159,10,0.20) !important; }
+[data-theme='dark'] .bg-purple-100  { background-color: rgba(175,82,222,0.20) !important; }
+[data-theme='dark'] .bg-emerald-100 { background-color: rgba(48,209,88,0.20) !important; }
+[data-theme='dark'] .bg-amber-100   { background-color: rgba(255,159,10,0.20) !important; }
